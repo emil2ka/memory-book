@@ -2,9 +2,9 @@ import * as THREE from 'three'
 import type { Mood } from '../types/script'
 import type { ActorId, Stage, TimelineEvent } from '../types/timeline'
 import type { CameraId } from '../types/script'
-import { Book, PAGE_H, PAGE_W, TEX_W } from './Book'
+import { Book, PAGE_H, PAGE_W, SS, TEX_W } from './Book'
 import { PALETTE } from './palette'
-import { PIXEL_H, PIXEL_W, PixelStage, pixelTexture } from './PixelStage'
+import { PixelStage, pixelTexture } from './PixelStage'
 import { Room } from './Room'
 import { loadModels } from './models'
 import { SpriteActor, WORLD_PER_PX, placeholderHero, placeholderItem } from '../actors/SpriteActor'
@@ -181,7 +181,7 @@ export class FilmStage implements Stage {
         this.book.hideWords(boxes)
         const canvas = this.book.wordCanvas(boxes)
         // буквы того же размера, что и на странице
-        const word = new SpriteActor(canvas, canvas.width, canvas.height, PAGE_W / TEX_W)
+        const word = new SpriteActor(canvas, canvas.width, canvas.height, PAGE_W / TEX_W / SS)
         word.object.position.copy(at)
         this.addBillboard(word)
         this.lifted.set(e.quote, word)
@@ -358,13 +358,15 @@ export class FilmStage implements Stage {
     this.book.setText(this.bookText)
   }
 
-  /** Прямоугольники страниц в пикселях внутреннего холста 480×270. */
+  /** Прямоугольники страниц в пикселях холста. */
   pageRectsPx(): { left: Rect; right: Rect } {
     this.px.camera.updateMatrixWorld()
     const rect = (page: 0 | 1): Rect => {
       const pts = this.book.pageCorners(page).map((v) => v.project(this.px.camera))
-      const xs = pts.map((p) => ((p.x + 1) / 2) * PIXEL_W)
-      const ys = pts.map((p) => ((1 - p.y) / 2) * PIXEL_H)
+      const cw = this.px.renderer.domElement.width
+      const ch = this.px.renderer.domElement.height
+      const xs = pts.map((p) => ((p.x + 1) / 2) * cw)
+      const ys = pts.map((p) => ((1 - p.y) / 2) * ch)
       const x = Math.min(...xs)
       const y = Math.min(...ys)
       return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y }

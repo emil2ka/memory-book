@@ -4,6 +4,12 @@ import * as THREE from 'three'
 export const PIXEL_W = 480
 export const PIXEL_H = 270
 
+/**
+ * Основной вид — смешанный: реалистичный мир (полное разрешение, сглаживание, мягкие тени)
+ * и пиксельные жители. Старый целиком пиксельный вид остаётся по ?look=pixel в адресе.
+ */
+export const HD = typeof location === 'undefined' ? false : new URLSearchParams(location.search).get('look') !== 'pixel'
+
 export type TickFn = (time: number, dt: number) => void
 
 /**
@@ -21,12 +27,18 @@ export class PixelStage {
   private ro: ResizeObserver
 
   constructor(private host: HTMLElement) {
-    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, preserveDrawingBuffer: true })
+    this.renderer = new THREE.WebGLRenderer({ antialias: HD, alpha: false, preserveDrawingBuffer: true })
     this.renderer.setPixelRatio(1)
     this.renderer.setSize(PIXEL_W, PIXEL_H, false)
+    if (HD) {
+      this.renderer.shadowMap.enabled = true
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+      this.renderer.toneMappingExposure = 1.15
+    }
     this.renderer.setClearColor(0x1b1410)
     const c = this.renderer.domElement
-    c.style.imageRendering = 'pixelated'
+    if (!HD) c.style.imageRendering = 'pixelated'
     c.style.display = 'block'
     host.appendChild(c)
 
@@ -40,8 +52,17 @@ export class PixelStage {
 
   /** Целый множитель, чтобы пиксели оставались квадратными и одного размера. */
   private fit() {
-    const k = Math.max(1, Math.floor(Math.min(this.host.clientWidth / PIXEL_W, this.host.clientHeight / PIXEL_H)))
     const c = this.renderer.domElement
+    if (HD) {
+      // тот же кадр 16:9, но в полном разрешении экрана
+      const s = Math.min(this.host.clientWidth / PIXEL_W, this.host.clientHeight / PIXEL_H)
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      this.renderer.setSize(Math.round(PIXEL_W * s * dpr), Math.round(PIXEL_H * s * dpr), false)
+      c.style.width = `${PIXEL_W * s}px`
+      c.style.height = `${PIXEL_H * s}px`
+      return
+    }
+    const k = Math.max(1, Math.floor(Math.min(this.host.clientWidth / PIXEL_W, this.host.clientHeight / PIXEL_H)))
     c.style.width = `${PIXEL_W * k}px`
     c.style.height = `${PIXEL_H * k}px`
   }
@@ -72,11 +93,13 @@ export class PixelStage {
 }
 
 /** Текстура без сглаживания — для всего, что должно выглядеть пиксельным. */
-export function pixelTexture(source: HTMLCanvasElement | HTMLImageElement): THREE.Texture {
+export function pixelTexture(source: HTMLCanvasElement | HTMLImageElement, smooth = false): THREE.Texture {
   const t = source instanceof HTMLCanvasElement ? new THREE.CanvasTexture(source) : new THREE.Texture(source)
-  t.magFilter = THREE.NearestFilter
-  t.minFilter = THREE.NearestFilter
-  t.generateMipmaps = false
+  if (!smooth) {
+    t.magFilter = THREE.NearestFilter
+    t.minFilter = THREE.NearestFilter
+    t.generateMipmaps = false
+  }
   t.colorSpace = THREE.SRGBColorSpace
   t.needsUpdate = true
   return t

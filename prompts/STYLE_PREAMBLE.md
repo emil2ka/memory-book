@@ -4,8 +4,10 @@
 
 ## Для 3D-моделей (Claude Design)
 
+Мир реалистичный (решение от 21 ноября): модели без пиксельных текстур.
+
 ```text
-STYLE RULE — MEMORY BOOK. Low-poly "chunky" 3D model made to be rendered at 480x270 with nearest-neighbour upscaling, so it reads as pixel art. Big simple readable shapes, no small geometric detail: detail is painted in the texture. One texture atlas, max 256x256, hard pixel edges, no anti-aliasing, no gradients, no baked soft shadows. Colours only from a warm 32-colour palette: paper cream, amber, ochre, brick red, soft green, slate blue, deep navy, near-black brown. No black outlines. Slightly handmade, cosy, like a paper pop-up book on a wooden desk under a warm lamp. Y up, origin at the base, 1 unit = 10 cm. Max 3000 triangles unless stated. Export GLB with named animation clips exactly as listed.
+STYLE RULE — MEMORY BOOK WORLD. A realistic, slightly stylised 3D prop for a cosy desk scene lit by one warm lamp, rendered at full resolution with soft shadows. Believable materials painted into smooth textures: worn leather, uncoated cream paper, brushed metal, matte plastic, oiled wood. Smooth texture filtering, NO pixel art, no hard pixel edges, no visible texels. One texture atlas up to 1024x1024 with subtle wear, grain and edge darkening; no baked directional shadows. Clean rounded bevels, modest polygon count (max 6000 triangles unless stated). Warm muted palette: cream, amber, ochre, brick red, soft green, slate blue, deep navy, dark brown. Y up, origin at the base, 1 unit = 10 cm. Export GLB with named animation clips exactly as listed.
 ```
 
 ## Для спрайтов (генератор картинок)

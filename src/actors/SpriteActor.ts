@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { pixelTexture } from '../scene/PixelStage'
+import { HD, pixelTexture } from '../scene/PixelStage'
 import { PALETTE, css } from '../scene/palette'
 
 /** Сколько единиц мира занимает один пиксель спрайта. Один размер на всё. */
@@ -25,6 +25,12 @@ export class SpriteActor {
     const geo = new THREE.PlaneGeometry(pxW * worldPerPx, pxH * worldPerPx)
     geo.translate(0, (pxH * worldPerPx) / 2, 0)
     this.mesh = new THREE.Mesh(geo, this.mat)
+    if (HD) {
+      // пиксельный человечек отбрасывает настоящую тень по своему силуэту
+      this.mesh.castShadow = true
+      this.mesh.customDistanceMaterial = new THREE.MeshDistanceMaterial({ map: this.mat.map, alphaTest: 0.5 })
+      this.mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ map: this.mat.map, alphaTest: 0.5, depthPacking: THREE.RGBADepthPacking })
+    }
     this.object.add(this.mesh)
   }
 

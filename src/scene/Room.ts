@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { PALETTE } from './palette'
+import { HD } from './PixelStage'
 import type { Model } from './models'
 
 /** ЗАГЛУШКА комнаты: стол, лампа, кассетник, свет. Модели придут из assets/models. */
@@ -40,6 +41,14 @@ export class Room {
     this.rim.position.set(5, 4, -6)
     this.ambient = new THREE.AmbientLight(PALETTE.mauve, 0.9)
     this.group.add(this.lamp, this.rim, this.ambient)
+    if (HD) {
+      desk.receiveShadow = true
+      this.lamp.castShadow = true
+      this.lamp.shadow.mapSize.set(1024, 1024)
+      this.lamp.shadow.radius = 6
+      this.lamp.shadow.bias = -0.002
+      this.lamp.position.set(-3.6, 3.4, -0.6)
+    }
   }
 
   /** Заменить коробки настоящими моделями лампы и кассетника. */
@@ -52,6 +61,9 @@ export class Room {
     cassette.root.position.set(4.4, 0, 1.5)
     cassette.root.rotation.y = -0.35
     this.group.add(lamp.root, cassette.root)
+    if (HD) {
+      cassette.root.traverse((o) => ((o.castShadow = true), (o.receiveShadow = true)))
+    }
     const spin = cassette.clips.get('Spin')
     if (spin) cassette.mixer.clipAction(spin).play()
     this.mixers.push(cassette.mixer)

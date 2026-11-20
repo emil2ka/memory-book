@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { PALETTE, css } from './palette'
-import { pixelTexture } from './PixelStage'
+import { HD, pixelTexture } from './PixelStage'
 import { poseClip, type Model } from './models'
 
 /** Размер одной страницы в единицах мира. */
@@ -10,6 +10,12 @@ export const PAGE_H = 4.2
 export const TEX_W = 160
 export const TEX_H = 210
 const PAGE_Y = 0.285
+/** В пробе HD страницы рисуются в 4 раза подробнее и рукописным шрифтом. */
+export const SS = HD ? 4 : 1
+/** Рукописный шрифт уже и ниже моноширинного, поэтому кегли крупнее, а строки плотнее. */
+const FONT_SIZES = HD ? [24, 21, 18, 16, 14, 12, 10] : [16, 14, 12, 10, 8, 7]
+const LH = HD ? 1.12 : 1.35
+export const HAND_FONT = 'Caveat'
 const MARGIN = 12
 
 export interface WordBox {
@@ -62,10 +68,16 @@ export class Book {
     const paperSide = new THREE.MeshLambertMaterial({ color: PALETTE.paperShade })
     const coverMat = new THREE.MeshLambertMaterial({ color: PALETTE.brickDark })
     for (const c of this.canvases) {
-      c.width = TEX_W
-      c.height = TEX_H
+      c.width = TEX_W * SS
+      c.height = TEX_H * SS
+      c.getContext('2d')!.scale(SS, SS)
     }
-    this.textures = this.canvases.map((c) => pixelTexture(c))
+    if (HD) {
+      this.fontFamily = `${HAND_FONT}, "Bradley Hand", "Segoe Print", cursive`
+      // шрифт подгружается с сети: когда придёт, текст перерисовывается им
+      document.fonts?.load(`24px ${HAND_FONT}`, 'Аәғқңөұүһі').then(() => this.refresh())
+    }
+    this.textures = this.canvases.map((c) => pixelTexture(c, HD))
 
     const half = (side: -1 | 1, tex: THREE.Texture) => {
       const g = new THREE.Group()
@@ -107,6 +119,7 @@ export class Book {
   /** Заменить коробки настоящей моделью. Текст рисуется на материалах page_left и page_right. */
   useModel(model: Model) {
     this.model = model
+    if (HD) model.root.traverse((o) => ((o.castShadow = true), (o.receiveShadow = true)))
     for (const b of this.boxes) b.visible = false
     this.group.add(model.root)
     poseClip(model, 'Open', 1)
@@ -173,7 +186,7 @@ export class Book {
     const ctx = this.canvases[0].getContext('2d')!
     const tokens = [...text.matchAll(/\S+/g)]
     // размер шрифта подбирается так, чтобы текст поместился на разворот
-    for (const px of [16, 14, 12, 10, 8, 7]) {
+    for (const px of FONT_SIZES) {
       this.fontPx = px
       if (this.layout(ctx, tokens)) break
     }
@@ -183,7 +196,7 @@ export class Book {
 
   private layout(ctx: CanvasRenderingContext2D, tokens: RegExpMatchArray[]): boolean {
     ctx.font = `${this.fontPx}px ${this.fontFamily}`
-    const lh = Math.round(this.fontPx * 1.35)
+    const lh = Math.round(this.fontPx * LH)
     const maxW = TEX_W - MARGIN * 2
     const space = ctx.measureText(' ').width
     const words: WordBox[] = []
@@ -226,7 +239,7 @@ export class Book {
   private caretBox(ctx: CanvasRenderingContext2D): { page: 0 | 1; x: number; y: number } | null {
     if (this.caretPos === null) return null
     const pos = this.caretPos
-    const lh = Math.round(this.fontPx * 1.35)
+    const lh = Math.round(this.fontPx * LH)
     let prev: WordBox | null = null
     for (const w of this.words) {
       if (w.start >= pos) break
@@ -236,6 +249,14 @@ export class Book {
     const inside = Math.min(pos - prev.start, prev.word.length)
     const x = prev.x + Math.ceil(ctx.measureText(prev.word.slice(0, inside)).width) + (pos > prev.end ? Math.ceil(ctx.measureText(' ').width) : 0)
     return { page: prev.page, x, y: prev.y }
+  }
+
+  /** Переразложить текущий текст (например, после загрузки шрифта), сохранив вытянутые слова. */
+  refresh() {
+    const hidden = new Set(this.hidden)
+    this.setText(this.text)
+    this.hidden = hidden
+    this.redraw()
   }
 
   getWords() {
@@ -285,19 +306,20 @@ export class Book {
   wordCanvas(boxes: WordBox[]): HTMLCanvasElement {
     const label = boxes.map((b) => b.word).join(' ')
     const c = document.createElement('canvas')
+    const font = `${this.fontPx * SS}px ${this.fontFamily}`
     const g = c.getContext('2d')!
-    g.font = `${this.fontPx}px ${this.fontFamily}`
-    c.width = Math.ceil(g.measureText(label).width) + 4
-    c.height = this.fontPx + 6
+    g.font = font
+    c.width = Math.ceil(g.measureText(label).width) + 4 * SS
+    c.height = Math.ceil(this.fontPx * SS * 1.3)
     const g2 = c.getContext('2d')!
-    g2.font = `${this.fontPx}px ${this.fontFamily}`
+    g2.font = font
     g2.fillStyle = css(PALETTE.navy)
-    g2.fillText(label, 2, this.fontPx + 1)
+    g2.fillText(label, 2 * SS, this.fontPx * SS)
     return c
   }
 
   private redraw() {
-    const lh = Math.round(this.fontPx * 1.35)
+    const lh = Math.round(this.fontPx * LH)
     this.canvases.forEach((canvas, page) => {
       const ctx = canvas.getContext('2d')!
       ctx.fillStyle = css(PALETTE.paper)
