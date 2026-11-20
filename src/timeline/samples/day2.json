@@ -1,0 +1,23 @@
+{
+  "title": "Ночь перед сдачей проекта",
+  "mood": { "warmth": -0.1, "tension": 0.7, "energy": 0.5, "openness": -0.3 },
+  "contradiction": { "a": "до дедлайна шесть часов", "b": "засмеялся вслух", "staging": "slow_walk_bright_light" },
+  "time_of_day": "night",
+  "weather": "clear",
+  "place": "home",
+  "palette_hint": ["navy", "slate_blue", "grey_blue", "amber"],
+  "song": { "tempo": "fast", "energy": 0.75, "estimated": true },
+  "beats": [
+    { "quote": "До дедлайна шесть часов", "action": "shake", "result": { "kind": "item", "id": "clock" }, "camera": "hard_cut", "effect": "page_shake" },
+    { "quote": "Ноутбук горячий", "action": "carry", "result": { "kind": "item", "id": "laptop" }, "camera": "push_in", "effect": null },
+    { "quote": "кофе холодный", "action": "pull", "result": { "kind": "item", "id": "coffee" }, "camera": "push_in", "effect": null },
+    { "quote": "горит только лампа", "action": "pull", "result": { "kind": "popup", "id": "work_desk" }, "camera": "hard_cut", "effect": "lamp_flicker" },
+    { "quote": "всё наконец заработало", "action": "shake", "result": { "kind": "effect", "id": "sparkles" }, "camera": "wide", "effect": "palette_shift" },
+    { "quote": "засмеялся вслух", "action": "cheer", "result": { "kind": "item", "id": "note" }, "camera": "hard_cut", "effect": null }
+  ],
+  "why": [
+    "Текст: усталость и радость в одной ночи → медленный шаг при ярком свете",
+    "Фото: тёмная комната и одна лампа → сине-серая палитра с янтарным акцентом",
+    "Песня: быстрый темп → резкие склейки и мерцание лампы"
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "actions": {
+    "walk": "идёт к слову",
+    "pull": "тянет слово из страницы двумя руками",
+    "shake": "встряхивает слово над головой, оно рассыпается",
+    "carry": "несёт предмет перед собой",
+    "drink": "пьёт из кружки",
+    "sit": "садится на страницу",
+    "shiver": "мёрзнет, кутается в шарф",
+    "cheer": "радостно подпрыгивает"
+  },
+  "popups": {
+    "tree": "дерево",
+    "bench": "скамейка",
+    "lamp_post": "уличный фонарь",
+    "house": "дом с окном, окно может светиться",
+    "work_desk": "рабочий стол с ноутбуком",
+    "cafe_table": "столик кафе с двумя стульями"
+  },
+  "items": {
+    "cocoa": "кружка какао с паром",
+    "coffee": "чашка кофе",
+    "leaf": "жёлтый лист",
+    "snowflake": "снежинка",
+    "drop": "капля воды",
+    "sun": "солнце",
+    "moon": "луна",
+    "street_lamp": "фонарь",
+    "laptop": "ноутбук",
+    "phone": "телефон",
+    "book": "книга",
+    "cake": "кусок торта",
+    "heart": "сердце",
+    "note": "нота, музыка",
+    "umbrella": "зонт",
+    "bench_small": "скамейка",
+    "tea": "чашка чая",
+    "pizza": "пицца",
+    "bicycle": "велосипед",
+    "bus": "автобус",
+    "car": "машина",
+    "ball": "мяч",
+    "guitar": "гитара",
+    "headphones": "наушники",
+    "gift": "подарок",
+    "candle": "свеча",
+    "flower": "цветок",
+    "dog": "собака",
+    "cat": "кошка",
+    "backpack": "рюкзак",
+    "clock": "часы, будильник",
+    "star": "звезда"
+  },
+  "effects": {
+    "leaves": "падающие листья",
+    "snow": "снег",
+    "rain": "дождь",
+    "steam": "пар",
+    "frost": "иней ползёт по странице",
+    "sparkles": "искры"
+  },
+  "persons": {
+    "second_person": "второй человечек"
+  },
+  "cameras": {
+    "wide": "общий план стола и книги",
+    "push_in": "наезд на слово",
+    "pull_out": "отъезд",
+    "orbit_quarter": "облёт на четверть круга",
+    "hard_cut": "резкая склейка на крупный план",
+    "hold": "неподвижный план"
+  },
+  "sceneEffects": {
+    "palette_shift": "палитра плавно меняется",
+    "lamp_flicker": "лампа мерцает",
+    "day_to_night": "день сменяется ночью",
+    "page_shake": "страница вздрагивает"
+  },
+  "stagings": {
+    "frost_edges_warm_center": "иней по краям, тёплый свет в центре",
+    "crowd_edges_alone_center": "толпа по краям, человечек один в центре",
+    "slow_walk_bright_light": "медленный шаг при ярком свете"
+  },
+  "places": {
+    "park": "парк",
+    "home": "дом",
+    "office": "офис, рабочее место",
+    "cafe": "кафе",
+    "street": "улица",
+    "nature": "природа"
+  },
+  "timesOfDay": ["morning", "day", "evening", "night"],
+  "weathers": ["clear", "cloudy", "rain", "snow", "fog"],
+  "tempos": ["slow", "medium", "fast"],
+  "paletteColors": ["cream", "amber", "ochre", "brick_red", "coral", "soft_green", "teal", "slate_blue", "navy", "grey_blue", "white", "brown"]
+}

@@ -1,0 +1,90 @@
+{
+  "cell": [
+    16,
+    16
+  ],
+  "cols": 4,
+  "rows": 4,
+  "frames": [
+    {
+      "name": "cocoa",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "name": "coffee",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "name": "leaf",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "name": "snowflake",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "name": "drop",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "name": "sun",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "name": "moon",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "name": "street_lamp",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "name": "laptop",
+      "col": 0,
+      "row": 2
+    },
+    {
+      "name": "phone",
+      "col": 1,
+      "row": 2
+    },
+    {
+      "name": "book",
+      "col": 2,
+      "row": 2
+    },
+    {
+      "name": "cake",
+      "col": 3,
+      "row": 2
+    },
+    {
+      "name": "heart",
+      "col": 0,
+      "row": 3
+    },
+    {
+      "name": "note",
+      "col": 1,
+      "row": 3
+    },
+    {
+      "name": "umbrella",
+      "col": 2,
+      "row": 3
+    },
+    {
+      "name": "bench_small",
+      "col": 3,
+      "row": 3
+    }
+  ]
+}

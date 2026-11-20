@@ -1,0 +1,205 @@
+/* Цвета — только переменные мастер-палитры (--ink, --paper, ...), их ставит App из src/scene/palette.ts.
+   Стиль: пиксельный. Без скруглений, градиентов, размытия и стеклянных панелей. */
+
+html, body, #root { height: 100%; margin: 0; background: var(--ink, #1b1410); }
+* { box-sizing: border-box; border-radius: 0 !important; }
+body {
+  color: var(--cream);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.overlay { position: absolute; inset: 0; pointer-events: none; }
+.overlay > * { pointer-events: auto; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.55; }
+
+/* Кнопка-слово: подчёркнутая пиксельной линией, без плашки. */
+.link {
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  color: var(--cream);
+  text-decoration: none;
+  border-bottom: 2px solid var(--ochre);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.link:hover:not(:disabled), .link:focus-visible { color: var(--yellow); border-bottom-color: var(--yellow); outline: none; }
+.link.on { color: var(--yellow); border-bottom-color: var(--amber); }
+.link.danger { border-bottom-color: var(--brick); }
+.small { font-size: 11px; color: var(--greyLight); }
+
+/* ---------- полка ---------- */
+.shelf {
+  position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: min(92vw, 900px);
+  transition: opacity 0.45s steps(5), transform 0.45s steps(5);
+}
+.shelf.hidden { opacity: 0; transform: translate(-50%, -16px); pointer-events: none; }
+.shelf.hidden * { pointer-events: none; }
+.spines { display: flex; align-items: flex-end; gap: 3px; min-height: 160px; padding: 0 10px; }
+.spine {
+  position: relative;
+  border: 0;
+  border-left: 2px solid rgba(0, 0, 0, 0);
+  box-shadow: inset -3px 0 0 var(--ink), inset 2px 0 0 var(--cream);
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--cream);
+  transition: transform 80ms steps(2);
+}
+.spine:hover, .spine:focus-visible { transform: translateY(-6px); outline: none; }
+.spine-title { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; line-height: 1; max-height: 92px; overflow: hidden; text-shadow: 1px 1px 0 var(--ink); }
+.spine-date { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; color: var(--paper); text-shadow: 1px 1px 0 var(--ink); }
+.spine.new { width: 30px; height: 104px; background: var(--paper); color: var(--brownDark); box-shadow: inset -3px 0 0 var(--paperShade), inset 0 -10px 0 var(--brick); }
+.spine.new .spine-title, .spine.new .spine-date { color: var(--brownDark); text-shadow: none; }
+.plank { height: 12px; background: var(--wood); box-shadow: inset 0 -4px 0 var(--brown), 0 4px 0 var(--brownDark); }
+
+/* ---------- режим записи ---------- */
+.write { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.45s steps(5); }
+.write.hidden { opacity: 0; }
+.write.hidden > * { pointer-events: none; }
+.write > * { pointer-events: auto; position: absolute; }
+
+.page-text {
+  background: transparent;
+  border: 0;
+  outline: none;
+  resize: none;
+  color: transparent; /* текст рисует сцена на странице */
+  caret-color: var(--ink);
+  font-family: inherit;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.page-text.scene-caret { caret-color: transparent; }
+.page-text::selection { background: var(--amber); color: transparent; }
+
+.hint { font-size: 11px; color: var(--greyLight); text-align: center; pointer-events: none; }
+.hint.right { pointer-events: auto; display: flex; gap: 8px; justify-content: center; align-items: baseline; }
+
+.page-photos { cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.page-photos:not(.has) { outline: 2px dashed var(--paperShade); outline-offset: -10%; }
+.page-photos.has { outline: none; }
+.page-photos.drag { outline: 3px dashed var(--amber); outline-offset: -6%; }
+.drop-label { white-space: pre-line; text-align: center; color: var(--brown); font-size: 12px; line-height: 1.5; pointer-events: none; }
+
+/* мягкая подсветка того, чего не хватает */
+.need { animation: need 0.5s steps(2) 4; }
+.page-text.need, .page-photos.need { outline: 3px solid var(--amber); outline-offset: -4px; }
+.cassette.need { box-shadow: 0 0 0 3px var(--amber), 4px 4px 0 3px var(--ink); }
+@keyframes need { 50% { outline-color: transparent; box-shadow: none; } }
+
+/* уголок страницы — единственная кнопка «Собрать» */
+.corner {
+  border: 0;
+  padding: 0;
+  background: none;
+}
+.corner-fold {
+  position: absolute;
+  inset: 0;
+  background: var(--paperShade);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  box-shadow: inset 3px 3px 0 var(--cream);
+  transition: transform 80ms steps(2);
+  transform-origin: 100% 100%;
+}
+.corner:hover:not(:disabled) .corner-fold, .corner:focus-visible .corner-fold { transform: scale(1.25); background: var(--amber); }
+.corner:focus-visible { outline: none; }
+.corner-label {
+  position: absolute;
+  left: calc(100% + 10px);
+  bottom: 0;
+  font-size: 13px;
+  color: var(--cream);
+  white-space: nowrap;
+  border-bottom: 2px solid var(--amber);
+}
+.corner.thinking .corner-label { animation: blink 0.8s steps(2) infinite; border-bottom-color: transparent; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+.write.busy .page-text, .write.busy .page-photos, .write.busy .cassette { opacity: 0.85; }
+.back { font-size: 12px; }
+
+/* ---------- кассета ---------- */
+.cassette {
+  width: 176px;
+  padding: 8px;
+  background: var(--brownDark);
+  box-shadow: 4px 4px 0 var(--ink), inset 0 0 0 2px var(--brown);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.cassette.drag { box-shadow: 0 0 0 3px var(--amber), 4px 4px 0 3px var(--ink); }
+.tape { background: var(--grey); padding: 5px; box-shadow: inset 0 0 0 2px var(--ink); }
+.tape-label { background: var(--cream); color: var(--brownDark); padding: 2px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 -3px 0 var(--coral); }
+.reels { display: flex; align-items: center; justify-content: space-between; padding: 6px 14px 2px; }
+.reel { width: 16px; height: 16px; background: var(--paper); box-shadow: inset 0 0 0 4px var(--brownDark); }
+.reel.spin { animation: spin 0.6s steps(4) infinite; }
+@keyframes spin { to { transform: rotate(90deg); } }
+.window { width: 52px; height: 10px; background: var(--brown); box-shadow: inset 0 0 0 2px var(--ink); }
+.tabs { display: flex; gap: 10px; }
+.cassette-body { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.field {
+  width: 100%;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--cream);
+  border: 0;
+  box-shadow: inset 2px 2px 0 var(--paperShade);
+  padding: 4px 5px;
+  outline: none;
+}
+.field:focus { box-shadow: inset 2px 2px 0 var(--paperShade), 0 0 0 2px var(--amber); }
+.knob { display: flex; flex-direction: column; width: 100%; gap: 2px; }
+.knob input[type='range'] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: var(--brown); box-shadow: inset 0 0 0 2px var(--ink); margin: 2px 0; }
+.knob input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 14px; background: var(--amber); box-shadow: inset -2px -2px 0 var(--ochre); border: 0; }
+.knob input[type='range']::-moz-range-thumb { width: 10px; height: 14px; background: var(--amber); border: 0; border-radius: 0; }
+.ends { display: flex; justify-content: space-between; font-size: 9px; color: var(--greyLight); }
+
+/* ---------- фильм ---------- */
+.film-hint { position: absolute; right: 16px; bottom: 12px; opacity: 0.28; animation: fade-in 0.8s steps(4) both; transition: opacity 0.2s; }
+.film-hint .link { font-size: 11px; border-bottom-width: 1px; border-bottom-color: var(--brown); color: var(--greyLight); }
+.film-hint:hover, .film-hint:focus-within { opacity: 0.9; }
+@keyframes fade-in { from { opacity: 0; } }
+
+/* ---------- закладка «Почему так» ---------- */
+.bookmark {
+  position: absolute;
+  top: 0;
+  right: max(16px, 6vw);
+  width: min(320px, 86vw);
+  padding: 18px 16px 40px;
+  background: var(--brownDark);
+  color: var(--cream);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 22px), 0 100%);
+  box-shadow: inset 10px 0 0 var(--ribbon, var(--brick)), inset -4px 0 0 var(--ink);
+  padding-left: 24px;
+  animation: drop 0.4s steps(6) both;
+}
+@keyframes drop { from { transform: translateY(-100%); } }
+.ribbon-top { height: 6px; margin: -18px -16px 14px -24px; background: var(--ribbon, var(--brick)); }
+.bm-title { font-size: 17px; line-height: 1.25; margin: 0 0 12px; font-weight: 700; }
+.bm-head { font-size: 12px; margin: 0 0 6px; color: var(--yellow); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 400; }
+.bm-why { list-style: none; padding: 0; margin: 0 0 12px; font-size: 12px; line-height: 1.45; }
+.bm-why li { padding: 5px 0; border-top: 2px dotted var(--brown); }
+.bm-actions { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 10px; }
+.bm-actions .link { color: var(--cream); border-bottom-color: var(--cream); }
+.bm-actions .link:hover:not(:disabled) { color: var(--yellow); border-bottom-color: var(--yellow); }
+.status { margin-top: 8px; color: var(--cream); }
+
+@media (max-width: 720px) {
+  .cassette { width: 150px; }
+  .bookmark { right: 8px; }
+}

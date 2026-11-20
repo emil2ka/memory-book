@@ -1,0 +1,87 @@
+[
+  {
+    "id": "d1-park-cocoa",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Гуляли по парку, всё в жёлтых листьях. Было холодно, но мы пили какао и долго разговаривали. Фонари зажглись раньше, чем мы заметили, что стемнело.",
+    "song": null,
+    "photo": "amber"
+  },
+  {
+    "id": "d2-deadline-night",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "До дедлайна шесть часов. Ноутбук горячий, кофе холодный, в комнате горит только лампа. В четыре утра всё наконец заработало, и я засмеялся вслух в пустой квартире.",
+    "song": { "title": "Sandstorm", "artist": "Darude" }
+  },
+  {
+    "id": "d3-first-snow",
+    "lang": "ru",
+    "expectContradiction": false,
+    "text": "Проснулся, а за окном всё белое. Никуда не пошёл. Заварил чай, сел у окна и просто смотрел, как падает снег. Очень тихо.",
+    "song": { "title": "Gymnopédie No. 1", "artist": "Erik Satie", "measuredTempoBpm": 68 }
+  },
+  {
+    "id": "d4-grandma-birthday",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Вся семья за одним столом, все говорят одновременно. Бабушка принесла торт со свечами. Я сидел в углу и вдруг понял, что давно не слышал этот шум и скучал по нему.",
+    "song": null
+  },
+  {
+    "id": "d5-rain-home",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Автобус не пришёл, пошёл пешком. Дождь, в наушниках старая песня, фонари отражаются в лужах. Промок, но домой идти не хотелось.",
+    "song": { "title": "Кукушка", "artist": "Кино" }
+  },
+  {
+    "id": "e6-exam-passed",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Всю ночь не спал перед экзаменом, руки тряслись. Сдал на отлично! Вышел из универа, а на улице солнце, и мне почему-то хочется плакать.",
+    "song": null
+  },
+  {
+    "id": "e7-dog-morning",
+    "lang": "ru",
+    "expectContradiction": false,
+    "text": "Утром гулял с собакой у реки. Она гонялась за мячом, а я пил кофе из термоса и смотрел на туман над водой.",
+    "song": { "title": "Here Comes the Sun", "artist": "The Beatles" }
+  },
+  {
+    "id": "e8-move-out",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Последний день в старой квартире. Коробки, пустые полки, эхо. Нашёл под диваном мамино письмо. Грустно уезжать, но в новом доме будет своё окно на горы.",
+    "song": null
+  },
+  {
+    "id": "e9-concert",
+    "lang": "ru",
+    "expectContradiction": true,
+    "text": "Концерт в огромном зале, тысячи людей прыгают и поют. Я стоял в толпе с гитарой на футболке и чувствовал себя совсем одним, пока друг не обнял меня за плечо.",
+    "song": { "title": "Smells Like Teen Spirit", "artist": "Nirvana", "measuredTempoBpm": 117 }
+  },
+  {
+    "id": "e10-bike-summer",
+    "lang": "ru",
+    "expectContradiction": false,
+    "text": "Катались на велосипедах до озера. Жара, мороженое тает быстрее, чем успеваешь откусить. Вечером ели пиццу на траве и смотрели на звёзды.",
+    "song": null
+  },
+  {
+    "id": "e11-kazakh-snow",
+    "lang": "kk",
+    "expectContradiction": true,
+    "text": "Бүгін таңертең алғашқы қар жауды. Сыртта суық, бірақ әжеммен бірге ыстық шай іштік. Мысық терезе алдында ұйықтап жатты.",
+    "song": null
+  },
+  {
+    "id": "e12-mixed-cafe",
+    "lang": "mixed",
+    "expectContradiction": true,
+    "text": "Досыммен кафеде отырдық. Заказали капучино и чизкейк, долго смеялись. Сыртта жаңбыр, а внутри тепло и пахнет корицей.",
+    "song": { "title": "Fly Me to the Moon", "artist": "Frank Sinatra" }
+  }
+]

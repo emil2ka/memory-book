@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.vercel
+.DS_Store
+*.local
+assets/_raw
+tools/.venv
+__pycache__
+*.pyc

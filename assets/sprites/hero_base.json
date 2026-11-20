@@ -1,0 +1,130 @@
+{
+  "cell": [
+    24,
+    32
+  ],
+  "cols": 6,
+  "rows": 4,
+  "frames": [
+    {
+      "name": "idle_0",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "name": "idle_1",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "name": "idle_2",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "name": "idle_3",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "name": "idle_4",
+      "col": 4,
+      "row": 0
+    },
+    {
+      "name": "idle_5",
+      "col": 5,
+      "row": 0
+    },
+    {
+      "name": "walk_0",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "name": "walk_1",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "name": "walk_2",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "name": "walk_3",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "name": "walk_4",
+      "col": 4,
+      "row": 1
+    },
+    {
+      "name": "walk_5",
+      "col": 5,
+      "row": 1
+    },
+    {
+      "name": "pull_0",
+      "col": 0,
+      "row": 2
+    },
+    {
+      "name": "pull_1",
+      "col": 1,
+      "row": 2
+    },
+    {
+      "name": "pull_2",
+      "col": 2,
+      "row": 2
+    },
+    {
+      "name": "pull_3",
+      "col": 3,
+      "row": 2
+    },
+    {
+      "name": "pull_4",
+      "col": 4,
+      "row": 2
+    },
+    {
+      "name": "pull_5",
+      "col": 5,
+      "row": 2
+    },
+    {
+      "name": "sit_0",
+      "col": 0,
+      "row": 3
+    },
+    {
+      "name": "sit_1",
+      "col": 1,
+      "row": 3
+    },
+    {
+      "name": "sit_2",
+      "col": 2,
+      "row": 3
+    },
+    {
+      "name": "sit_3",
+      "col": 3,
+      "row": 3
+    },
+    {
+      "name": "sit_4",
+      "col": 4,
+      "row": 3
+    },
+    {
+      "name": "sit_5",
+      "col": 5,
+      "row": 3
+    }
+  ]
+}

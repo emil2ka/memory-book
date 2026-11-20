@@ -1,0 +1,22 @@
+{
+  "title": "Первый снег за окном",
+  "mood": { "warmth": 0.1, "tension": -0.6, "energy": -0.7, "openness": -0.4 },
+  "contradiction": null,
+  "time_of_day": "morning",
+  "weather": "snow",
+  "place": "home",
+  "palette_hint": ["white", "grey_blue", "slate_blue", "amber"],
+  "song": { "tempo": "slow", "energy": 0.15, "estimated": true },
+  "beats": [
+    { "quote": "за окном всё белое", "action": "pull", "result": { "kind": "popup", "id": "house" }, "camera": "wide", "effect": "palette_shift" },
+    { "quote": "Заварил чай", "action": "pull", "result": { "kind": "item", "id": "tea" }, "camera": "hold", "effect": null },
+    { "quote": "сел у окна", "action": "sit", "result": { "kind": "effect", "id": "frost" }, "camera": "hold", "effect": null },
+    { "quote": "падает снег", "action": "shake", "result": { "kind": "effect", "id": "snow" }, "camera": "wide", "effect": null },
+    { "quote": "Очень тихо", "action": "sit", "result": { "kind": "crystal", "id": "crystal" }, "camera": "hold", "effect": null }
+  ],
+  "why": [
+    "Текст: «никуда не пошёл», «очень тихо» → камера почти стоит, редкий снег",
+    "Фото: белое окно → белый и серо-голубой, один тёплый огонёк",
+    "Песня: очень медленный темп → долгие планы и медленный шаг"
+  ]
+}

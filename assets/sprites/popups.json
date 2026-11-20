@@ -1,0 +1,40 @@
+{
+  "cell": [
+    48,
+    48
+  ],
+  "cols": 3,
+  "rows": 2,
+  "frames": [
+    {
+      "name": "tree",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "name": "bench",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "name": "lamp_post",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "name": "house",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "name": "work_desk",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "name": "cafe_table",
+      "col": 2,
+      "row": 1
+    }
+  ]
+}

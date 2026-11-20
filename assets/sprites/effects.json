@@ -1,0 +1,290 @@
+{
+  "cell": [
+    16,
+    16
+  ],
+  "cols": 8,
+  "rows": 7,
+  "frames": [
+    {
+      "name": "leaves_0",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "name": "leaves_1",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "name": "leaves_2",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "name": "leaves_3",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "name": "leaves_4",
+      "col": 4,
+      "row": 0
+    },
+    {
+      "name": "leaves_5",
+      "col": 5,
+      "row": 0
+    },
+    {
+      "name": "leaves_6",
+      "col": 6,
+      "row": 0
+    },
+    {
+      "name": "leaves_7",
+      "col": 7,
+      "row": 0
+    },
+    {
+      "name": "snow_0",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "name": "snow_1",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "name": "snow_2",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "name": "snow_3",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "name": "snow_4",
+      "col": 4,
+      "row": 1
+    },
+    {
+      "name": "snow_5",
+      "col": 5,
+      "row": 1
+    },
+    {
+      "name": "snow_6",
+      "col": 6,
+      "row": 1
+    },
+    {
+      "name": "snow_7",
+      "col": 7,
+      "row": 1
+    },
+    {
+      "name": "rain_0",
+      "col": 0,
+      "row": 2
+    },
+    {
+      "name": "rain_1",
+      "col": 1,
+      "row": 2
+    },
+    {
+      "name": "rain_2",
+      "col": 2,
+      "row": 2
+    },
+    {
+      "name": "rain_3",
+      "col": 3,
+      "row": 2
+    },
+    {
+      "name": "rain_4",
+      "col": 4,
+      "row": 2
+    },
+    {
+      "name": "rain_5",
+      "col": 5,
+      "row": 2
+    },
+    {
+      "name": "rain_6",
+      "col": 6,
+      "row": 2
+    },
+    {
+      "name": "rain_7",
+      "col": 7,
+      "row": 2
+    },
+    {
+      "name": "steam_0",
+      "col": 0,
+      "row": 3
+    },
+    {
+      "name": "steam_1",
+      "col": 1,
+      "row": 3
+    },
+    {
+      "name": "steam_2",
+      "col": 2,
+      "row": 3
+    },
+    {
+      "name": "steam_3",
+      "col": 3,
+      "row": 3
+    },
+    {
+      "name": "steam_4",
+      "col": 4,
+      "row": 3
+    },
+    {
+      "name": "steam_5",
+      "col": 5,
+      "row": 3
+    },
+    {
+      "name": "steam_6",
+      "col": 6,
+      "row": 3
+    },
+    {
+      "name": "steam_7",
+      "col": 7,
+      "row": 3
+    },
+    {
+      "name": "frost_0",
+      "col": 0,
+      "row": 4
+    },
+    {
+      "name": "frost_1",
+      "col": 1,
+      "row": 4
+    },
+    {
+      "name": "frost_2",
+      "col": 2,
+      "row": 4
+    },
+    {
+      "name": "frost_3",
+      "col": 3,
+      "row": 4
+    },
+    {
+      "name": "frost_4",
+      "col": 4,
+      "row": 4
+    },
+    {
+      "name": "frost_5",
+      "col": 5,
+      "row": 4
+    },
+    {
+      "name": "frost_6",
+      "col": 6,
+      "row": 4
+    },
+    {
+      "name": "frost_7",
+      "col": 7,
+      "row": 4
+    },
+    {
+      "name": "sparkles_0",
+      "col": 0,
+      "row": 5
+    },
+    {
+      "name": "sparkles_1",
+      "col": 1,
+      "row": 5
+    },
+    {
+      "name": "sparkles_2",
+      "col": 2,
+      "row": 5
+    },
+    {
+      "name": "sparkles_3",
+      "col": 3,
+      "row": 5
+    },
+    {
+      "name": "sparkles_4",
+      "col": 4,
+      "row": 5
+    },
+    {
+      "name": "sparkles_5",
+      "col": 5,
+      "row": 5
+    },
+    {
+      "name": "sparkles_6",
+      "col": 6,
+      "row": 5
+    },
+    {
+      "name": "sparkles_7",
+      "col": 7,
+      "row": 5
+    },
+    {
+      "name": "word_break_0",
+      "col": 0,
+      "row": 6
+    },
+    {
+      "name": "word_break_1",
+      "col": 1,
+      "row": 6
+    },
+    {
+      "name": "word_break_2",
+      "col": 2,
+      "row": 6
+    },
+    {
+      "name": "word_break_3",
+      "col": 3,
+      "row": 6
+    },
+    {
+      "name": "word_break_4",
+      "col": 4,
+      "row": 6
+    },
+    {
+      "name": "word_break_5",
+      "col": 5,
+      "row": 6
+    },
+    {
+      "name": "word_break_6",
+      "col": 6,
+      "row": 6
+    },
+    {
+      "name": "word_break_7",
+      "col": 7,
+      "row": 6
+    }
+  ]
+}

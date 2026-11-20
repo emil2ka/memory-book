@@ -1,0 +1,2508 @@
+{
+  "when": "2026-11-20T18:44:44.169Z",
+  "summary": {
+    "model": "claude-haiku-5-5",
+    "effort": "low",
+    "calls": 12,
+    "validJson": "12/12",
+    "schemaValidRaw": "12/12",
+    "quotesExact": "66/66",
+    "idsInCatalog": "12/12",
+    "beatsIn4to7": "12/12",
+    "actionVariety": "12/12",
+    "contradictionWhenExpected": "9/9",
+    "latencyMedianS": 2.7,
+    "latencyMaxS": 7.1,
+    "over20s": 0
+  },
+  "rows": [
+    {
+      "id": "d1-park-cocoa",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "да ✓",
+      "latencyS": 5.1,
+      "cacheRead": 8501,
+      "title": "Осенний парк и какао",
+      "fixes": 0,
+      "filmS": 59.95
+    },
+    {
+      "id": "d2-deadline-night",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "да ✓",
+      "latencyS": 5.7,
+      "cacheRead": 8501,
+      "title": "Ночь перед дедлайном",
+      "fixes": 0,
+      "filmS": 43.6
+    },
+    {
+      "id": "d3-first-snow",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "5/5",
+      "idsOk": true,
+      "beats": 5,
+      "variety": true,
+      "distinctActions": 3,
+      "contradiction": "нет ✓",
+      "latencyS": 2.3,
+      "cacheRead": 8501,
+      "title": "Первый снег за окном",
+      "fixes": 0,
+      "filmS": 55
+    },
+    {
+      "id": "d4-grandma-birthday",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "да ✓",
+      "latencyS": 2.4,
+      "cacheRead": 8501,
+      "title": "День рождения у бабушки",
+      "fixes": 0,
+      "filmS": 51.05
+    },
+    {
+      "id": "d5-rain-home",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "5/5",
+      "idsOk": true,
+      "beats": 5,
+      "variety": true,
+      "distinctActions": 3,
+      "contradiction": "да ✓",
+      "latencyS": 2.6,
+      "cacheRead": 8501,
+      "title": "Дорога домой под дождём",
+      "fixes": 0,
+      "filmS": 56.6
+    },
+    {
+      "id": "e6-exam-passed",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 5,
+      "contradiction": "да ✓",
+      "latencyS": 2.6,
+      "cacheRead": 8501,
+      "title": "Ночь перед экзаменом и солнце",
+      "fixes": 0,
+      "filmS": 56.44
+    },
+    {
+      "id": "e7-dog-morning",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "4/4",
+      "idsOk": true,
+      "beats": 4,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "нет ✓",
+      "latencyS": 2.5,
+      "cacheRead": 8501,
+      "title": "Утром у реки с собакой",
+      "fixes": 0,
+      "filmS": 42.16
+    },
+    {
+      "id": "e8-move-out",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "5/5",
+      "idsOk": true,
+      "beats": 5,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "да ✓",
+      "latencyS": 2.7,
+      "cacheRead": 8501,
+      "title": "Последний день в старой квартире",
+      "fixes": 0,
+      "filmS": 57.8
+    },
+    {
+      "id": "e9-concert",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 5,
+      "contradiction": "да ✓",
+      "latencyS": 2.7,
+      "cacheRead": 8501,
+      "title": "Концерт в огромном зале",
+      "fixes": 0,
+      "filmS": 46.84
+    },
+    {
+      "id": "e10-bike-summer",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 5,
+      "contradiction": "нет ✓",
+      "latencyS": 6.3,
+      "cacheRead": 8501,
+      "title": "Велосипеды до озера и звёзды",
+      "fixes": 0,
+      "filmS": 52.72
+    },
+    {
+      "id": "e11-kazakh-snow",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "5/5",
+      "idsOk": true,
+      "beats": 5,
+      "variety": true,
+      "distinctActions": 4,
+      "contradiction": "да ✓",
+      "latencyS": 2.5,
+      "cacheRead": 8501,
+      "title": "Алғашқы қар және ыстық шай",
+      "fixes": 0,
+      "filmS": 58.4
+    },
+    {
+      "id": "e12-mixed-cafe",
+      "ok": true,
+      "schemaOk": true,
+      "quotesExact": "6/6",
+      "idsOk": true,
+      "beats": 6,
+      "variety": true,
+      "distinctActions": 6,
+      "contradiction": "да ✓",
+      "latencyS": 7.1,
+      "cacheRead": 8501,
+      "title": "Кафе, жаңбыр и корица",
+      "fixes": 0,
+      "filmS": 56.825
+    }
+  ],
+  "details": [
+    {
+      "id": "d1-park-cocoa",
+      "latencyMs": 5138,
+      "usage": {
+        "input": 155,
+        "output": 993,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Осенний парк и какао",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.4,
+          "energy": -0.2,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "холодно",
+          "b": "пили какао",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "park",
+        "palette_hint": [
+          "amber",
+          "ochre",
+          "coral",
+          "cream"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "по парку",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "tree"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "жёлтых листьях",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "leaves"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "холодно",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "пили какао",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "cocoa"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "мы",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Фонари",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "lamp_post"
+            },
+            "camera": "orbit_quarter",
+            "effect": "day_to_night"
+          }
+        ],
+        "why": [
+          "Текст: холод и какао вместе → иней по краям и тёплый свет в центре",
+          "Фото: тёплый жёлто-оранжевый градиент без предметов → янтарная палитра, объекты берутся из текста",
+          "Песня: не указана, темп оценён по настроению текста → спокойный шаг и плавные наезды"
+        ]
+      },
+      "script": {
+        "title": "Осенний парк и какао",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.4,
+          "energy": -0.2,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "холодно",
+          "b": "пили какао",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "park",
+        "palette_hint": [
+          "amber",
+          "ochre",
+          "coral",
+          "cream"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "по парку",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "tree"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "жёлтых листьях",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "leaves"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "холодно",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "пили какао",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "cocoa"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "мы",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Фонари",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "lamp_post"
+            },
+            "camera": "orbit_quarter",
+            "effect": "day_to_night"
+          }
+        ],
+        "why": [
+          "Текст: холод и какао вместе → иней по краям и тёплый свет в центре",
+          "Фото: тёплый жёлто-оранжевый градиент без предметов → янтарная палитра, объекты берутся из текста",
+          "Песня: не указана, темп оценён по настроению текста → спокойный шаг и плавные наезды"
+        ]
+      }
+    },
+    {
+      "id": "d2-deadline-night",
+      "latencyMs": 5741,
+      "usage": {
+        "input": 156,
+        "output": 1414,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Ночь перед дедлайном",
+        "mood": {
+          "warmth": -0.1,
+          "tension": 0.7,
+          "energy": 0.5,
+          "openness": -0.3
+        },
+        "contradiction": {
+          "a": "до дедлайна шесть часов",
+          "b": "засмеялся вслух",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "night",
+        "weather": "clear",
+        "place": "home",
+        "palette_hint": [
+          "navy",
+          "slate_blue",
+          "grey_blue",
+          "amber"
+        ],
+        "song": {
+          "tempo": "fast",
+          "energy": 0.9,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "До дедлайна шесть часов",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "clock"
+            },
+            "camera": "wide",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Ноутбук горячий",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "laptop"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "кофе холодный",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "горит только лампа",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "work_desk"
+            },
+            "camera": "hard_cut",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "всё наконец заработало",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "засмеялся вслух",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "note"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «до дедлайна шесть часов» и «засмеялся вслух» → медленный шаг при ярком свете",
+          "Фото: нет → палитра и ночь взяты из текста: тёмная комната, одна лампа, сине-серые тона с янтарным акцентом",
+          "Песня: Darude — Sandstorm, быстрый темп по оценке → резкие склейки и мерцание лампы"
+        ]
+      },
+      "script": {
+        "title": "Ночь перед дедлайном",
+        "mood": {
+          "warmth": -0.1,
+          "tension": 0.7,
+          "energy": 0.5,
+          "openness": -0.3
+        },
+        "contradiction": {
+          "a": "до дедлайна шесть часов",
+          "b": "засмеялся вслух",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "night",
+        "weather": "clear",
+        "place": "home",
+        "palette_hint": [
+          "navy",
+          "slate_blue",
+          "grey_blue",
+          "amber"
+        ],
+        "song": {
+          "tempo": "fast",
+          "energy": 0.9,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "До дедлайна шесть часов",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "clock"
+            },
+            "camera": "wide",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Ноутбук горячий",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "laptop"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "кофе холодный",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "горит только лампа",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "work_desk"
+            },
+            "camera": "hard_cut",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "всё наконец заработало",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "засмеялся вслух",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "note"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «до дедлайна шесть часов» и «засмеялся вслух» → медленный шаг при ярком свете",
+          "Фото: нет → палитра и ночь взяты из текста: тёмная комната, одна лампа, сине-серые тона с янтарным акцентом",
+          "Песня: Darude — Sandstorm, быстрый темп по оценке → резкие склейки и мерцание лампы"
+        ]
+      }
+    },
+    {
+      "id": "d3-first-snow",
+      "latencyMs": 2255,
+      "usage": {
+        "input": 155,
+        "output": 529,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Первый снег за окном",
+        "mood": {
+          "warmth": 0.1,
+          "tension": -0.7,
+          "energy": -0.7,
+          "openness": -0.4
+        },
+        "contradiction": null,
+        "time_of_day": "morning",
+        "weather": "snow",
+        "place": "home",
+        "palette_hint": [
+          "white",
+          "grey_blue",
+          "slate_blue",
+          "amber"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.15,
+          "estimated": false
+        },
+        "beats": [
+          {
+            "quote": "за окном всё белое",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "Заварил чай",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "tea"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "сел у окна",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "падает снег",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "snow"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Очень тихо",
+            "action": "sit",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «никуда не пошёл», «очень тихо» → камера почти стоит, редкий снег",
+          "Фото: нет — палитра и погода взяты из текста: белое окно → белый и серо-голубой, один тёплый огонёк",
+          "Песня: Erik Satie, Gymnopédie No. 1, 68 bpm → медленный шаг и долгие планы"
+        ]
+      },
+      "script": {
+        "title": "Первый снег за окном",
+        "mood": {
+          "warmth": 0.1,
+          "tension": -0.7,
+          "energy": -0.7,
+          "openness": -0.4
+        },
+        "contradiction": null,
+        "time_of_day": "morning",
+        "weather": "snow",
+        "place": "home",
+        "palette_hint": [
+          "white",
+          "grey_blue",
+          "slate_blue",
+          "amber"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.15,
+          "estimated": false
+        },
+        "beats": [
+          {
+            "quote": "за окном всё белое",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "Заварил чай",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "tea"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "сел у окна",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "падает снег",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "snow"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Очень тихо",
+            "action": "sit",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «никуда не пошёл», «очень тихо» → камера почти стоит, редкий снег",
+          "Фото: нет — палитра и погода взяты из текста: белое окно → белый и серо-голубой, один тёплый огонёк",
+          "Песня: Erik Satie, Gymnopédie No. 1, 68 bpm → медленный шаг и долгие планы"
+        ]
+      }
+    },
+    {
+      "id": "d4-grandma-birthday",
+      "latencyMs": 2421,
+      "usage": {
+        "input": 139,
+        "output": 597,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "День рождения у бабушки",
+        "mood": {
+          "warmth": 0.7,
+          "tension": 0.1,
+          "energy": 0.5,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "все говорят одновременно",
+          "b": "я сидел в углу",
+          "staging": "crowd_edges_alone_center"
+        },
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "home",
+        "palette_hint": [
+          "coral",
+          "amber",
+          "cream",
+          "brown"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.55,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Вся семья",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "за одним столом",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "cafe_table"
+            },
+            "camera": "orbit_quarter",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "торт",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "cake"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "свечами",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "candle"
+            },
+            "camera": "hard_cut",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "в углу",
+            "action": "sit",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "этот шум",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "wide",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: шумная семья и тихий угол → толпа по краям, человечек один в центре",
+          "Фото: нет → палитра выведена из текста: свечи и тёплый стол, коралл и янтарь",
+          "Песня: не указана → средний темп по настроению текста, весёлый шаг и широкие облёты"
+        ]
+      },
+      "script": {
+        "title": "День рождения у бабушки",
+        "mood": {
+          "warmth": 0.7,
+          "tension": 0.1,
+          "energy": 0.5,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "все говорят одновременно",
+          "b": "я сидел в углу",
+          "staging": "crowd_edges_alone_center"
+        },
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "home",
+        "palette_hint": [
+          "coral",
+          "amber",
+          "cream",
+          "brown"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.55,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Вся семья",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "за одним столом",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "cafe_table"
+            },
+            "camera": "orbit_quarter",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "торт",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "cake"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "свечами",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "candle"
+            },
+            "camera": "hard_cut",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "в углу",
+            "action": "sit",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "этот шум",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "wide",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: шумная семья и тихий угол → толпа по краям, человечек один в центре",
+          "Фото: нет → палитра выведена из текста: свечи и тёплый стол, коралл и янтарь",
+          "Песня: не указана → средний темп по настроению текста, весёлый шаг и широкие облёты"
+        ]
+      }
+    },
+    {
+      "id": "d5-rain-home",
+      "latencyMs": 2609,
+      "usage": {
+        "input": 142,
+        "output": 598,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Дорога домой под дождём",
+        "mood": {
+          "warmth": 0.2,
+          "tension": -0.1,
+          "energy": -0.3,
+          "openness": 0.2
+        },
+        "contradiction": {
+          "a": "промок",
+          "b": "домой идти не хотелось",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "evening",
+        "weather": "rain",
+        "place": "street",
+        "palette_hint": [
+          "slate_blue",
+          "grey_blue",
+          "navy",
+          "amber"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.35,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Автобус не пришёл",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "bus"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Дождь",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "rain"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "в наушниках старая песня",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "headphones"
+            },
+            "camera": "orbit_quarter",
+            "effect": null
+          },
+          {
+            "quote": "фонари отражаются в лужах",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "lamp_post"
+            },
+            "camera": "push_in",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "Промок",
+            "action": "shiver",
+            "result": {
+              "kind": "item",
+              "id": "drop"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: промок, но домой идти не хотелось → грусть и покой вместе, медленный шаг при ярком свете",
+          "Фото: нет → палитру и погоду взял из текста: мокрая улица и огни, сине-серые тона с тёплым акцентом",
+          "Песня: Кино «Кукушка», темп не измерен → медленный темп по настроению, спокойный шаг и плавная камера"
+        ]
+      },
+      "script": {
+        "title": "Дорога домой под дождём",
+        "mood": {
+          "warmth": 0.2,
+          "tension": -0.1,
+          "energy": -0.3,
+          "openness": 0.2
+        },
+        "contradiction": {
+          "a": "промок",
+          "b": "домой идти не хотелось",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "evening",
+        "weather": "rain",
+        "place": "street",
+        "palette_hint": [
+          "slate_blue",
+          "grey_blue",
+          "navy",
+          "amber"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.35,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Автобус не пришёл",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "bus"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Дождь",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "rain"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "в наушниках старая песня",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "headphones"
+            },
+            "camera": "orbit_quarter",
+            "effect": null
+          },
+          {
+            "quote": "фонари отражаются в лужах",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "lamp_post"
+            },
+            "camera": "push_in",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "Промок",
+            "action": "shiver",
+            "result": {
+              "kind": "item",
+              "id": "drop"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: промок, но домой идти не хотелось → грусть и покой вместе, медленный шаг при ярком свете",
+          "Фото: нет → палитру и погоду взял из текста: мокрая улица и огни, сине-серые тона с тёплым акцентом",
+          "Песня: Кино «Кукушка», темп не измерен → медленный темп по настроению, спокойный шаг и плавная камера"
+        ]
+      }
+    },
+    {
+      "id": "e6-exam-passed",
+      "latencyMs": 2617,
+      "usage": {
+        "input": 132,
+        "output": 601,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Ночь перед экзаменом и солнце",
+        "mood": {
+          "warmth": 0.3,
+          "tension": 0.4,
+          "energy": 0.2,
+          "openness": 0.5
+        },
+        "contradiction": {
+          "a": "руки тряслись",
+          "b": "хочется плакать",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "day",
+        "weather": "clear",
+        "place": "street",
+        "palette_hint": [
+          "cream",
+          "amber",
+          "grey_blue",
+          "white"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Всю ночь не спал",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "clock"
+            },
+            "camera": "wide",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "перед экзаменом",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "book"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "руки тряслись",
+            "action": "shiver",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hard_cut",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Сдал на отлично",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "star"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "на улице солнце",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "sun"
+            },
+            "camera": "pull_out",
+            "effect": null
+          },
+          {
+            "quote": "хочется плакать",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "drop"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: бессонница и дрожь → страх и облегчение вместе, медленный шаг при ярком свете",
+          "Фото: нет → палитра выбрана по тексту, тёплый свет улицы",
+          "Песня: не указана → медленный темп по настроению текста"
+        ]
+      },
+      "script": {
+        "title": "Ночь перед экзаменом и солнце",
+        "mood": {
+          "warmth": 0.3,
+          "tension": 0.4,
+          "energy": 0.2,
+          "openness": 0.5
+        },
+        "contradiction": {
+          "a": "руки тряслись",
+          "b": "хочется плакать",
+          "staging": "slow_walk_bright_light"
+        },
+        "time_of_day": "day",
+        "weather": "clear",
+        "place": "street",
+        "palette_hint": [
+          "cream",
+          "amber",
+          "grey_blue",
+          "white"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Всю ночь не спал",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "clock"
+            },
+            "camera": "wide",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "перед экзаменом",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "book"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "руки тряслись",
+            "action": "shiver",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hard_cut",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Сдал на отлично",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "star"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "на улице солнце",
+            "action": "pull",
+            "result": {
+              "kind": "item",
+              "id": "sun"
+            },
+            "camera": "pull_out",
+            "effect": null
+          },
+          {
+            "quote": "хочется плакать",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "drop"
+            },
+            "camera": "hold",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: бессонница и дрожь → страх и облегчение вместе, медленный шаг при ярком свете",
+          "Фото: нет → палитра выбрана по тексту, тёплый свет улицы",
+          "Песня: не указана → медленный темп по настроению текста"
+        ]
+      }
+    },
+    {
+      "id": "e7-dog-morning",
+      "latencyMs": 2460,
+      "usage": {
+        "input": 136,
+        "output": 467,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Утром у реки с собакой",
+        "mood": {
+          "warmth": 0.4,
+          "tension": -0.5,
+          "energy": 0.2,
+          "openness": 0.5
+        },
+        "contradiction": null,
+        "time_of_day": "morning",
+        "weather": "fog",
+        "place": "nature",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "soft_green",
+          "amber"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.6,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "гулял с собакой",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "dog"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "гонялась за мячом",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "ball"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "пил кофе",
+            "action": "drink",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "туман над водой",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "pull_out",
+            "effect": "palette_shift"
+          }
+        ],
+        "why": [
+          "Текст: собака с мячом и кофе у воды → тёплый шаг и туманный покой",
+          "Фото: нет — палитра и погода взяты из текста, фото не приложено",
+          "Песня: The Beatles, Here Comes the Sun, темп оценён по названию → бодрый средний шаг и плавный отъезд"
+        ]
+      },
+      "script": {
+        "title": "Утром у реки с собакой",
+        "mood": {
+          "warmth": 0.4,
+          "tension": -0.5,
+          "energy": 0.2,
+          "openness": 0.5
+        },
+        "contradiction": null,
+        "time_of_day": "morning",
+        "weather": "fog",
+        "place": "nature",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "soft_green",
+          "amber"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.6,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "гулял с собакой",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "dog"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "гонялась за мячом",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "ball"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "пил кофе",
+            "action": "drink",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "туман над водой",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "pull_out",
+            "effect": "palette_shift"
+          }
+        ],
+        "why": [
+          "Текст: собака с мячом и кофе у воды → тёплый шаг и туманный покой",
+          "Фото: нет — палитра и погода взяты из текста, фото не приложено",
+          "Песня: The Beatles, Here Comes the Sun, темп оценён по названию → бодрый средний шаг и плавный отъезд"
+        ]
+      }
+    },
+    {
+      "id": "e8-move-out",
+      "latencyMs": 2680,
+      "usage": {
+        "input": 136,
+        "output": 583,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Последний день в старой квартире",
+        "mood": {
+          "warmth": 0.2,
+          "tension": -0.2,
+          "energy": -0.4,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "Грустно уезжать",
+          "b": "в новом доме будет своё окно на горы",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "day",
+        "weather": "cloudy",
+        "place": "home",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "ochre",
+          "soft_green"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Коробки, пустые полки",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "backpack"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "эхо",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "мамино письмо",
+            "action": "pull",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hard_cut",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Грустно уезжать",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "своё окно на горы",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "pull_out",
+            "effect": "palette_shift"
+          }
+        ],
+        "why": [
+          "Текст: пустая квартира и грусть, но своё окно на горы → иней по краям и тёплый свет в центре",
+          "Фото: нет → палитра выбрана по тексту: кремовый, серо-голубой, охра и мягкая зелень",
+          "Песня: не указана → медленный темп по спокойному, но грустному настроению"
+        ]
+      },
+      "script": {
+        "title": "Последний день в старой квартире",
+        "mood": {
+          "warmth": 0.2,
+          "tension": -0.2,
+          "energy": -0.4,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "Грустно уезжать",
+          "b": "в новом доме будет своё окно на горы",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "day",
+        "weather": "cloudy",
+        "place": "home",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "ochre",
+          "soft_green"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.3,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Коробки, пустые полки",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "backpack"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "эхо",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "мамино письмо",
+            "action": "pull",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hard_cut",
+            "effect": "page_shake"
+          },
+          {
+            "quote": "Грустно уезжать",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "своё окно на горы",
+            "action": "pull",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "pull_out",
+            "effect": "palette_shift"
+          }
+        ],
+        "why": [
+          "Текст: пустая квартира и грусть, но своё окно на горы → иней по краям и тёплый свет в центре",
+          "Фото: нет → палитра выбрана по тексту: кремовый, серо-голубой, охра и мягкая зелень",
+          "Песня: не указана → медленный темп по спокойному, но грустному настроению"
+        ]
+      }
+    },
+    {
+      "id": "e9-concert",
+      "latencyMs": 2747,
+      "usage": {
+        "input": 169,
+        "output": 634,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Концерт в огромном зале",
+        "mood": {
+          "warmth": 0.4,
+          "tension": 0.3,
+          "energy": 0.7,
+          "openness": 0.2
+        },
+        "contradiction": {
+          "a": "тысячи людей прыгают и поют",
+          "b": "совсем одним",
+          "staging": "crowd_edges_alone_center"
+        },
+        "time_of_day": "night",
+        "weather": "clear",
+        "place": "street",
+        "palette_hint": [
+          "navy",
+          "slate_blue",
+          "brick_red",
+          "amber"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.8,
+          "estimated": false
+        },
+        "beats": [
+          {
+            "quote": "Концерт в огромном зале",
+            "action": "walk",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "тысячи людей прыгают и поют",
+            "action": "cheer",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "orbit_quarter",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "с гитарой на футболке",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "guitar"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "совсем одним",
+            "action": "sit",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hold",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "друг не обнял меня",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "за плечо",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "heart"
+            },
+            "camera": "push_in",
+            "effect": "day_to_night"
+          }
+        ],
+        "why": [
+          "Текст: толпа и одиночество → толпа по краям, человечек один в центре, потом друг рядом",
+          "Фото: нет → палитра и погода выведены из текста, фото не было",
+          "Песня: Nirvana, 117 bpm → средний темп, резкие шаги и вспышки света"
+        ]
+      },
+      "script": {
+        "title": "Концерт в огромном зале",
+        "mood": {
+          "warmth": 0.4,
+          "tension": 0.3,
+          "energy": 0.7,
+          "openness": 0.2
+        },
+        "contradiction": {
+          "a": "тысячи людей прыгают и поют",
+          "b": "совсем одним",
+          "staging": "crowd_edges_alone_center"
+        },
+        "time_of_day": "night",
+        "weather": "clear",
+        "place": "street",
+        "palette_hint": [
+          "navy",
+          "slate_blue",
+          "brick_red",
+          "amber"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.8,
+          "estimated": false
+        },
+        "beats": [
+          {
+            "quote": "Концерт в огромном зале",
+            "action": "walk",
+            "result": {
+              "kind": "popup",
+              "id": "house"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "тысячи людей прыгают и поют",
+            "action": "cheer",
+            "result": {
+              "kind": "effect",
+              "id": "sparkles"
+            },
+            "camera": "orbit_quarter",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "с гитарой на футболке",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "guitar"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "совсем одним",
+            "action": "sit",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "hold",
+            "effect": "lamp_flicker"
+          },
+          {
+            "quote": "друг не обнял меня",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "за плечо",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "heart"
+            },
+            "camera": "push_in",
+            "effect": "day_to_night"
+          }
+        ],
+        "why": [
+          "Текст: толпа и одиночество → толпа по краям, человечек один в центре, потом друг рядом",
+          "Фото: нет → палитра и погода выведены из текста, фото не было",
+          "Песня: Nirvana, 117 bpm → средний темп, резкие шаги и вспышки света"
+        ]
+      }
+    },
+    {
+      "id": "e10-bike-summer",
+      "latencyMs": 6326,
+      "usage": {
+        "input": 132,
+        "output": 1403,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Велосипеды до озера и звёзды",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.4,
+          "energy": 0.5,
+          "openness": 0.5
+        },
+        "contradiction": null,
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "nature",
+        "palette_hint": [
+          "amber",
+          "coral",
+          "soft_green",
+          "teal",
+          "cream"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.5,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Катались на велосипедах",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "bicycle"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Жара",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "sun"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "мороженое тает",
+            "action": "carry",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "Вечером ели пиццу",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "pizza"
+            },
+            "camera": "hard_cut",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "на траве",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "leaves"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "смотрели на звёзды",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "star"
+            },
+            "camera": "pull_out",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «Катались на велосипедах», «Жара», «Вечером ели пиццу» → велосипед, солнце и пицца в центре кадра",
+          "Фото: нет → палитра и место выбраны по тексту: жаркий день у озера и трава",
+          "Песня: не указана → средний темп по настроению записи, плавный шаг и переход к ночи"
+        ]
+      },
+      "script": {
+        "title": "Велосипеды до озера и звёзды",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.4,
+          "energy": 0.5,
+          "openness": 0.5
+        },
+        "contradiction": null,
+        "time_of_day": "evening",
+        "weather": "clear",
+        "place": "nature",
+        "palette_hint": [
+          "amber",
+          "coral",
+          "soft_green",
+          "teal",
+          "cream"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.5,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "Катались на велосипедах",
+            "action": "walk",
+            "result": {
+              "kind": "item",
+              "id": "bicycle"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Жара",
+            "action": "shake",
+            "result": {
+              "kind": "item",
+              "id": "sun"
+            },
+            "camera": "push_in",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "мороженое тает",
+            "action": "carry",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "Вечером ели пиццу",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "pizza"
+            },
+            "camera": "hard_cut",
+            "effect": "day_to_night"
+          },
+          {
+            "quote": "на траве",
+            "action": "sit",
+            "result": {
+              "kind": "effect",
+              "id": "leaves"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "смотрели на звёзды",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "star"
+            },
+            "camera": "pull_out",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: «Катались на велосипедах», «Жара», «Вечером ели пиццу» → велосипед, солнце и пицца в центре кадра",
+          "Фото: нет → палитра и место выбраны по тексту: жаркий день у озера и трава",
+          "Песня: не указана → средний темп по настроению записи, плавный шаг и переход к ночи"
+        ]
+      }
+    },
+    {
+      "id": "e11-kazakh-snow",
+      "latencyMs": 2521,
+      "usage": {
+        "input": 139,
+        "output": 560,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Алғашқы қар және ыстық шай",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.5,
+          "energy": -0.3,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "Сыртта суық",
+          "b": "ыстық шай іштік",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "morning",
+        "weather": "snow",
+        "place": "home",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "amber",
+          "white"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.2,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "алғашқы қар жауды",
+            "action": "pull",
+            "result": {
+              "kind": "effect",
+              "id": "snow"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "Сыртта суық",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "ыстық шай іштік",
+            "action": "drink",
+            "result": {
+              "kind": "item",
+              "id": "tea"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "әжеммен бірге",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "Мысық терезе алдында",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "cat"
+            },
+            "camera": "hold",
+            "effect": "lamp_flicker"
+          }
+        ],
+        "why": [
+          "Текст: суық снаружи и тёплый чай вместе → иней по краям и тёплый свет в центре",
+          "Фото: нет → палитра и погода выведены из текста, фото не было",
+          "Песня: не указана → медленный темп оценён по настроению утра"
+        ]
+      },
+      "script": {
+        "title": "Алғашқы қар және ыстық шай",
+        "mood": {
+          "warmth": 0.6,
+          "tension": -0.5,
+          "energy": -0.3,
+          "openness": 0.3
+        },
+        "contradiction": {
+          "a": "Сыртта суық",
+          "b": "ыстық шай іштік",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "morning",
+        "weather": "snow",
+        "place": "home",
+        "palette_hint": [
+          "cream",
+          "grey_blue",
+          "amber",
+          "white"
+        ],
+        "song": {
+          "tempo": "slow",
+          "energy": 0.2,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "алғашқы қар жауды",
+            "action": "pull",
+            "result": {
+              "kind": "effect",
+              "id": "snow"
+            },
+            "camera": "wide",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "Сыртта суық",
+            "action": "shiver",
+            "result": {
+              "kind": "effect",
+              "id": "frost"
+            },
+            "camera": "hold",
+            "effect": null
+          },
+          {
+            "quote": "ыстық шай іштік",
+            "action": "drink",
+            "result": {
+              "kind": "item",
+              "id": "tea"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "әжеммен бірге",
+            "action": "pull",
+            "result": {
+              "kind": "person",
+              "id": "second_person"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "Мысық терезе алдында",
+            "action": "sit",
+            "result": {
+              "kind": "item",
+              "id": "cat"
+            },
+            "camera": "hold",
+            "effect": "lamp_flicker"
+          }
+        ],
+        "why": [
+          "Текст: суық снаружи и тёплый чай вместе → иней по краям и тёплый свет в центре",
+          "Фото: нет → палитра и погода выведены из текста, фото не было",
+          "Песня: не указана → медленный темп оценён по настроению утра"
+        ]
+      }
+    },
+    {
+      "id": "e12-mixed-cafe",
+      "latencyMs": 7099,
+      "usage": {
+        "input": 155,
+        "output": 1599,
+        "cacheRead": 8501,
+        "cacheWrite": 0
+      },
+      "model": "claude-haiku-5-5",
+      "schemaErrors": [],
+      "issues": [],
+      "raw": {
+        "title": "Кафе, жаңбыр и корица",
+        "mood": {
+          "warmth": 0.7,
+          "tension": -0.3,
+          "energy": 0.2,
+          "openness": 0.4
+        },
+        "contradiction": {
+          "a": "Сыртта жаңбыр",
+          "b": "внутри тепло",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "day",
+        "weather": "rain",
+        "place": "cafe",
+        "palette_hint": [
+          "cream",
+          "amber",
+          "brown",
+          "grey_blue"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.5,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "кафеде отырдық",
+            "action": "sit",
+            "result": {
+              "kind": "popup",
+              "id": "cafe_table"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Заказали капучино",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "долго смеялись",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "heart"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "Сыртта жаңбыр",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "rain"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "внутри тепло",
+            "action": "drink",
+            "result": {
+              "kind": "effect",
+              "id": "steam"
+            },
+            "camera": "hold",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "пахнет корицей",
+            "action": "walk",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "orbit_quarter",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: тепло внутри и дождь снаружи → кадр с тёплым центром и инеем по краям",
+          "Фото: нет — палитра и место выведены из текста кафе и тепла",
+          "Песня: Frank Sinatra, Fly Me to the Moon (темп не измерен) → средний темп, плавные облёты"
+        ]
+      },
+      "script": {
+        "title": "Кафе, жаңбыр и корица",
+        "mood": {
+          "warmth": 0.7,
+          "tension": -0.3,
+          "energy": 0.2,
+          "openness": 0.4
+        },
+        "contradiction": {
+          "a": "Сыртта жаңбыр",
+          "b": "внутри тепло",
+          "staging": "frost_edges_warm_center"
+        },
+        "time_of_day": "day",
+        "weather": "rain",
+        "place": "cafe",
+        "palette_hint": [
+          "cream",
+          "amber",
+          "brown",
+          "grey_blue"
+        ],
+        "song": {
+          "tempo": "medium",
+          "energy": 0.5,
+          "estimated": true
+        },
+        "beats": [
+          {
+            "quote": "кафеде отырдық",
+            "action": "sit",
+            "result": {
+              "kind": "popup",
+              "id": "cafe_table"
+            },
+            "camera": "wide",
+            "effect": null
+          },
+          {
+            "quote": "Заказали капучино",
+            "action": "carry",
+            "result": {
+              "kind": "item",
+              "id": "coffee"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "долго смеялись",
+            "action": "cheer",
+            "result": {
+              "kind": "item",
+              "id": "heart"
+            },
+            "camera": "hard_cut",
+            "effect": null
+          },
+          {
+            "quote": "Сыртта жаңбыр",
+            "action": "shake",
+            "result": {
+              "kind": "effect",
+              "id": "rain"
+            },
+            "camera": "push_in",
+            "effect": null
+          },
+          {
+            "quote": "внутри тепло",
+            "action": "drink",
+            "result": {
+              "kind": "effect",
+              "id": "steam"
+            },
+            "camera": "hold",
+            "effect": "palette_shift"
+          },
+          {
+            "quote": "пахнет корицей",
+            "action": "walk",
+            "result": {
+              "kind": "crystal",
+              "id": "crystal"
+            },
+            "camera": "orbit_quarter",
+            "effect": null
+          }
+        ],
+        "why": [
+          "Текст: тепло внутри и дождь снаружи → кадр с тёплым центром и инеем по краям",
+          "Фото: нет — палитра и место выведены из текста кафе и тепла",
+          "Песня: Frank Sinatra, Fly Me to the Moon (темп не измерен) → средний темп, плавные облёты"
+        ]
+      }
+    }
+  ]
+}

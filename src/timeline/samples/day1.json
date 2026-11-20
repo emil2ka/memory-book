@@ -1,0 +1,23 @@
+{
+  "title": "Осенний парк и какао",
+  "mood": { "warmth": 0.6, "tension": -0.4, "energy": -0.2, "openness": 0.3 },
+  "contradiction": { "a": "холодно", "b": "пили какао", "staging": "frost_edges_warm_center" },
+  "time_of_day": "evening",
+  "weather": "clear",
+  "place": "park",
+  "palette_hint": ["amber", "ochre", "soft_green", "slate_blue"],
+  "song": { "tempo": "slow", "energy": 0.3, "estimated": true },
+  "beats": [
+    { "quote": "по парку", "action": "pull", "result": { "kind": "popup", "id": "tree" }, "camera": "wide", "effect": null },
+    { "quote": "жёлтых листьях", "action": "shake", "result": { "kind": "effect", "id": "leaves" }, "camera": "push_in", "effect": "palette_shift" },
+    { "quote": "холодно", "action": "shiver", "result": { "kind": "effect", "id": "frost" }, "camera": "hold", "effect": null },
+    { "quote": "какао", "action": "carry", "result": { "kind": "item", "id": "cocoa" }, "camera": "push_in", "effect": null },
+    { "quote": "мы", "action": "pull", "result": { "kind": "person", "id": "second_person" }, "camera": "wide", "effect": null },
+    { "quote": "Фонари", "action": "pull", "result": { "kind": "popup", "id": "lamp_post" }, "camera": "orbit_quarter", "effect": "day_to_night" }
+  ],
+  "why": [
+    "Текст: холод и какао вместе → иней по краям и тёплый свет в центре",
+    "Фото: много жёлтого и охры → янтарная палитра",
+    "Песня: медленный темп → спокойный шаг и плавные наезды"
+  ]
+}
