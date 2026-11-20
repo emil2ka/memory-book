@@ -102,9 +102,9 @@ export class Book {
     this.boxes.push(this.leftHalf, rightHalf)
 
     // табличка названия на внешней стороне левой обложки (видна, когда книга закрыта)
-    this.titleCanvas.width = 128
-    this.titleCanvas.height = 64
-    this.titleTex = pixelTexture(this.titleCanvas)
+    this.titleCanvas.width = 128 * SS
+    this.titleCanvas.height = 64 * SS
+    this.titleTex = pixelTexture(this.titleCanvas, HD)
     const tg = new THREE.PlaneGeometry(2.4, 1.2)
     tg.rotateX(Math.PI / 2)
     this.coverTitle = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: this.titleTex, transparent: true }))
@@ -164,15 +164,19 @@ export class Book {
   }
 
   setTitle(title: string, alpha = 1) {
+    const W = this.titleCanvas.width
+    const H = this.titleCanvas.height
+    const k = W / 128
     const g = this.titleCanvas.getContext('2d')!
-    g.clearRect(0, 0, 128, 64)
+    g.clearRect(0, 0, W, H)
     g.fillStyle = css(PALETTE.cream)
-    g.fillRect(0, 0, 128, 64)
+    g.fillRect(0, 0, W, H)
     g.fillStyle = css(PALETTE.brickDark)
-    g.font = `12px ${this.fontFamily}`
+    const size = (HD ? 17 : 12) * k
+    g.font = `${size}px ${this.fontFamily}`
     g.textAlign = 'center'
-    const lines = wrap(g, title, 108)
-    lines.forEach((l, i) => g.fillText(l, 64, 36 - (lines.length - 1) * 7 + i * 14))
+    const lines = wrap(g, title, 112 * k)
+    lines.forEach((l, n) => g.fillText(l, W / 2, H / 2 + size * 0.3 - ((lines.length - 1) * size * 1.05) / 2 + n * size * 1.05))
     this.titleTex.needsUpdate = true
     this.coverTitle.visible = alpha > 0 && !this.model
     if (this.modelTitle) this.modelTitle.visible = alpha > 0

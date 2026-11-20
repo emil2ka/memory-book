@@ -87,7 +87,7 @@ export class FilmStage implements Stage {
     // модели подменяют коробки, когда загрузятся; без них сцена работает на заглушках
     loadModels()
       .then((m) => {
-        this.room.useModels(m.lamp, m.cassette)
+        this.room.useModels(m.lamp, m.cassette, m.desk)
         this.book.useModel(m.book)
       })
       .catch((err) => console.warn('3D-модели не загрузились, остаются заглушки', err))

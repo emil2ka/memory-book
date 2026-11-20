@@ -3,6 +3,8 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import bookUrl from '../../assets/models/book.glb?url'
 import lampUrl from '../../assets/models/lamp.glb?url'
 import cassetteUrl from '../../assets/models/cassette.glb?url'
+import deskUrl from '../../assets/models/desk.glb?url'
+import { HD } from './PixelStage'
 
 export interface Model {
   root: THREE.Object3D
@@ -14,23 +16,27 @@ export interface Models {
   book: Model
   lamp: Model
   cassette: Model
+  desk: Model
 }
 
 function toModel(g: GLTF): Model {
-  // пиксельный вид: без сглаживания текстур, матовые поверхности
+  // в пиксельном виде текстуры без сглаживания; в основном — гладкие, с мип-уровнями
   g.scene.traverse((o) => {
     const mesh = o as THREE.Mesh
     if (!mesh.isMesh) return
     for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
       const mat = m as THREE.MeshStandardMaterial
-      if (mat.map) {
+      if (mat.map && !HD) {
         mat.map.magFilter = THREE.NearestFilter
         mat.map.minFilter = THREE.NearestFilter
         mat.map.generateMipmaps = false
         mat.map.needsUpdate = true
       }
-      if ('roughness' in mat) mat.roughness = 1
-      if ('metalness' in mat) mat.metalness = 0
+      if (mat.map && HD) mat.map.anisotropy = 8
+      if (!HD) {
+        if ('roughness' in mat) mat.roughness = 1
+        if ('metalness' in mat) mat.metalness = 0
+      }
     }
   })
   return {
@@ -42,8 +48,8 @@ function toModel(g: GLTF): Model {
 
 export async function loadModels(): Promise<Models> {
   const loader = new GLTFLoader()
-  const [book, lamp, cassette] = await Promise.all([bookUrl, lampUrl, cassetteUrl].map((u) => loader.loadAsync(u)))
-  return { book: toModel(book), lamp: toModel(lamp), cassette: toModel(cassette) }
+  const [book, lamp, cassette, desk] = await Promise.all([bookUrl, lampUrl, cassetteUrl, deskUrl].map((u) => loader.loadAsync(u)))
+  return { book: toModel(book), lamp: toModel(lamp), cassette: toModel(cassette), desk: toModel(desk) }
 }
 
 /** Поставить клип в заданный момент (0..1 от длительности) без проигрывания по часам. */

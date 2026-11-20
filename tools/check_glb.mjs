@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // check_glb.mjs — validate a GLB against the Memory Book limits (03-art-pipeline.md).
-// Usage: node tools/check_glb.mjs <file.glb> [--max-tris 3000] [--clips Open,Close,Flip,Idle] [--json]
+// Usage: node tools/check_glb.mjs <file.glb> [--max-tris 6000] [--max-tex 1024] [--style real|pixel]
+//        [--clips Open,Close,Flip,Idle] [--materials page_left,page_right] [--json]
+// Defaults follow the realistic-world style of 21 Nov (6000 tris, textures up to 1024, smooth filtering).
 // Prints triangle count, textures (size, filter), animation clips (name, duration),
 // world bounding box (Y up, origin at base, 1 unit = 10 cm) and PASS/FAIL per rule.
 // Parses the GLB container directly (no DOM needed), so it runs in plain Node.
@@ -9,12 +11,15 @@ import { basename } from 'node:path'
 
 const args = process.argv.slice(2)
 if (!args.length) {
-  console.error('usage: node tools/check_glb.mjs <file.glb> [--max-tris N] [--clips A,B] [--json]')
+  console.error('usage: node tools/check_glb.mjs <file.glb> [--max-tris N] [--max-tex N] [--style real|pixel] [--clips A,B] [--materials a,b] [--json]')
   process.exit(2)
 }
 const file = args[0]
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d }
-const maxTris = Number(opt('--max-tris', 3000))
+const maxTris = Number(opt('--max-tris', 6000))
+const maxTex = Number(opt('--max-tex', 1024))
+const style = opt('--style', 'real')
+const wantMats = (opt('--materials', '') || '').split(',').map(s => s.trim()).filter(Boolean)
 const wantClips = (opt('--clips', '') || '').split(',').map(s => s.trim()).filter(Boolean)
 const asJson = args.includes('--json')
 
@@ -160,8 +165,13 @@ const clips = (json.animations || []).map((a, i) => {
 // ---- rules ----
 if (tris > maxTris) fail.push(`triangles ${tris} > ${maxTris}`)
 if (textures.length > 1) warn.push(`${textures.length} textures (rule: one atlas)`)
-for (const t of textures) if (t.width > 256 || t.height > 256) fail.push(`texture ${t.index} ${t.width}x${t.height} > 256x256`)
-for (const s of samplers) if (s.mag != null && !NEAREST.has(s.mag)) warn.push(`sampler magFilter ${s.mag} is not NEAREST (engine can override)`)
+for (const t of textures) if (t.width > maxTex || t.height > maxTex) fail.push(`texture ${t.index} ${t.width}x${t.height} > ${maxTex}x${maxTex}`)
+for (const s of samplers) {
+  if (style === 'pixel' && s.mag != null && !NEAREST.has(s.mag)) warn.push(`sampler magFilter ${s.mag} is not NEAREST (pixel style)`)
+  if (style === 'real' && NEAREST.has(s.mag)) warn.push(`sampler magFilter NEAREST in realistic style (should be LINEAR)`)
+}
+const matNames = (json.materials || []).map(m => m.name)
+for (const m of wantMats) if (!matNames.includes(m)) fail.push(`missing material "${m}"`)
 const names = clips.map(c => c.name)
 for (const c of wantClips) if (!names.includes(c)) fail.push(`missing clip "${c}"`)
 for (const n of names) if (wantClips.length && !wantClips.includes(n)) warn.push(`extra clip "${n}"`)

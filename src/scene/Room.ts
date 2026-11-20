@@ -10,6 +10,7 @@ export class Room {
   readonly rim: THREE.DirectionalLight
   readonly ambient: THREE.AmbientLight
   private placeholders: THREE.Object3D[] = []
+  private deskBox: THREE.Object3D | null = null
   private mixers: THREE.AnimationMixer[] = []
 
   constructor() {
@@ -19,6 +20,7 @@ export class Room {
     )
     desk.position.y = -0.2
     this.group.add(desk)
+    this.deskBox = desk
 
     // лампа: стойка и абажур
     const stand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 2.4, 0.15), new THREE.MeshLambertMaterial({ color: PALETTE.brownDark }))
@@ -52,7 +54,12 @@ export class Room {
   }
 
   /** Заменить коробки настоящими моделями лампы и кассетника. */
-  useModels(lamp: Model, cassette: Model) {
+  useModels(lamp: Model, cassette: Model, desk?: Model) {
+    if (desk && HD) {
+      if (this.deskBox) this.group.remove(this.deskBox)
+      desk.root.traverse((o) => (o.receiveShadow = true))
+      this.group.add(desk.root)
+    }
     for (const p of this.placeholders) this.group.remove(p)
     this.placeholders = []
     lamp.root.scale.setScalar(0.62)
@@ -63,6 +70,7 @@ export class Room {
     this.group.add(lamp.root, cassette.root)
     if (HD) {
       cassette.root.traverse((o) => ((o.castShadow = true), (o.receiveShadow = true)))
+      lamp.root.traverse((o) => (o.receiveShadow = true))
     }
     const spin = cassette.clips.get('Spin')
     if (spin) cassette.mixer.clipAction(spin).play()
