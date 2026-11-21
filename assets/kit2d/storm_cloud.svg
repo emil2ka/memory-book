@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<polygon points="54.0,60.0 42.0,80.0 52.0,80.0 44.0,98.0 66.0,72.0 56.0,72.0 62.0,60.0" fill="#f4d675" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="28" cy="44" r="18.4" fill="#1b1410"/><circle cx="50" cy="32" r="22.4" fill="#1b1410"/><circle cx="72" cy="42" r="18.4" fill="#1b1410"/><circle cx="40" cy="56" r="14.4" fill="#1b1410"/><circle cx="62" cy="56" r="14.4" fill="#1b1410"/>
+<circle cx="28" cy="44" r="16" fill="#2c3b58"/><circle cx="50" cy="32" r="20" fill="#2c3b58"/><circle cx="72" cy="42" r="16" fill="#2c3b58"/><circle cx="40" cy="56" r="12" fill="#2c3b58"/><circle cx="62" cy="56" r="12" fill="#2c3b58"/>
+<circle cx="44" cy="24" r="7" fill="#4a6285"/>
+<path d="M38 44 L44 40 M62 44 L56 40" fill="none" stroke="#e3f0f5" stroke-width="2.4"/>
+<path d="M42 54 Q50 48 58 54" fill="none" stroke="#e3f0f5" stroke-width="2.4"/>
+</svg>

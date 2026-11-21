@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { PixelLayer } from '../render/PixelLayer'
 
 /** Внутреннее разрешение. Весь мир рисуется в него и растягивается без сглаживания. */
 export const PIXEL_W = 480
@@ -9,6 +10,10 @@ export const PIXEL_H = 270
  * и пиксельные жители. Старый целиком пиксельный вид остаётся по ?look=pixel в адресе.
  */
 export const HD = typeof location === 'undefined' ? false : new URLSearchParams(location.search).get('look') !== 'pixel'
+
+const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search)
+/** Объёмный человечек в пиксельном слое (вариант А). ?hero=sprite — старый плоский. */
+export const HERO3D = HD && params.get('hero') !== 'sprite'
 
 export type TickFn = (time: number, dt: number) => void
 
@@ -25,6 +30,8 @@ export class PixelStage {
   private last = 0
   private time = 0
   private ro: ResizeObserver
+  /** Пиксельный слой жителей; только в смешанном виде. */
+  readonly pixel: PixelLayer | null = HD ? new PixelLayer() : null
 
   constructor(private host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: HD, alpha: false, preserveDrawingBuffer: true })
@@ -44,6 +51,13 @@ export class PixelStage {
 
     this.camera.position.set(0, 7.2, 8.4)
     this.camera.lookAt(0, 0.2, 0)
+
+    if (this.pixel) {
+      const d = Number(params.get('pxd'))
+      const h = Number(params.get('pxh'))
+      if (d > 0) this.pixel.density = d
+      if (h > 0) this.pixel.fixedHeight = h
+    }
 
     this.ro = new ResizeObserver(() => this.fit())
     this.ro.observe(host)
@@ -78,7 +92,8 @@ export class PixelStage {
       this.last = now
       this.time += dt
       for (const fn of this.ticks) fn(this.time, dt)
-      this.renderer.render(this.scene, this.camera)
+      if (this.pixel) this.pixel.render(this.renderer, this.scene, this.camera)
+      else this.renderer.render(this.scene, this.camera)
       this.raf = requestAnimationFrame(loop)
     }
     this.raf = requestAnimationFrame(loop)
@@ -87,6 +102,7 @@ export class PixelStage {
   dispose() {
     cancelAnimationFrame(this.raf)
     this.ro.disconnect()
+    this.pixel?.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }

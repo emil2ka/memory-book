@@ -1,5 +1,6 @@
 // Хореограф: DayScript → Timeline. Чистая функция, без DOM и без Date/Math.random.
 // Структура: вступление ≈ 8 с → блок на каждый бит → (постановка противоречия) → финал ≈ 8 с.
+import { resultTags } from '../director/results'
 import type { ActionId, Beat, BeatResult, CameraId, DayScript, Mood } from '../types/script'
 import type { Timeline, TimelineEvent } from '../types/timeline'
 import { makeRng, type Rng } from './rng'
@@ -10,7 +11,13 @@ export interface ChoreographOptions {
   beatTimes?: number[]
   /** Верхняя граница длины фильма, по умолчанию 60 с. */
   maxDuration?: number
+  /** Сколько фото у дня. 0 — полароида нет; 1+ — photo_reveal (снимок 0), 2+ — ещё photo_fan с 1. */
+  photoCount?: number
 }
+
+/** Длительность церемонии полароида и веера остальных снимков. */
+export const PHOTO_REVEAL_LEN = 8
+export const PHOTO_FAN_LEN = 2.5
 
 export const MIN_DURATION = 30
 export const MAX_DURATION = 60
@@ -36,6 +43,18 @@ export function computePace(script: Pick<DayScript, 'mood' | 'song'>): number {
 /** Реакция человечка после превращения слова. */
 export function chooseReaction(result: BeatResult, action: ActionId, mood: Mood, rng: Rng): ActionId {
   let r: ActionId
+  if (result.kind === 'kit' || result.kind === 'make') {
+    // предмет кита: реакция по тегам и по тому, как его держат
+    const { tags, hold } = resultTags(result)
+    const has = (...t: string[]) => t.some((x) => tags.includes(x))
+    if (has('drink') && hold !== 'ground') r = 'drink'
+    else if (has('cold', 'winter') && !has('warm')) r = 'shiver'
+    else if (has('joy', 'holiday', 'birthday', 'love', 'gift')) r = 'cheer'
+    else if (hold === 'ground') r = 'sit'
+    else r = 'carry'
+    if (r === action) r = action === 'sit' ? 'cheer' : 'sit'
+    return r
+  }
   if (result.kind === 'item' && (result.id === 'cocoa' || result.id === 'coffee' || result.id === 'tea')) r = 'drink'
   else if ((result.kind === 'effect' && (result.id === 'frost' || result.id === 'snow' || result.id === 'rain')) ||
     (result.kind === 'item' && result.id === 'snowflake')) r = 'shiver'
@@ -51,22 +70,50 @@ export function chooseReaction(result: BeatResult, action: ActionId, mood: Mood,
 }
 
 interface Block {
-  kind: 'beat' | 'contradiction'
+  kind: 'beat' | 'contradiction' | 'photo'
   beatIndex: number
   /** Длина блока при pace (до сжатия), включая паузу в конце. */
   len: number
 }
 
-/** Камера бита после правил монтажа. */
+/**
+ * Камера бита после правил монтажа. Первый бит — общий план; в середине фильма общий план редок
+ * (человечек на нём мелкий) — вместо него hold, который мягко следит за человечком.
+ */
 function editCamera(wanted: CameraId, index: number, prev: CameraId | null, mood: Mood, rng: Rng): CameraId {
   if (index === 0) return 'wide'
   let c = wanted
-  if (c === 'pull_out') c = 'wide' // pull_out бережём для финала: последний план — отъезд
+  if (c === 'pull_out') c = 'hold' // pull_out бережём для финала: последний план — отъезд
+  if (c === 'wide') c = prev === 'hold' ? 'push_in' : 'hold'
   if (c === 'push_in' && prev === 'push_in') {
     const tense = mood.tension > 0.3
-    c = tense ? 'hard_cut' : rng() < 0.5 ? 'orbit_quarter' : 'wide'
+    c = tense ? 'hard_cut' : rng() < 0.5 ? 'orbit_quarter' : 'hold'
   }
+  if (c === 'hold' && prev === 'hold') c = 'push_in'
   return c
+}
+
+/** Бит для облёта: предмет в руках важнее, чем pop-up; первый бит (общий план) не трогаем. */
+function orbitBeat(beats: Beat[]): number {
+  let best = -1
+  let bestScore = -Infinity
+  beats.forEach((b, i) => {
+    if (i === 0 && beats.length > 1) return
+    const { hold } = resultTags(b.result)
+    let score = 0
+    if (b.result.kind === 'make' || b.result.kind === 'kit' || b.result.kind === 'item' || b.result.kind === 'crystal') score += 2
+    if (hold === 'hand' || hold === 'both') score += 2
+    if (b.result.kind === 'effect') score -= 1
+    // ближе к середине фильма
+    score -= Math.abs(i - (beats.length - 1) / 2) * 0.3
+    if (score > bestScore) [best, bestScore] = [i, score]
+  })
+  return best
+}
+
+/** Куда вставить полароид: после второго бита, при 4 битах и меньше — после первого. */
+export function photoAfter(beatCount: number): number {
+  return beatCount <= 4 ? 0 : 1
 }
 
 /** Где ставить противоречие: после последнего бита, цитата которого перекликается с a или b. */
@@ -111,15 +158,19 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
   // 1. Блоки и их длины.
   const contraAt = contradictionAfter(script)
   const contraLen = script.contradiction ? clamp(2.5 * pace, 2, 3) : 0
+  const photos = Math.max(0, Math.floor(opts.photoCount ?? 0))
+  const photoAt = photos > 0 && beats.length ? photoAfter(beats.length) : -1
+  const photoLen = photos > 0 ? PHOTO_REVEAL_LEN + (photos > 1 ? PHOTO_FAN_LEN : 0) + 0.4 : 0
   const blocks: Block[] = []
   const stepSum = STEP.lead + STEP.walk + STEP.action + STEP.lift + STEP.transform + STEP.reaction + STEP.gap
   beats.forEach((_, i) => {
     blocks.push({ kind: 'beat', beatIndex: i, len: stepSum * pace })
     if (i === contraAt) blocks.push({ kind: 'contradiction', beatIndex: i, len: contraLen + 0.4 })
+    if (i === photoAt) blocks.push({ kind: 'photo', beatIndex: i, len: photoLen })
   })
 
   // 2. Сжать или растянуть биты, чтобы фильм уложился в 30..max.
-  const fixed = INTRO_LEN + OUTRO_LEN + (script.contradiction ? contraLen + 0.4 : 0)
+  const fixed = INTRO_LEN + OUTRO_LEN + (script.contradiction ? contraLen + 0.4 : 0) + photoLen
   const beatSum = blocks.filter((b) => b.kind === 'beat').reduce((s, b) => s + b.len, 0)
   // Запас на притяжение к ударам: каждый блок может сдвинуться не больше чем на окно.
   const snapSlack = beatTimes && beatTimes.length ? SNAP_WINDOW : 0
@@ -148,8 +199,26 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
   let minStart = INTRO_LEN - 0.3
   let prevCam: CameraId | null = 'push_in'
   let secondEntered = false
+  const orbitAt = orbitBeat(beats)
   for (const block of blocks) {
     const start = snap(cursor, minStart, beatTimes)
+    if (block.kind === 'photo') {
+      // Сцена сама ведёт камеру на всём отрезке полароида: никаких camera внутри [start, start + reveal].
+      push({ type: 'photo_reveal', t: start, dur: PHOTO_REVEAL_LEN, beat: block.beatIndex, photo: 0 })
+      let t = start + PHOTO_REVEAL_LEN
+      if (photos > 1) {
+        push({ type: 'camera', t, dur: PHOTO_FAN_LEN + 0.4, beat: block.beatIndex, shot: 'wide', targetQuote: null })
+        push({ type: 'photo_fan', t, dur: PHOTO_FAN_LEN, beat: block.beatIndex, from: 1 })
+        prevCam = 'wide'
+        t += PHOTO_FAN_LEN
+      } else {
+        push({ type: 'camera', t, dur: 0.4, beat: block.beatIndex, shot: 'push_in', targetQuote: null })
+        prevCam = 'push_in'
+      }
+      minStart = t
+      cursor = start + block.len
+      continue
+    }
     if (block.kind === 'contradiction') {
       const c = script.contradiction!
       push({ type: 'camera', t: start, dur: contraLen, beat: block.beatIndex, shot: 'hold', targetQuote: null })
@@ -180,7 +249,7 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
     walk *= fit; act *= fit
     const liftD = lift * fit, transD = transform * fit, reactD = reaction * fit, leadD = lead * fit
 
-    const shot = editCamera(beat.camera, i, prevCam, mood, rng)
+    const shot: CameraId = i === orbitAt ? 'orbit_quarter' : editCamera(beat.camera, i, prevCam, mood, rng)
     prevCam = shot
     let t = start
     const contentDur = leadD + walk + act + liftD + transD + reactD

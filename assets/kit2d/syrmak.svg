@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<rect x="12" y="12" width="76" height="72" rx="2" fill="#b5432f" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="17" y="17" width="66" height="62" rx="1" fill="#f4d675"/>
+<rect x="21" y="21" width="58" height="54" rx="1" fill="#b5432f" stroke="#1b1410" stroke-width="2"/>
+<path d="M27 44 Q24 30 33 30 Q39 32 36 38 M45 44 Q48 30 39 30 Q33 32 36 38" fill="none" stroke="#1b1410" stroke-width="7.5"/><path d="M27 44 Q24 30 33 30 Q39 32 36 38 M45 44 Q48 30 39 30 Q33 32 36 38" fill="none" stroke="#f4d675" stroke-width="2.5"/>
+<path d="M55 44 Q52 30 61 30 Q67 32 64 38 M73 44 Q76 30 67 30 Q61 32 64 38" fill="none" stroke="#1b1410" stroke-width="7.5"/><path d="M55 44 Q52 30 61 30 Q67 32 64 38 M73 44 Q76 30 67 30 Q61 32 64 38" fill="none" stroke="#f4d675" stroke-width="2.5"/>
+<path d="M27 68 Q24 54 33 54 Q39 56 36 62 M45 68 Q48 54 39 54 Q33 56 36 62" fill="none" stroke="#1b1410" stroke-width="7.5"/><path d="M27 68 Q24 54 33 54 Q39 56 36 62 M45 68 Q48 54 39 54 Q33 56 36 62" fill="none" stroke="#3b8483" stroke-width="2.5"/>
+<path d="M55 68 Q52 54 61 54 Q67 56 64 62 M73 68 Q76 54 67 54 Q61 56 64 62" fill="none" stroke="#1b1410" stroke-width="7.5"/><path d="M55 68 Q52 54 61 54 Q67 56 64 62 M73 68 Q76 54 67 54 Q61 56 64 62" fill="none" stroke="#3b8483" stroke-width="2.5"/>
+<polygon points="50.0,42.0 58.0,50.0 50.0,58.0 42.0,50.0" fill="#fbf6ea" stroke="#1b1410" stroke-width="2"/>
+<rect x="16" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="25" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="34" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="43" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="52" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="61" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="70" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="79" y="8" width="4" height="6" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="10" y="82" width="80" height="12" rx="6" fill="#7a2e24" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M16 88 L84 88" fill="none" stroke="#b5432f" stroke-width="2"/>
+</svg>

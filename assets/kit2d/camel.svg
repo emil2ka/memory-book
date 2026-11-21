@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<rect x="22" y="62" width="6.5" height="28" rx="2" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="30" y="62" width="6.5" height="28" rx="2" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="60" y="62" width="6.5" height="28" rx="2" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="68" y="62" width="6.5" height="28" rx="2" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="25.25" cy="91" rx="5.5" ry="3" fill="#b07a45" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="33.25" cy="91" rx="5.5" ry="3" fill="#b07a45" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="63.25" cy="91" rx="5.5" ry="3" fill="#b07a45" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="71.25" cy="91" rx="5.5" ry="3" fill="#b07a45" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M18 50 Q10 56 14 68" fill="none" stroke="#1b1410" stroke-width="8"/><path d="M18 50 Q10 56 14 68" fill="none" stroke="#8a5a33" stroke-width="3"/>
+<path d="M16 50 Q16 40 28 40 L72 40 Q84 42 82 54 Q80 66 68 66 L28 66 Q16 64 16 50 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M26 42 Q28 22 38 22 Q48 22 48 42 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M50 42 Q52 22 62 22 Q72 22 72 42 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="34" cy="26" rx="5" ry="3" fill="#b07a45"/>
+<ellipse cx="58" cy="26" rx="5" ry="3" fill="#b07a45"/>
+<path d="M24 58 Q50 68 80 58 Q78 66 68 66 L28 66 Q24 64 24 58 Z" fill="#b07a45"/>
+<path d="M74 46 Q80 30 82 20 Q84 12 92 14 Q98 16 96 24 Q94 28 88 26 Q84 40 82 50 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="90" cy="18" rx="1.8" ry="2.3" fill="#1b1410"/>
+<path d="M86 12 L86 8 L90 11 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2"/>
+<rect x="40" y="40" width="10" height="14" rx="1.5" fill="#3b8483" stroke="#1b1410" stroke-width="2"/>
+<rect x="41" y="48" width="8" height="3" fill="#b5432f"/>
+</svg>

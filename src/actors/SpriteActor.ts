@@ -21,7 +21,8 @@ export class SpriteActor {
     /** Сколько единиц мира занимает пиксель этого спрайта. */
     readonly worldPerPx: number = WORLD_PER_PX,
   ) {
-    this.mat = new THREE.MeshBasicMaterial({ map: pixelTexture(source), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide })
+    // toneMapped: false — жители сохраняют цвета своей палитры, тональная кривая мира их не выбеливает
+    this.mat = new THREE.MeshBasicMaterial({ map: pixelTexture(source), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, toneMapped: false })
     const geo = new THREE.PlaneGeometry(pxW * worldPerPx, pxH * worldPerPx)
     geo.translate(0, (pxH * worldPerPx) / 2, 0)
     this.mesh = new THREE.Mesh(geo, this.mat)

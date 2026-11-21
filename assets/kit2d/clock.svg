@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<path d="M28 82 L22 93" fill="none" stroke="#1b1410" stroke-width="7"/><path d="M28 82 L22 93" fill="none" stroke="#1b1410" stroke-width="2"/>
+<path d="M72 82 L78 93" fill="none" stroke="#1b1410" stroke-width="7"/><path d="M72 82 L78 93" fill="none" stroke="#1b1410" stroke-width="2"/>
+<g transform="rotate(-20 30 26)"><path d="M21 30 Q21 18 30 18 Q39 18 39 30 Z" fill="#e8b04a" stroke="#1b1410" stroke-width="2.5"/></g>
+<g transform="rotate(20 70 26)"><path d="M61 30 Q61 18 70 18 Q79 18 79 30 Z" fill="#e8b04a" stroke="#1b1410" stroke-width="2.5"/></g>
+<rect x="47" y="16" width="6" height="10" rx="1" fill="#1b1410"/>
+<rect x="42" y="14" width="16" height="4" rx="1" fill="#1b1410"/>
+<circle cx="50" cy="58" r="30" fill="#b5432f" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M66 33 A30 30 0 0 1 58 87 A26 26 0 0 0 66 33 Z" fill="#7a2e24"/>
+<circle cx="50" cy="58" r="23" fill="#f3e6c8" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="48.5" y="38.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="57.5" y="40.9" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="64.1" y="47.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="66.5" y="56.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="64.1" y="65.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="57.5" y="72.1" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="48.5" y="74.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="39.5" y="72.1" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="32.9" y="65.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="30.5" y="56.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="32.9" y="47.5" width="3" height="3" rx="0.5" fill="#1b1410"/><rect x="39.5" y="40.9" width="3" height="3" rx="0.5" fill="#1b1410"/>
+<path d="M50 58 L50 42" fill="none" stroke="#1b1410" stroke-width="6.5"/><path d="M50 58 L50 42" fill="none" stroke="#1b1410" stroke-width="1.5"/>
+<path d="M50 58 L62 64" fill="none" stroke="#1b1410" stroke-width="6.5"/><path d="M50 58 L62 64" fill="none" stroke="#1b1410" stroke-width="1.5"/>
+<circle cx="50" cy="58" r="3" fill="#b5432f" stroke="#1b1410" stroke-width="2"/>
+<ellipse cx="36" cy="44" rx="3" ry="6" fill="#fbf6ea" transform="rotate(40 36 44)"/>
+</svg>

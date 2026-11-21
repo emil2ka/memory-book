@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<circle cx="50" cy="54" r="40" fill="#8a5a33" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="47.5" cy="51.5" r="35" fill="#c9953d"/>
+<path d="M14 50 Q14 18 50 16 Q86 18 86 50 Q84 64 78 60 Q74 74 64 66 Q58 78 50 70 Q42 80 36 68 Q26 76 22 62 Q14 64 14 50 Z" fill="#f2a983" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="50" cy="50" r="12" fill="#e9d9b4" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="32" cy="30" rx="6" ry="3" fill="#fbf6ea" transform="rotate(-30 32 30)"/>
+<rect x="54.8" y="22.5" width="5" height="2" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1" transform="rotate(0 54.8 22.5)"/>
+<rect x="65.9" y="28.0" width="5" height="2" rx="1" fill="#3b8483" stroke="#1b1410" stroke-width="1" transform="rotate(47 65.9 28.0)"/>
+<rect x="72.8" y="38.4" width="5" height="2" rx="1" fill="#fbf6ea" stroke="#1b1410" stroke-width="1" transform="rotate(94 72.8 38.4)"/>
+<rect x="73.5" y="50.8" width="5" height="2" rx="1" fill="#b5432f" stroke="#1b1410" stroke-width="1" transform="rotate(141 73.5 50.8)"/>
+<rect x="68.0" y="61.9" width="5" height="2" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1" transform="rotate(188 68.0 61.9)"/>
+<rect x="57.6" y="68.8" width="5" height="2" rx="1" fill="#3b8483" stroke="#1b1410" stroke-width="1" transform="rotate(235 57.6 68.8)"/>
+<rect x="45.2" y="69.5" width="5" height="2" rx="1" fill="#fbf6ea" stroke="#1b1410" stroke-width="1" transform="rotate(282 45.2 69.5)"/>
+<rect x="34.1" y="64.0" width="5" height="2" rx="1" fill="#b5432f" stroke="#1b1410" stroke-width="1" transform="rotate(329 34.1 64.0)"/>
+<rect x="27.2" y="53.6" width="5" height="2" rx="1" fill="#f4d675" stroke="#1b1410" stroke-width="1" transform="rotate(376 27.2 53.6)"/>
+<rect x="26.5" y="41.2" width="5" height="2" rx="1" fill="#3b8483" stroke="#1b1410" stroke-width="1" transform="rotate(423 26.5 41.2)"/>
+<rect x="32.0" y="30.1" width="5" height="2" rx="1" fill="#fbf6ea" stroke="#1b1410" stroke-width="1" transform="rotate(470 32.0 30.1)"/>
+<rect x="42.4" y="23.2" width="5" height="2" rx="1" fill="#b5432f" stroke="#1b1410" stroke-width="1" transform="rotate(517 42.4 23.2)"/>
+</svg>

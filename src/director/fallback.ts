@@ -4,6 +4,8 @@ import { tempoToCategory } from '../audio/tempo'
 import type { ActionId, Beat, CameraId, Contradiction, DayScript, DirectorInput, Mood, PlaceId, SceneEffectId, TimeOfDay, Weather } from '../types/script'
 import { CONTRADICTION_RULES, LEXICON, MOOD_WORDS, TIME_WORDS, type LexEntry } from './lexicon'
 import { expandToWord, findStem, norm, words } from './text'
+import { findByWord } from '../kit/library'
+import { kitResult, toKit } from './results'
 
 const clamp = (v: number, lo = -1, hi = 1) => Math.min(hi, Math.max(lo, v))
 const round2 = (v: number) => Math.round(v * 100) / 100
@@ -31,6 +33,14 @@ function lexHits(text: string): Hit[] {
         hits.push({ entry, quote: text.slice(start, end), start })
       }
     }
+  }
+  // слова, которых нет в словаре, но есть в библиотеке кита (юрта, самовар, тюльпан…)
+  for (const w of words(text)) {
+    if (taken.some(([a, b]) => w.start < b && w.start + w.text.length > a)) continue
+    const m = findByWord(w.text)
+    if (!m || m.id === 'crystal') continue
+    taken.push([w.start, w.start + w.text.length])
+    hits.push({ entry: { stems: [], result: kitResult(m.id), noun: m.ru }, quote: w.text, start: w.start })
   }
   return hits.sort((a, b) => a.start - b.start)
 }
@@ -123,14 +133,15 @@ export function fallbackDirect(input: Pick<DirectorInput, 'text'> & Partial<Dire
   const chosen: Hit[] = []
   const seen = new Set<string>()
   for (const h of hits) {
-    const key = `${h.entry.result.kind}:${h.entry.result.id}`
+    const r = toKit(h.entry.result)
+    const key = `${r.kind}:${r.id}`
     if (seen.has(key)) continue
     seen.add(key)
     chosen.push(h)
     if (chosen.length === 7) break
   }
 
-  const beats: Beat[] = chosen.map((h) => ({ quote: h.quote, action: defaultAction(h), result: h.entry.result, camera: 'wide', effect: null }))
+  const beats: Beat[] = chosen.map((h) => ({ quote: h.quote, action: defaultAction(h), result: toKit(h.entry.result), camera: 'wide', effect: null }))
 
   // 2. Добрать до 4 битов самыми длинными словами (кристаллы памяти).
   if (beats.length < 4) {
@@ -141,7 +152,7 @@ export function fallbackDirect(input: Pick<DirectorInput, 'text'> & Partial<Dire
     while (beats.length < 4) {
       const w = pool[k % Math.max(1, pool.length)]
       const quote = w ? w.text : text.trim() || text
-      beats.push({ quote, action: beats.length % 2 ? 'walk' : 'sit', result: { kind: 'crystal', id: 'crystal' }, camera: 'wide', effect: null })
+      beats.push({ quote, action: beats.length % 2 ? 'walk' : 'sit', result: kitResult('crystal'), camera: 'wide', effect: null })
       k++
     }
     // в порядке появления в тексте

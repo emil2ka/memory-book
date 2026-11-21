@@ -306,7 +306,24 @@ export class Book {
     ].map(([x, z]) => this.group.localToWorld(new THREE.Vector3(x, this.surfaceY, z)))
   }
 
-  /** Холст с буквами слов — для спрайта, который поднимается со страницы. */
+  /**
+   * Где на странице лежит холст wordCanvas(boxes): центр в координатах книги и размер в единицах мира.
+   * Холст совпадает с буквами на странице, если слова в одной строке.
+   */
+  wordCanvasRect(boxes: WordBox[], canvas: HTMLCanvasElement): { center: THREE.Vector3; w: number; h: number } | null {
+    if (!boxes.length) return null
+    const b = boxes[0]
+    const k = PAGE_W / TEX_W
+    const w = (canvas.width / SS) * k
+    const h = (canvas.height / SS) * (PAGE_H / TEX_H)
+    const x0 = b.x - 2
+    const y0 = b.y + this.fontPx - this.fontPx
+    const cx = (b.page === 0 ? -PAGE_W : 0) + (x0 * k + w / 2)
+    const cz = -PAGE_H / 2 + (y0 / TEX_H) * PAGE_H + h / 2
+    return { center: new THREE.Vector3(cx, this.surfaceY, cz), w, h }
+  }
+
+  /** Холст с буквами слов — для слова, которое поднимается со страницы. */
   wordCanvas(boxes: WordBox[]): HTMLCanvasElement {
     const label = boxes.map((b) => b.word).join(' ')
     const c = document.createElement('canvas')
@@ -334,9 +351,12 @@ export class Book {
       ctx.textBaseline = 'alphabetic'
       ctx.fillStyle = css(PALETTE.navy)
       for (const w of this.words) {
-        if (w.page !== page || this.hidden.has(w.index)) continue
+        if (w.page !== page) continue
+        // вытянутое слово оставляет бледный оттиск на бумаге
+        ctx.globalAlpha = this.hidden.has(w.index) ? 0.14 : 1
         ctx.fillText(w.word, w.x, w.y + this.fontPx)
       }
+      ctx.globalAlpha = 1
       const caret = this.caretOn ? this.caretBox(ctx) : null
       if (caret && caret.page === page) ctx.fillRect(Math.min(caret.x, TEX_W - 4), caret.y + 1, 1, this.fontPx + 2)
       this.textures[page].needsUpdate = true

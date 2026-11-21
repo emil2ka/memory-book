@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<path d="M64 26 L82 6" fill="none" stroke="#1b1410" stroke-width="7"/><path d="M64 26 L82 6" fill="none" stroke="#2c3b58" stroke-width="2"/>
+<circle cx="82" cy="6" r="2.5" fill="#4a6285" stroke="#1b1410" stroke-width="1.5"/>
+<rect x="8" y="26" width="84" height="58" rx="8" fill="#e0745a" stroke="#1b1410" stroke-width="2.5"/>
+<rect x="70" y="28" width="20" height="54" fill="#b5432f"/>
+<path d="M16 26 L84 26 Q92 26 92 34 L92 76 Q92 84 84 84 L16 84 Q8 84 8 76 L8 34 Q8 26 16 26 Z" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="32" cy="56" r="17" fill="#f3e6c8" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="32.0" cy="50.0" r="1.6" fill="#cbb78d"/>
+<circle cx="36.2" cy="51.8" r="1.6" fill="#cbb78d"/>
+<circle cx="38.0" cy="56.0" r="1.6" fill="#cbb78d"/>
+<circle cx="36.2" cy="60.2" r="1.6" fill="#cbb78d"/>
+<circle cx="32.0" cy="62.0" r="1.6" fill="#cbb78d"/>
+<circle cx="27.8" cy="60.2" r="1.6" fill="#cbb78d"/>
+<circle cx="26.0" cy="56.0" r="1.6" fill="#cbb78d"/>
+<circle cx="27.8" cy="51.8" r="1.6" fill="#cbb78d"/>
+<circle cx="32.0" cy="45.0" r="1.6" fill="#cbb78d"/>
+<circle cx="39.8" cy="48.2" r="1.6" fill="#cbb78d"/>
+<circle cx="43.0" cy="56.0" r="1.6" fill="#cbb78d"/>
+<circle cx="39.8" cy="63.8" r="1.6" fill="#cbb78d"/>
+<circle cx="32.0" cy="67.0" r="1.6" fill="#cbb78d"/>
+<circle cx="24.2" cy="63.8" r="1.6" fill="#cbb78d"/>
+<circle cx="21.0" cy="56.0" r="1.6" fill="#cbb78d"/>
+<circle cx="24.2" cy="48.2" r="1.6" fill="#cbb78d"/>
+<rect x="56" y="36" width="28" height="14" rx="2" fill="#f4d675" stroke="#1b1410" stroke-width="2"/>
+<path d="M70 38 L70 48" fill="none" stroke="#b5432f" stroke-width="2"/>
+<circle cx="62" cy="66" r="6" fill="#f3e6c8" stroke="#1b1410" stroke-width="2"/>
+<circle cx="78" cy="66" r="6" fill="#f3e6c8" stroke="#1b1410" stroke-width="2"/>
+<rect x="16" y="86" width="10" height="6" rx="1" fill="#1b1410"/>
+<rect x="74" y="86" width="10" height="6" rx="1" fill="#1b1410"/>
+</svg>

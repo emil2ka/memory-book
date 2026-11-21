@@ -1,6 +1,7 @@
 // Пять образцовых пар «запись → сценарий» из 09-demo-days. Разные по настроению.
 // Первые три совпадают с демо-днями в src/timeline/samples.
 import type { DayScript } from '../types/script'
+import { kitResult, toKit } from './results'
 import day1 from '../timeline/samples/day1.json'
 import day2 from '../timeline/samples/day2.json'
 import day3 from '../timeline/samples/day3.json'
@@ -58,7 +59,7 @@ const day5: DayScript = {
   ],
 }
 
-export const exemplars: Exemplar[] = [
+const raw: Exemplar[] = [
   {
     text: 'Гуляли по парку, всё в жёлтых листьях. Было холодно, но мы пили какао и долго разговаривали. Фонари зажглись раньше, чем мы заметили, что стемнело.',
     song: 'не указана',
@@ -85,3 +86,12 @@ export const exemplars: Exemplar[] = [
     script: day5,
   },
 ]
+
+/**
+ * Образцы в мире кита: прежние item/popup → kit (те же id), кристалл → kit crystal.
+ * Так режиссёр видит, как выглядит хороший ответ с новыми kinds.
+ */
+export const exemplars: Exemplar[] = raw.map((e) => ({
+  ...e,
+  script: { ...e.script, beats: e.script.beats.map((b) => ({ ...b, result: b.result.kind === 'crystal' ? kitResult('crystal') : toKit(b.result) })) },
+}))

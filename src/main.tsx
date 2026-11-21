@@ -3,3 +3,6 @@ import { App } from './App'
 import './app.css'
 
 createRoot(document.getElementById('root')!).render(<App />)
+
+// снимки кадров для проверки — только в разработке
+if (import.meta.env.DEV) void import('./render/devshots')

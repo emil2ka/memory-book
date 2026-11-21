@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<rect x="46" y="10" width="8" height="50" rx="1.5" fill="#5c3b22" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M46 22 L54 22" fill="none" stroke="#bfb7a6" stroke-width="1.4"/><path d="M46 30 L54 30" fill="none" stroke="#bfb7a6" stroke-width="1.4"/><path d="M46 38 L54 38" fill="none" stroke="#bfb7a6" stroke-width="1.4"/><path d="M46 46 L54 46" fill="none" stroke="#bfb7a6" stroke-width="1.4"/>
+<path d="M44 4 L56 4 L57 14 L43 14 Z" fill="#3a2618" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="40" cy="6" r="2" fill="#f3e6c8" stroke="#1b1410" stroke-width="1.6"/><circle cx="40" cy="12" r="2" fill="#f3e6c8" stroke="#1b1410" stroke-width="1.6"/><circle cx="60" cy="6" r="2" fill="#f3e6c8" stroke="#1b1410" stroke-width="1.6"/><circle cx="60" cy="12" r="2" fill="#f3e6c8" stroke="#1b1410" stroke-width="1.6"/>
+<path d="M50 44 C62 44 64 54 60 60 C72 64 76 76 70 86 C64 96 36 96 30 86 C24 76 28 64 40 60 C36 54 38 44 50 44 Z" fill="#b07a45"/>
+<path d="M58 46 C64 52 62 58 60 60 C72 64 76 76 70 86 C66 92 58 94 50 94 C64 88 70 70 58 46 Z" fill="#8a5a33"/>
+<path d="M50 44 C62 44 64 54 60 60 C72 64 76 76 70 86 C64 96 36 96 30 86 C24 76 28 64 40 60 C36 54 38 44 50 44 Z" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="50" cy="68" r="6.5" fill="#3a2618" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="50.0" cy="59.0" r="1.1" fill="#c9953d"/><circle cx="54.5" cy="60.2" r="1.1" fill="#c9953d"/><circle cx="57.8" cy="63.5" r="1.1" fill="#c9953d"/><circle cx="59.0" cy="68.0" r="1.1" fill="#c9953d"/><circle cx="57.8" cy="72.5" r="1.1" fill="#c9953d"/><circle cx="54.5" cy="75.8" r="1.1" fill="#c9953d"/><circle cx="50.0" cy="77.0" r="1.1" fill="#c9953d"/><circle cx="45.5" cy="75.8" r="1.1" fill="#c9953d"/><circle cx="42.2" cy="72.5" r="1.1" fill="#c9953d"/><circle cx="41.0" cy="68.0" r="1.1" fill="#c9953d"/><circle cx="42.2" cy="63.5" r="1.1" fill="#c9953d"/><circle cx="45.5" cy="60.2" r="1.1" fill="#c9953d"/>
+<rect x="42" y="80" width="16" height="4" rx="1" fill="#3a2618"/>
+<path d="M48.5 12 L48.5 82 M51.5 12 L51.5 82" fill="none" stroke="#f3e6c8" stroke-width="1"/>
+</svg>

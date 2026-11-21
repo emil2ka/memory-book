@@ -1,0 +1,248 @@
+{
+ "summary": {
+  "model": "claude-haiku-5-5",
+  "total": 20,
+  "ok": 20,
+  "firstTry": 14,
+  "medianMs": 5705,
+  "maxMs": 10699
+ },
+ "rows": [
+  {
+   "name": "самокат",
+   "ok": true,
+   "id": "mk_scooter",
+   "latencyMs": 4563,
+   "attempts": 1,
+   "parts": 13,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1057
+  },
+  {
+   "name": "микроволновка",
+   "ok": true,
+   "id": "mk_microwave",
+   "latencyMs": 4920,
+   "attempts": 1,
+   "parts": 16,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1240
+  },
+  {
+   "name": "глобус",
+   "ok": true,
+   "id": "mk_globe",
+   "latencyMs": 5970,
+   "attempts": 1,
+   "parts": 17,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1423
+  },
+  {
+   "name": "рюкзак-кенгуру",
+   "ok": true,
+   "id": "mk_baby_carrier_kangaroo",
+   "latencyMs": 9662,
+   "attempts": 2,
+   "parts": 18,
+   "firstErrors": [
+    "<rect>: непонятные атрибуты «x=</svg»",
+    "не закрыты: svg, rect"
+   ],
+   "inLibrary": "backpack",
+   "output": 2539
+  },
+  {
+   "name": "батут",
+   "ok": true,
+   "id": "mk_trampoline",
+   "latencyMs": 5914,
+   "attempts": 1,
+   "parts": 16,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1454
+  },
+  {
+   "name": "электричка",
+   "ok": true,
+   "id": "mk_elektrichka",
+   "latencyMs": 5902,
+   "attempts": 1,
+   "parts": 19,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1557
+  },
+  {
+   "name": "пылесос",
+   "ok": true,
+   "id": "mk_vacuum_cleaner",
+   "latencyMs": 10699,
+   "attempts": 2,
+   "parts": 18,
+   "firstErrors": [
+    "<path>: атрибут stroke-dasharray не разрешён"
+   ],
+   "inLibrary": null,
+   "output": 2754
+  },
+  {
+   "name": "утюг",
+   "ok": true,
+   "id": "mk_iron",
+   "latencyMs": 3955,
+   "attempts": 1,
+   "parts": 9,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 851
+  },
+  {
+   "name": "фен",
+   "ok": true,
+   "id": "mk_hair_dryer",
+   "latencyMs": 7962,
+   "attempts": 2,
+   "parts": 12,
+   "firstErrors": [
+    "<ellipse>: непонятные атрибуты «cx=</svg»",
+    "не закрыты: svg, ellipse"
+   ],
+   "inLibrary": null,
+   "output": 1964
+  },
+  {
+   "name": "стиральная машина",
+   "ok": true,
+   "id": "mk_washing_machine",
+   "latencyMs": 8257,
+   "attempts": 2,
+   "parts": 13,
+   "firstErrors": [
+    "<ellipse>: непонятные атрибуты «cx=</svg»",
+    "не закрыты: svg, ellipse"
+   ],
+   "inLibrary": null,
+   "output": 2126
+  },
+  {
+   "name": "лейка",
+   "ok": true,
+   "id": "mk_watering_can",
+   "latencyMs": 5125,
+   "attempts": 1,
+   "parts": 16,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1229
+  },
+  {
+   "name": "качели",
+   "ok": true,
+   "id": "mk_swing",
+   "latencyMs": 4725,
+   "attempts": 1,
+   "parts": 13,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1030
+  },
+  {
+   "name": "скейтборд",
+   "ok": true,
+   "id": "mk_skateboard",
+   "latencyMs": 4364,
+   "attempts": 1,
+   "parts": 13,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1033
+  },
+  {
+   "name": "воздушный змей",
+   "ok": true,
+   "id": "mk_kite",
+   "latencyMs": 5814,
+   "attempts": 2,
+   "parts": 9,
+   "firstErrors": [
+    "<ellipse>: непонятные атрибуты «cx=</svg»",
+    "не закрыты: svg, ellipse"
+   ],
+   "inLibrary": null,
+   "output": 1329
+  },
+  {
+   "name": "удочка",
+   "ok": true,
+   "id": "mk_fishing_rod",
+   "latencyMs": 4352,
+   "attempts": 1,
+   "parts": 13,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1027
+  },
+  {
+   "name": "тостер",
+   "ok": true,
+   "id": "mk_toaster",
+   "latencyMs": 9683,
+   "attempts": 2,
+   "parts": 15,
+   "firstErrors": [
+    "<rect>: атрибут clip-path не разрешён"
+   ],
+   "inLibrary": null,
+   "output": 2706
+  },
+  {
+   "name": "вентилятор",
+   "ok": true,
+   "id": "mk_fan",
+   "latencyMs": 4571,
+   "attempts": 1,
+   "parts": 15,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1134
+  },
+  {
+   "name": "кресло-качалка",
+   "ok": true,
+   "id": "mk_rocking_chair",
+   "latencyMs": 5627,
+   "attempts": 1,
+   "parts": 16,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1367
+  },
+  {
+   "name": "швейная машинка",
+   "ok": true,
+   "id": "mk_sewing_machine",
+   "latencyMs": 5705,
+   "attempts": 1,
+   "parts": 17,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1433
+  },
+  {
+   "name": "аквариум",
+   "ok": true,
+   "id": "mk_aquarium",
+   "latencyMs": 5474,
+   "attempts": 1,
+   "parts": 17,
+   "firstErrors": [],
+   "inLibrary": null,
+   "output": 1314
+  }
+ ]
+}

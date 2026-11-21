@@ -29,6 +29,13 @@ export type BeatResult =
   | { kind: 'person'; id: PersonId }
   /** Запасной вариант: слова нет в каталоге, оно становится светящимся кубиком. */
   | { kind: 'crystal'; id: 'crystal' }
+  /** Предмет из библиотеки кита (assets/kit/*.json): id из src/kit/library. Включает прежние item и popup с теми же id. */
+  | { kind: 'kit'; id: string }
+  /**
+   * Слова нет в библиотеке — дорисовать (POST /api/make, клиент src/kit/make.ts → makeKit).
+   * id = "make:" + имя в нижнем регистре (ключ кэша); name — именительный падеж; hint — как выглядит; tags — для образцов и запасного.
+   */
+  | { kind: 'make'; id: string; name: string; hint: string; tags: string[] }
 
 export interface Beat {
   /** Точная подстрока текста пользователя. */

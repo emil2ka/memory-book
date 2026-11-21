@@ -1,0 +1,491 @@
+[
+ {
+  "text": "Гуляли по парку, всё в жёлтых листьях. Было холодно, но мы пили какао и долго разговаривали. Фонари зажглись раньше, чем мы заметили, что стемнело.",
+  "script": {
+   "title": "Осенний парк и какао",
+   "mood": {
+    "warmth": 0.5,
+    "tension": -0.4,
+    "energy": -0.2,
+    "openness": 0.3
+   },
+   "contradiction": {
+    "a": "Было холодно",
+    "b": "пили какао",
+    "staging": "frost_edges_warm_center"
+   },
+   "time_of_day": "evening",
+   "weather": "clear",
+   "place": "park",
+   "palette_hint": [
+    "amber",
+    "ochre",
+    "soft_green",
+    "slate_blue"
+   ],
+   "song": {
+    "tempo": "slow",
+    "energy": 0.3,
+    "estimated": true
+   },
+   "beats": [
+    {
+     "quote": "по парку",
+     "action": "walk",
+     "result": {
+      "kind": "kit",
+      "id": "tree"
+     },
+     "camera": "wide",
+     "effect": null
+    },
+    {
+     "quote": "жёлтых листьях",
+     "action": "shake",
+     "result": {
+      "kind": "effect",
+      "id": "leaves"
+     },
+     "camera": "push_in",
+     "effect": "palette_shift"
+    },
+    {
+     "quote": "Было холодно",
+     "action": "shiver",
+     "result": {
+      "kind": "effect",
+      "id": "frost"
+     },
+     "camera": "hold",
+     "effect": null
+    },
+    {
+     "quote": "пили какао",
+     "action": "drink",
+     "result": {
+      "kind": "kit",
+      "id": "cocoa"
+     },
+     "camera": "push_in",
+     "effect": null
+    },
+    {
+     "quote": "мы",
+     "action": "walk",
+     "result": {
+      "kind": "person",
+      "id": "second_person"
+     },
+     "camera": "wide",
+     "effect": null
+    },
+    {
+     "quote": "Фонари зажглись",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "lamp_post"
+     },
+     "camera": "orbit_quarter",
+     "effect": "day_to_night"
+    }
+   ],
+   "why": [
+    "Текст: холод и какао вместе → иней по краям и тёплый свет в центре",
+    "Фото: нет → палитру взял из описания осеннего парка: охра и янтарь",
+    "Песня: не указана → медленный темп по настроению текста"
+   ]
+  },
+  "issues": [],
+  "errors": [],
+  "latencyMs": 4832
+ },
+ {
+  "text": "До дедлайна шесть часов. Ноутбук горячий, кофе холодный, в комнате горит только лампа. В четыре утра всё наконец заработало, и я засмеялся вслух в пустой квартире.",
+  "script": {
+   "title": "Ночь перед сдачей проекта",
+   "mood": {
+    "warmth": 0.1,
+    "tension": 0.6,
+    "energy": 0.4,
+    "openness": -0.2
+   },
+   "contradiction": {
+    "a": "до дедлайна шесть часов",
+    "b": "засмеялся вслух",
+    "staging": "slow_walk_bright_light"
+   },
+   "time_of_day": "night",
+   "weather": "clear",
+   "place": "home",
+   "palette_hint": [
+    "navy",
+    "slate_blue",
+    "grey_blue",
+    "amber"
+   ],
+   "song": {
+    "tempo": "medium",
+    "energy": 0.6,
+    "estimated": true
+   },
+   "beats": [
+    {
+     "quote": "До дедлайна шесть часов",
+     "action": "shake",
+     "result": {
+      "kind": "kit",
+      "id": "clock"
+     },
+     "camera": "wide",
+     "effect": "page_shake"
+    },
+    {
+     "quote": "Ноутбук горячий",
+     "action": "carry",
+     "result": {
+      "kind": "kit",
+      "id": "laptop"
+     },
+     "camera": "push_in",
+     "effect": null
+    },
+    {
+     "quote": "кофе холодный",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "coffee"
+     },
+     "camera": "push_in",
+     "effect": null
+    },
+    {
+     "quote": "горит только лампа",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "desk_lamp"
+     },
+     "camera": "hard_cut",
+     "effect": "lamp_flicker"
+    },
+    {
+     "quote": "всё наконец заработало",
+     "action": "shake",
+     "result": {
+      "kind": "effect",
+      "id": "sparkles"
+     },
+     "camera": "hold",
+     "effect": "palette_shift"
+    },
+    {
+     "quote": "засмеялся вслух",
+     "action": "cheer",
+     "result": {
+      "kind": "kit",
+      "id": "smile"
+     },
+     "camera": "hard_cut",
+     "effect": null
+    }
+   ],
+   "why": [
+    "Текст: усталость и смех в одной ночи → медленный шаг при ярком свете",
+    "Фото: нет — палитра и ночь взяты из текста: тёмная комната и одна лампа",
+    "Песня: не указана → средний темп по настроению текста"
+   ]
+  },
+  "issues": [],
+  "errors": [],
+  "latencyMs": 2983
+ },
+ {
+  "text": "Проснулся, а за окном всё белое. Никуда не пошёл. Заварил чай, сел у окна и просто смотрел, как падает снег. Очень тихо.",
+  "script": {
+   "title": "Первый снег за окном",
+   "mood": {
+    "warmth": 0.1,
+    "tension": -0.6,
+    "energy": -0.7,
+    "openness": -0.4
+   },
+   "contradiction": null,
+   "time_of_day": "morning",
+   "weather": "snow",
+   "place": "home",
+   "palette_hint": [
+    "white",
+    "grey_blue",
+    "slate_blue",
+    "amber"
+   ],
+   "song": {
+    "tempo": "slow",
+    "energy": 0.15,
+    "estimated": true
+   },
+   "beats": [
+    {
+     "quote": "за окном всё белое",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "window"
+     },
+     "camera": "wide",
+     "effect": "palette_shift"
+    },
+    {
+     "quote": "Заварил чай",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "tea"
+     },
+     "camera": "hold",
+     "effect": null
+    },
+    {
+     "quote": "сел у окна",
+     "action": "sit",
+     "result": {
+      "kind": "effect",
+      "id": "frost"
+     },
+     "camera": "hold",
+     "effect": null
+    },
+    {
+     "quote": "падает снег",
+     "action": "shake",
+     "result": {
+      "kind": "effect",
+      "id": "snow"
+     },
+     "camera": "wide",
+     "effect": null
+    },
+    {
+     "quote": "Очень тихо",
+     "action": "sit",
+     "result": {
+      "kind": "kit",
+      "id": "crystal"
+     },
+     "camera": "hold",
+     "effect": null
+    }
+   ],
+   "why": [
+    "Текст: «за окном всё белое», «очень тихо» → белый свет и долгие неподвижные планы",
+    "Фото: нет — палитра и место выведены из текста: белое окно → белый и серо-голубой, один тёплый огонёк",
+    "Песня: не указана → очень медленный темп по настроению текста"
+   ]
+  },
+  "issues": [],
+  "errors": [],
+  "latencyMs": 2527
+ },
+ {
+  "text": "Бабушка подарила мне старую швейную машинку. Весь вечер чинили её с дедушкой, пили чай с баурсаками, а потом я сшила себе сумку из лоскутов. Устала, но горжусь.",
+  "script": {
+   "title": "Старая швейная машинка и лоскутная сумка",
+   "mood": {
+    "warmth": 0.7,
+    "tension": -0.2,
+    "energy": 0.2,
+    "openness": 0.5
+   },
+   "contradiction": {
+    "a": "Устала",
+    "b": "горжусь",
+    "staging": "slow_walk_bright_light"
+   },
+   "time_of_day": "evening",
+   "weather": "clear",
+   "place": "home",
+   "palette_hint": [
+    "amber",
+    "ochre",
+    "brown",
+    "cream"
+   ],
+   "song": {
+    "tempo": "slow",
+    "energy": 0.35,
+    "estimated": true
+   },
+   "beats": [
+    {
+     "quote": "старую швейную машинку",
+     "action": "carry",
+     "result": {
+      "kind": "kit",
+      "id": "car"
+     },
+     "camera": "wide",
+     "effect": null
+    },
+    {
+     "quote": "Весь вечер чинили",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "desk_lamp"
+     },
+     "camera": "push_in",
+     "effect": "lamp_flicker"
+    },
+    {
+     "quote": "пили чай",
+     "action": "drink",
+     "result": {
+      "kind": "kit",
+      "id": "tea"
+     },
+     "camera": "hold",
+     "effect": null
+    },
+    {
+     "quote": "баурсаками",
+     "action": "carry",
+     "result": {
+      "kind": "kit",
+      "id": "baursak"
+     },
+     "camera": "push_in",
+     "effect": null
+    },
+    {
+     "quote": "сшила себе сумку",
+     "action": "pull",
+     "result": {
+      "kind": "person",
+      "id": "second_person"
+     },
+     "camera": "orbit_quarter",
+     "effect": "palette_shift"
+    },
+    {
+     "quote": "горжусь",
+     "action": "cheer",
+     "result": {
+      "kind": "kit",
+      "id": "medal"
+     },
+     "camera": "hard_cut",
+     "effect": "day_to_night"
+    }
+   ],
+   "why": [
+    "Текст: устала, но горжусь → медленный шаг при ярком свете",
+    "Фото: нет → палитра и время опираются на текст, фото не приложено",
+    "Песня: не указана → медленный темп оценён по настроению текста"
+   ]
+  },
+  "issues": [
+   "id исправлены в бите «старую швейную машинку»"
+  ],
+  "errors": [],
+  "latencyMs": 3254
+ },
+ {
+  "text": "Ауылда әжемнің үйінде қымыз іштік. Кешке жылқыларды көрдік, ағам домбыра тартты. Аспанда жұлдыздар көп, тыныш.",
+  "script": {
+   "title": "Ауыл, қымыз және жұлдыздар",
+   "mood": {
+    "warmth": 0.6,
+    "tension": -0.6,
+    "energy": -0.2,
+    "openness": 0.4
+   },
+   "contradiction": null,
+   "time_of_day": "evening",
+   "weather": "clear",
+   "place": "nature",
+   "palette_hint": [
+    "amber",
+    "ochre",
+    "navy",
+    "cream"
+   ],
+   "song": {
+    "tempo": "slow",
+    "energy": 0.25,
+    "estimated": true
+   },
+   "beats": [
+    {
+     "quote": "Ауылда әжемнің үйінде",
+     "action": "walk",
+     "result": {
+      "kind": "kit",
+      "id": "yurt"
+     },
+     "camera": "wide",
+     "effect": null
+    },
+    {
+     "quote": "қымыз іштік",
+     "action": "drink",
+     "result": {
+      "kind": "kit",
+      "id": "torsyk"
+     },
+     "camera": "push_in",
+     "effect": null
+    },
+    {
+     "quote": "жылқыларды көрдік",
+     "action": "walk",
+     "result": {
+      "kind": "kit",
+      "id": "horse"
+     },
+     "camera": "orbit_quarter",
+     "effect": null
+    },
+    {
+     "quote": "ағам домбыра тартты",
+     "action": "pull",
+     "result": {
+      "kind": "kit",
+      "id": "dombra"
+     },
+     "camera": "push_in",
+     "effect": "palette_shift"
+    },
+    {
+     "quote": "Аспанда жұлдыздар көп",
+     "action": "shake",
+     "result": {
+      "kind": "kit",
+      "id": "star"
+     },
+     "camera": "wide",
+     "effect": "day_to_night"
+    },
+    {
+     "quote": "тыныш",
+     "action": "sit",
+     "result": {
+      "kind": "kit",
+      "id": "crystal"
+     },
+     "camera": "hold",
+     "effect": null
+    }
+   ],
+   "why": [
+    "Мәтін: әже, жылқылар, домбыра и тыныш → тёплый центр без контраста, ночное небо",
+    "Фото: нет → палитра выбрана по тексту, янтарь и ночной синий",
+    "Ән: нет → оценён медленный темп по спокойному тексту"
+   ]
+  },
+  "issues": [],
+  "errors": [],
+  "latencyMs": 6783
+ }
+]

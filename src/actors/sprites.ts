@@ -32,6 +32,8 @@ interface HeroSheet {
   canvas: HTMLCanvasElement
   rows: Partial<Record<HeroRow, number>>
   rowCount: number
+  /** Размер ячейки листа в пикселях. */
+  cell: [number, number]
 }
 
 function load(url: string): Promise<HTMLImageElement> {
@@ -53,18 +55,19 @@ function rowNames(meta: SheetMeta): string[] {
 /** Склеивает листы человечка по вертикали в один атлас, чтобы анимации переключались без смены текстуры. */
 function heroAtlas(parts: { img: HTMLImageElement; meta: SheetMeta }[]): HeroSheet {
   const rowCount = parts.reduce((n, p) => n + p.meta.rows, 0)
+  const [cw, ch] = parts[0].meta.cell
   const canvas = document.createElement('canvas')
-  canvas.width = 24 * HERO_COLS
-  canvas.height = 32 * rowCount
+  canvas.width = cw * HERO_COLS
+  canvas.height = ch * rowCount
   const g = canvas.getContext('2d')!
   const rows: Partial<Record<HeroRow, number>> = {}
   let y = 0
   for (const p of parts) {
-    g.drawImage(p.img, 0, y * 32)
+    g.drawImage(p.img, 0, y * ch)
     rowNames(p.meta).forEach((name, i) => (rows[name as HeroRow] = y + i))
     y += p.meta.rows
   }
-  return { canvas, rows, rowCount }
+  return { canvas, rows, rowCount, cell: [cw, ch] }
 }
 
 /** Загруженные листы спрайтов и фабрики актёров. */
@@ -106,12 +109,13 @@ export class SpriteBank {
   }
 
   makeHero(kind: HeroKind): SpriteActor {
-    const a = new SpriteActor(this.heroes[kind].canvas, 24, 32)
+    const sheet = this.heroes[kind]
+    const a = new SpriteActor(sheet.canvas, sheet.cell[0], sheet.cell[1])
     this.setHeroFrame(a, kind, 'idle', 0)
     return a
   }
 
-  /** Если у листа нет нужного ряда (у второго человечка только idle, walk, sit) — показывается idle. */
+  /** Если у листа нет нужного ряда — показывается idle. */
   setHeroFrame(a: SpriteActor, kind: HeroKind, row: HeroRow, col: number) {
     const sheet = this.heroes[kind]
     a.setFrame(col % HERO_COLS, sheet.rows[row] ?? sheet.rows.idle ?? 0, HERO_COLS, sheet.rowCount)

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<polygon points="50.0,12.0 61.2,38.6 89.9,41.0 68.1,59.9 74.7,88.0 50.0,73.0 25.3,88.0 31.9,59.9 10.1,41.0 38.8,38.6" fill="#f4d675" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="50.0,54.0 74.7,88.0 50.0,73.0 25.3,88.0 31.9,59.9 50.0,54.0" fill="#e8b04a"/>
+<polygon points="50.0,12.0 61.2,38.6 89.9,41.0 68.1,59.9 74.7,88.0 50.0,73.0 25.3,88.0 31.9,59.9 10.1,41.0 38.8,38.6" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="38" cy="40" rx="3" ry="6" fill="#fbf6ea" transform="rotate(30 38 40)"/>
+<ellipse cx="43.0" cy="56" rx="2.6" ry="3.3800000000000003" fill="#1b1410"/><ellipse cx="57.0" cy="56" rx="2.6" ry="3.3800000000000003" fill="#1b1410"/><circle cx="43.9" cy="54.7" r="0.9880000000000001" fill="#fbf6ea"/><circle cx="57.9" cy="54.7" r="0.9880000000000001" fill="#fbf6ea"/><ellipse cx="38.5" cy="62" rx="3.8" ry="2.2" fill="#e0745a"/><ellipse cx="61.5" cy="62" rx="3.8" ry="2.2" fill="#e0745a"/><path d="M46 62 Q50 66 54 62" fill="none" stroke="#1b1410" stroke-width="2.2"/>
+</svg>

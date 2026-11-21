@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<polygon points="2.0,92.0 30.0,38.0 58.0,92.0" fill="#7f97b3" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="30.0,38.0 58.0,92.0 44.0,92.0 34.0,50.0" fill="#4a6285"/>
+<path d="M2 92 L30 38 L58 92" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="30.0,38.0 22.5,52.0 27.0,49.0 30.0,55.0 34.0,49.0 37.5,52.0" fill="#fbf6ea" stroke="#1b1410" stroke-width="2"/>
+<polygon points="36.0,92.0 64.0,14.0 96.0,92.0" fill="#4a6285" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="64.0,14.0 96.0,92.0 80.0,92.0 68.0,30.0" fill="#2c3b58"/>
+<path d="M36 92 L64 14 L96 92" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="64.0,14.0 55.0,39.0 60.0,35.0 64.0,42.0 68.0,36.0 73.5,39.0" fill="#fbf6ea" stroke="#1b1410" stroke-width="2"/>
+<path d="M0 96 Q14 80 30 86 Q46 76 62 86 Q80 78 100 88 L100 96 Z" fill="#8fa868" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M62 86 Q80 78 100 88 L100 96 L66 96 Z" fill="#55784a"/>
+<polygon points="14.0,74.0 8.0,92.0 20.0,92.0" fill="#2f4a36" stroke="#1b1410" stroke-width="2"/><rect x="12.5" y="92" width="3" height="4" fill="#5c3b22" stroke="#1b1410" stroke-width="1.5"/>
+<polygon points="24.0,74.0 18.0,92.0 30.0,92.0" fill="#2f4a36" stroke="#1b1410" stroke-width="2"/><rect x="22.5" y="92" width="3" height="4" fill="#5c3b22" stroke="#1b1410" stroke-width="1.5"/>
+<polygon points="80.0,74.0 74.0,92.0 86.0,92.0" fill="#2f4a36" stroke="#1b1410" stroke-width="2"/><rect x="78.5" y="92" width="3" height="4" fill="#5c3b22" stroke="#1b1410" stroke-width="1.5"/>
+</svg>

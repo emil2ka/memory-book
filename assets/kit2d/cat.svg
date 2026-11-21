@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<path d="M63 90 C86 89 88 66 77 58" fill="none" stroke="#1b1410" stroke-width="10.5"/><path d="M63 90 C86 89 88 66 77 58" fill="none" stroke="#c9953d" stroke-width="5.5"/>
+<path d="M30 95 C25 77 34 59 50 59 C66 59 75 77 70 95 Z" fill="#c9953d"/>
+<path d="M62 62 C70 68 74 82 70 95 L60 95 C64 84 64 72 62 62 Z" fill="#8a5a33"/>
+<path d="M40 95 C38 81 44 70 50 70 C56 70 62 81 60 95 Z" fill="#f3e6c8"/>
+<path d="M30 95 C25 77 34 59 50 59 C66 59 75 77 70 95 Z" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="41" cy="93" rx="6.5" ry="3.8" fill="#f3e6c8" stroke="#1b1410" stroke-width="2.2"/>
+<ellipse cx="59" cy="93" rx="6.5" ry="3.8" fill="#f3e6c8" stroke="#1b1410" stroke-width="2.2"/>
+<polygon points="30,38 31,16 47,29" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="70,38 69,16 53,29" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<polygon points="33.5,32 34,22 42,29" fill="#f2a983"/>
+<polygon points="66.5,32 66,22 58,29" fill="#f2a983"/>
+<path d="M28 44 C28 27 72 27 72 44 C72 58 62 64 50 64 C38 64 28 58 28 44 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M60 33 C68 36 71 42 70 48 C68 56 62 60 56 62 C63 55 65 44 60 33 Z" fill="#e8b04a"/>
+<path d="M44 31 L45.5 37 M50 30 L50 36.5 M56 31 L54.5 37" fill="none" stroke="#8a5a33" stroke-width="2.4"/>
+<ellipse cx="41" cy="46" rx="2.8" ry="3.6" fill="#1b1410"/>
+<ellipse cx="59" cy="46" rx="2.8" ry="3.6" fill="#1b1410"/>
+<circle cx="42" cy="44.6" r="1" fill="#fbf6ea"/>
+<circle cx="60" cy="44.6" r="1" fill="#fbf6ea"/>
+<ellipse cx="35.5" cy="53" rx="4" ry="2.2" fill="#e0745a"/>
+<ellipse cx="64.5" cy="53" rx="4" ry="2.2" fill="#e0745a"/>
+<polygon points="47.8,51 52.2,51 50,53.6" fill="#f2a983" stroke="#1b1410" stroke-width="1.2"/>
+<path d="M50 53.6 Q48 57 45.5 55.5 M50 53.6 Q52 57 54.5 55.5" fill="none" stroke="#1b1410" stroke-width="1.6"/>
+<path d="M33 51 L22 49 M33 54 L23 56 M67 51 L78 49 M67 54 L77 56" fill="none" stroke="#1b1410" stroke-width="1.2"/>
+</svg>

@@ -6,7 +6,7 @@ import { fallbackDirect } from './fallback'
 import { directDay } from './index'
 import { buildScriptSchema } from './schema'
 import { SYSTEM_PROMPT } from './prompt'
-import { checkScript, fixQuote, fixResult, validateScript } from './validate'
+import { MAX_MAKES, checkScript, fixQuote, fixResult, validateScript } from './validate'
 
 const day1 = exemplars[0]
 
@@ -43,11 +43,33 @@ describe('validateScript', () => {
   })
 
   it('неизвестные id → синонимы → кристалл', () => {
-    expect(fixResult({ kind: 'item', id: 'mug' }).result).toEqual({ kind: 'item', id: 'cocoa' })
-    expect(fixResult({ kind: 'popup', id: 'cocoa' }).result).toEqual({ kind: 'item', id: 'cocoa' })
-    expect(fixResult({ kind: 'item', id: 'снеговик' }).result).toEqual({ kind: 'effect', id: 'snow' })
-    expect(fixResult({ kind: 'item', id: 'spaceship' }).result).toEqual({ kind: 'crystal', id: 'crystal' })
-    expect(fixResult(null).result).toEqual({ kind: 'crystal', id: 'crystal' })
+    expect(fixResult({ kind: 'item', id: 'mug' }).result).toEqual({ kind: 'kit', id: 'cocoa' })
+    expect(fixResult({ kind: 'popup', id: 'cocoa' }).result).toEqual({ kind: 'kit', id: 'cocoa' })
+    expect(fixResult({ kind: 'item', id: 'снеговик' }).result).toEqual({ kind: 'kit', id: 'snowman' })
+    expect(fixResult({ kind: 'item', id: 'zxqvbn' }).result).toEqual({ kind: 'kit', id: 'crystal' })
+    expect(fixResult(null).result).toEqual({ kind: 'kit', id: 'crystal' })
+    expect(fixResult({ kind: 'kit', id: 'nope' }, 'старая юрта').result).toEqual({ kind: 'kit', id: 'yurt' })
+  })
+
+  it('kit и make', () => {
+    expect(fixResult({ kind: 'kit', id: 'yurt' })).toEqual({ result: { kind: 'kit', id: 'yurt' }, fixed: false })
+    expect(fixResult({ kind: 'item', id: 'tea' })).toEqual({ result: { kind: 'kit', id: 'tea' }, fixed: false })
+    // слово уже есть в библиотеке — дорисовывать не надо
+    expect(fixResult({ kind: 'make', name: 'самовар', hint: '', tags: [] }).result).toEqual({ kind: 'kit', id: 'samovar' })
+    expect(fixResult({ kind: 'make', name: 'швейная машинка', hint: '', tags: ['home'] }).result).toMatchObject({ kind: 'make', name: 'швейная машинка' })
+    const m = fixResult({ kind: 'make', name: 'Самокат', hint: 'детский', tags: ['transport', 'нет-такого', 'CITY'] }).result
+    expect(m).toEqual({ kind: 'make', id: 'make:самокат', name: 'Самокат', hint: 'детский', tags: ['transport', 'city'] })
+    const text = 'Купили самокат, глобус, пылесос, утюг и фен.'
+    const raw = {
+      title: 'День новых вещей дома', mood: { warmth: 0.5, tension: 0, energy: 0.5, openness: 0.5 }, contradiction: null,
+      time_of_day: 'day', weather: 'clear', place: 'home', palette_hint: ['cream', 'amber', 'teal'], song: { tempo: 'medium', energy: 0.5, estimated: true },
+      beats: ['самокат', 'глобус', 'пылесос', 'утюг', 'фен'].map((w) => ({ quote: w, action: 'pull', result: { kind: 'make', name: w, hint: '', tags: ['home'] }, camera: 'wide', effect: null })),
+      why: ['Текст: вещи → предметы', 'Фото: нет', 'Песня: нет'],
+    }
+    const r = validateScript(raw, text)
+    expect(r.script.beats.filter((b) => b.result.kind === 'make')).toHaveLength(MAX_MAKES)
+    expect(r.issues.some((i) => i.includes('лишняя дорисовка'))).toBe(true)
+    expect(checkScript(r.script, text)).toEqual([])
   })
 
   it('чинит сломанный ответ до валидного сценария', () => {
@@ -69,7 +91,7 @@ describe('validateScript', () => {
     const r = validateScript(raw, day1.text)
     expect(checkScript(r.script, day1.text)).toEqual([])
     expect(r.script.beats.length).toBeGreaterThanOrEqual(4)
-    expect(r.script.beats.some((b) => b.quote === 'какао' && b.action === 'drink' && b.result.kind === 'item' && b.result.id === 'cocoa' && b.camera === 'push_in' && b.effect === 'lamp_flicker')).toBe(true)
+    expect(r.script.beats.some((b) => b.quote === 'какао' && b.action === 'drink' && b.result.kind === 'kit' && b.result.id === 'cocoa' && b.camera === 'push_in' && b.effect === 'lamp_flicker')).toBe(true)
     expect(r.script.beats.some((b) => b.quote === 'единорог')).toBe(false)
     expect(r.script.mood.warmth).toBe(1)
     expect(r.script.mood.tension).toBe(-1)
@@ -120,7 +142,7 @@ describe('fallbackDirect', () => {
   it('берёт осмысленные слова и противоречие', () => {
     const s = fallbackDirect({ text: day1.text, photos: [], song: null })
     const ids = s.beats.map((b) => `${b.result.kind}:${b.result.id}`)
-    expect(ids).toEqual(expect.arrayContaining(['popup:tree', 'effect:leaves', 'effect:frost', 'item:cocoa', 'person:second_person']))
+    expect(ids).toEqual(expect.arrayContaining(['kit:tree', 'effect:leaves', 'effect:frost', 'kit:cocoa', 'person:second_person']))
     expect(s.contradiction?.staging).toBe('frost_edges_warm_center')
     expect(s.place).toBe('park')
     expect(s.time_of_day).toBe('evening')
@@ -188,5 +210,28 @@ describe('directDay', () => {
     expect(r.source).toBe('llm')
     expect(checkScript(r.script, input.text)).toEqual([])
     expect(r.issues!.length).toBeGreaterThan(0)
+  })
+})
+
+describe('режиссёр знает библиотеку кита', () => {
+  it('промпт и схема перечисляют предметы библиотеки', () => {
+    expect(SYSTEM_PROMPT).toContain('yurt юрта*')
+    expect(SYSTEM_PROMPT).toContain('kind="make"')
+    expect(JSON.stringify(buildScriptSchema())).toContain('"samovar"')
+  })
+
+  it('запасной режиссёр берёт слова из библиотеки', () => {
+    const s = fallbackDirect({ text: 'Вечером пили чай из самовара в юрте, ели баурсаки и слушали домбру.' })
+    const got = s.beats.map((b) => `${b.result.kind}:${b.result.id}`)
+    expect(got).toEqual(expect.arrayContaining(['kit:samovar', 'kit:yurt', 'kit:baursak', 'kit:dombra']))
+  })
+
+  it('образцы — только kit, effect, person', () => {
+    for (const e of exemplars) for (const b of e.script.beats) expect(['kit', 'effect', 'person']).toContain(b.result.kind)
+  })
+
+  it('реакция по тегам предмета', () => {
+    const tl = choreograph({ ...exemplars[0].script, beats: exemplars[0].script.beats.map((b) => b) }, { seed: 1 })
+    expect(tl.events.length).toBeGreaterThan(0)
   })
 })

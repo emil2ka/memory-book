@@ -158,3 +158,67 @@ describe('choreograph', () => {
     expect(JSON.stringify(choreograph(s, { seed: 4, beatTimes: far }).events)).toBe(JSON.stringify(choreograph(s, { seed: 4 }).events))
   })
 })
+
+describe('L7: полароид, облёт, камера', () => {
+  const days = samples
+
+  it('без фото — полароида нет', () => {
+    for (const s of days) {
+      const tl = choreograph(s, { seed: 3 })
+      expect(tl.events.some((e) => e.type === 'photo_reveal' || e.type === 'photo_fan')).toBe(false)
+    }
+  })
+
+  it('фото есть: photo_reveal 7–9 с после второго бита (после первого при 4 битах), без camera внутри, camera сразу после', () => {
+    for (const s of days) {
+      for (const photoCount of [1, 3]) {
+        const tl = choreograph(s, { seed: 3, photoCount })
+        expect(tl.duration).toBeLessThanOrEqual(60.5)
+        const rev = tl.events.filter((e) => e.type === 'photo_reveal')
+        expect(rev).toHaveLength(1)
+        const r = rev[0] as Extract<TimelineEvent, { type: 'photo_reveal' }>
+        expect(r.photo).toBe(0)
+        expect(r.dur).toBeGreaterThanOrEqual(7)
+        expect(r.dur).toBeLessThanOrEqual(9)
+        const after = s.beats.length <= 4 ? 0 : 1
+        const lastOfBeat = Math.max(...tl.events.filter((e) => e.beat === after && e.type !== 'photo_reveal' && e.type !== 'photo_fan' && e.type !== 'camera').map((e) => e.t + e.dur))
+        expect(r.t).toBeGreaterThanOrEqual(lastOfBeat - 1e-6)
+        const firstNext = Math.min(...tl.events.filter((e) => e.beat === after + 1).map((e) => e.t))
+        expect(r.t + r.dur).toBeLessThanOrEqual(firstNext + 1e-6)
+        // внутри — никакой камеры и никаких действий
+        const inside = tl.events.filter((e) => e !== r && e.t > r.t + 1e-6 && e.t < r.t + r.dur - 1e-6)
+        expect(inside.filter((e) => e.type === 'camera')).toEqual([])
+        expect(inside.filter((e) => e.type === 'actor_walk' || e.type === 'word_lift')).toEqual([])
+        const cam = tl.events.find((e) => e.type === 'camera' && Math.abs(e.t - (r.t + r.dur)) < 1e-6) as Extract<TimelineEvent, { type: 'camera' }>
+        expect(cam && ['wide', 'push_in'].includes(cam.shot)).toBe(true)
+        const fan = tl.events.filter((e) => e.type === 'photo_fan') as Extract<TimelineEvent, { type: 'photo_fan' }>[]
+        if (photoCount > 1) {
+          expect(fan).toHaveLength(1)
+          expect(fan[0].from).toBe(1)
+          expect(fan[0].t).toBeCloseTo(r.t + r.dur, 5)
+          expect(fan[0].dur).toBeGreaterThanOrEqual(2)
+          expect(fan[0].dur).toBeLessThanOrEqual(3)
+        } else expect(fan).toHaveLength(0)
+      }
+    }
+  })
+
+  it('в каждом фильме есть облёт с targetQuote, не на первом бите', () => {
+    for (const s of days)
+      for (const seed of [1, 2, 3]) {
+        const tl = choreograph(s, { seed, photoCount: 2 })
+        const orbits = tl.events.filter((e) => e.type === 'camera' && e.shot === 'orbit_quarter') as Extract<TimelineEvent, { type: 'camera' }>[]
+        expect(orbits.length).toBeGreaterThanOrEqual(1)
+        expect(orbits.every((o) => o.targetQuote && s.beats.some((b) => b.quote === o.targetQuote))).toBe(true)
+        expect(orbits.some((o) => o.beat === 0)).toBe(false)
+      }
+  })
+
+  it('общий план в середине фильма — только у первого бита и у веера снимков', () => {
+    for (const s of days) {
+      const tl = choreograph(s, { seed: 5, photoCount: 2 })
+      const mid = tl.events.filter((e) => e.type === 'camera' && e.shot === 'wide' && e.beat > 0) as Extract<TimelineEvent, { type: 'camera' }>[]
+      for (const c of mid) expect(tl.events.some((e) => e.type === 'photo_fan' && Math.abs(e.t - c.t) < 1e-6)).toBe(true)
+    }
+  })
+})

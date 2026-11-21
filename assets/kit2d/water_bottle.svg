@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<path d="M36 30 Q36 24 42 22 L42 14 L58 14 L58 22 Q64 24 64 30 L66 86 Q66 94 58 94 L42 94 Q34 94 34 86 Z" fill="#bcd3e3"/>
+<path d="M56 26 Q64 26 64 30 L66 86 Q66 94 58 94 L54 94 Q60 70 56 26 Z" fill="#7f97b3"/>
+<rect x="34" y="50" width="32" height="22" fill="#fbf6ea" stroke="#1b1410" stroke-width="2"/>
+<rect x="34" y="56" width="32" height="6" fill="#3b8483"/>
+<polygon points="50.0,58.0 52.0,60.0 50.0,62.0 48.0,60.0" fill="#fbf6ea"/>
+<rect x="39" y="30" width="4" height="16" rx="2" fill="#e3f0f5"/>
+<rect x="39" y="76" width="4" height="12" rx="2" fill="#e3f0f5"/>
+<path d="M36 30 Q36 24 42 22 L42 14 L58 14 L58 22 Q64 24 64 30 L66 86 Q66 94 58 94 L42 94 Q34 94 34 86 Z" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M36 40 L64 40 M35 80 L65 80" fill="none" stroke="#7f97b3" stroke-width="1.5"/>
+<rect x="40" y="6" width="20" height="10" rx="2" fill="#3b8483" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M44 8 L44 14 M48 8 L48 14 M52 8 L52 14 M56 8 L56 14" fill="none" stroke="#1f4a50" stroke-width="1.2"/>
+</svg>

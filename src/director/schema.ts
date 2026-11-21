@@ -1,6 +1,8 @@
 // JSON-схема сценария и текст каталога — оба собираются из assets/catalog.json,
 // поэтому промпт, схема и движок не расходятся.
 import { catalog } from '../types/script'
+import { CATEGORIES, CATEGORY_RU, KIT_LIBRARY, categoryOf } from '../kit/library'
+import { MAKE_TAGS } from './results'
 
 const keys = (o: Record<string, string>) => Object.keys(o)
 
@@ -18,6 +20,8 @@ export const ids = {
   weathers: [...catalog.weathers],
   tempos: [...catalog.tempos],
   paletteColors: [...catalog.paletteColors],
+  /** Все предметы библиотеки кита (включая прежние items и popups с теми же id). */
+  kit: KIT_LIBRARY.map((m) => m.id),
 }
 
 const str = (description?: string) => (description ? { type: 'string', description } : { type: 'string' })
@@ -61,11 +65,18 @@ export function buildScriptSchema(): Record<string, unknown> {
         action: en(ids.actions),
         result: {
           anyOf: [
-            result('popup', ids.popups),
-            result('item', ids.items),
+            result('kit', ids.kit),
+            obj(
+              {
+                kind: { type: 'string', const: 'make' },
+                name: str('предмет в именительном падеже, 1–3 слова'),
+                hint: str('как выглядит, главное в силуэте, до 12 слов'),
+                tags: { type: 'array', items: en([...MAKE_TAGS]), description: '2–4 тега' },
+              },
+              'дорисовать предмет, которого нет в библиотеке',
+            ),
             result('effect', ids.effects),
             result('person', ids.persons),
-            result('crystal', ['crystal']),
           ],
         },
         camera: en(ids.cameras),
@@ -80,15 +91,24 @@ function section(title: string, o: Record<string, string>): string {
   return `${title}:\n` + Object.entries(o).map(([k, v]) => `- ${k} — ${v}`).join('\n')
 }
 
+/** Библиотека кита компактно: по строке на категорию, «id название». ground — встаёт на странице объёмом. */
+function kitText(): string {
+  const lines = CATEGORIES.map((c) => {
+    const items = KIT_LIBRARY.filter((m) => categoryOf(m.id) === c)
+    if (!items.length) return ''
+    return `- ${CATEGORY_RU[c]}: ` + items.map((m) => `${m.id} ${m.ru}${m.hold === 'ground' ? '*' : ''}`).join('; ')
+  }).filter(Boolean)
+  return 'Результат kind="kit" — слово становится предметом из библиотеки (id — латиницей; * — большой, встаёт на странице объёмом, как pop-up):\n' + lines.join('\n')
+}
+
 /** Текст каталога для системного промпта. */
 export function buildCatalogText(): string {
   return [
     section('Действия человечка (action)', catalog.actions),
-    section('Результат kind="popup" — из страницы встаёт объём', catalog.popups),
-    section('Результат kind="item" — слово становится предметом', catalog.items),
+    kitText(),
+    'Результат kind="make" — слова нет в библиотеке: предмет дорисуют по твоему описанию. name — что это (именительный падеж), hint — как выглядит, tags — 2–4 тега из: ' + MAKE_TAGS.join(', ') + '.',
     section('Результат kind="effect" — слово рассыпается в эффект', catalog.effects),
     section('Результат kind="person"', catalog.persons),
-    'Результат kind="crystal", id="crystal" — запасной: светящийся кубик из букв слова, если подходящего предмета нет.',
     section('Камера (camera)', catalog.cameras),
     section('Эффект сцены (effect, может быть null)', catalog.sceneEffects),
     section('Постановка противоречия (contradiction.staging)', catalog.stagings),

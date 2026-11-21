@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<ellipse cx="50" cy="86" rx="42" ry="9" fill="#fbf6ea" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="50" cy="85" rx="34" ry="6" fill="#3b8483"/>
+<ellipse cx="50" cy="84.5" rx="30" ry="5" fill="#fbf6ea"/>
+<path d="M19 81 Q17 69 30 67 Q43 69 41 81 Q30 86 19 81 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="26" cy="73" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 26 73)"/>
+<path d="M39 83 Q37 71 50 69 Q63 71 61 83 Q50 88 39 83 Z" fill="#e8b04a" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="46" cy="75" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 46 75)"/>
+<path d="M59 81 Q57 69 70 67 Q83 69 81 81 Q70 86 59 81 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="66" cy="73" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 66 73)"/>
+<path d="M29 67 Q27 55 40 53 Q53 55 51 67 Q40 72 29 67 Z" fill="#e8b04a" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="36" cy="59" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 36 59)"/>
+<path d="M49 67 Q47 55 60 53 Q73 55 71 67 Q60 72 49 67 Z" fill="#c9953d" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="56" cy="59" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 56 59)"/>
+<path d="M39 52 Q37 40 50 38 Q63 40 61 52 Q50 57 39 52 Z" fill="#e8b04a" stroke="#1b1410" stroke-width="2.5"/><ellipse cx="46" cy="44" rx="3.5" ry="2" fill="#f4d675" transform="rotate(-20 46 44)"/>
+</svg>

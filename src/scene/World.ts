@@ -25,8 +25,9 @@ export class World {
    * Проиграть день. clock — источник времени в секундах (например, время песни);
    * без него проигрыватель идёт по своим часам.
    */
-  playDay(text: string, script: DayScript, opts: { seed?: number; beatTimes?: number[]; clock?: () => number } = {}) {
-    const timeline = choreograph(script, { seed: opts.seed ?? 1, beatTimes: opts.beatTimes })
+  playDay(text: string, script: DayScript, opts: { seed?: number; beatTimes?: number[]; clock?: () => number; photoCount?: number } = {}) {
+    const timeline = choreograph(script, { seed: opts.seed ?? 1, beatTimes: opts.beatTimes, photoCount: opts.photoCount ?? 0 })
+    this.film.preload(timeline)
     const player = new TimelinePlayer(opts.clock ? { clock: opts.clock } : {})
     player.load(timeline, this.film, text.trim())
     player.play()

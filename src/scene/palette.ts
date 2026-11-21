@@ -1,4 +1,4 @@
-/** Мастер-палитра, 32 цвета. Всё, что рисуется в сцене, берёт цвета отсюда. */
+/** Мастер-палитра, 34 цвета (32 + два тона кожи). Всё, что рисуется в сцене, берёт цвета отсюда. */
 export const PALETTE = {
   ink: 0x1b1410,
   brownDark: 0x3a2618,
@@ -32,6 +32,9 @@ export const PALETTE = {
   mauve: 0x8a5a7c,
   grey: 0x8c8478,
   greyLight: 0xbfb7a6,
+  /** Кожа жителей: основной и тень. */
+  skin: 0xf6cfac,
+  skinShade: 0xde9f7e,
 } as const
 
 export type PaletteName = keyof typeof PALETTE

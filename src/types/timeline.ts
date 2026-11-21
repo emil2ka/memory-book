@@ -27,6 +27,14 @@ export type TimelineEvent =
   | (Base & { type: 'scene_effect'; effect: SceneEffectId })
   | (Base & { type: 'staging'; staging: StagingId })
   | (Base & { type: 'title_reveal'; title: string })
+  /**
+   * Полароид: человечек вытягивает снимок photo из книги, встряхивает, снимок проявляется
+   * и встаёт задником; человечек садится смотреть. Камерой в это время управляет сцена —
+   * других событий camera на этом отрезке быть не должно. Длительность 7–9 с.
+   */
+  | (Base & { type: 'photo_reveal'; photo: number })
+  /** Остальные снимки, начиная с from, выезжают веером и проявляются сами. 2–3 с. */
+  | (Base & { type: 'photo_fan'; from: number })
   | (Base & { type: 'to_shelf' })
 
 export interface Timeline {

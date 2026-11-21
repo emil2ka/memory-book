@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" stroke-linejoin="round" stroke-linecap="round">
+<path d="M78 50 C94 52 92 70 80 68" fill="none" stroke="#1b1410" stroke-width="10"/><path d="M78 50 C94 52 92 70 80 68" fill="none" stroke="#fbf6ea" stroke-width="5"/>
+<path d="M22 56 Q10 52 6 36" fill="none" stroke="#1b1410" stroke-width="10"/><path d="M22 56 Q10 52 6 36" fill="none" stroke="#fbf6ea" stroke-width="5"/>
+<path d="M20 60 Q20 34 50 32 Q80 34 80 60 Q80 88 50 88 Q20 88 20 60 Z" fill="#fbf6ea"/>
+<path d="M64 36 Q80 42 80 60 Q80 88 50 88 Q72 76 64 36 Z" fill="#cbb78d"/>
+<rect x="20" y="58" width="60" height="7" fill="#3b8483"/>
+<polygon points="30.0,59.0 33.0,61.5 30.0,64.0 27.0,61.5" fill="#fbf6ea"/>
+<polygon points="42.0,59.0 45.0,61.5 42.0,64.0 39.0,61.5" fill="#fbf6ea"/>
+<polygon points="54.0,59.0 57.0,61.5 54.0,64.0 51.0,61.5" fill="#fbf6ea"/>
+<polygon points="66.0,59.0 69.0,61.5 66.0,64.0 63.0,61.5" fill="#fbf6ea"/>
+<ellipse cx="32" cy="46" rx="4" ry="7" fill="#e3f0f5" transform="rotate(30 32 46)"/>
+<path d="M20 60 Q20 34 50 32 Q80 34 80 60 Q80 88 50 88 Q20 88 20 60 Z" fill="none" stroke="#1b1410" stroke-width="2.5"/>
+<ellipse cx="50" cy="88" rx="18" ry="3.5" fill="#fbf6ea" stroke="#1b1410" stroke-width="2.5"/>
+<path d="M36 34 Q36 22 50 22 Q64 22 64 34 Z" fill="#3b8483" stroke="#1b1410" stroke-width="2.5"/>
+<circle cx="50" cy="18" r="4.5" fill="#1f4a50" stroke="#1b1410" stroke-width="2.5"/>
+</svg>

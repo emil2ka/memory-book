@@ -4,6 +4,8 @@ import { contradictionFromText, fallbackDirect, moodFromText, varyActions } from
 import { ACTION_SYNONYMS, CAMERA_SYNONYMS, LEXICON, RESULT_SYNONYMS, SCENE_EFFECT_SYNONYMS, STAGING_SYNONYMS } from './lexicon'
 import { ids } from './schema'
 import { expandToWord, findStem, isLetter, nearestQuote, norm, words } from './text'
+import { findByName, findByWord, kitById } from '../kit/library'
+import { kitFromQuote, kitResult, makeResult, toKit } from './results'
 
 export interface ValidationReport {
   script: DayScript
@@ -56,25 +58,49 @@ export function fixQuote(text: string, quote: string): { quote: string; fixed: b
 }
 
 const RESULT_LISTS: Record<string, string[]> = { popup: ids.popups, item: ids.items, effect: ids.effects, person: ids.persons }
-const CRYSTAL: BeatResult = { kind: 'crystal', id: 'crystal' }
+const CRYSTAL: BeatResult = { kind: 'kit', id: 'crystal' }
 
-/** Привести результат к каталогу: неизвестный id → синоним → кристалл. */
-export function fixResult(raw: unknown): { result: BeatResult; fixed: boolean } {
+/** Сколько дорисовок допускается в одном дне (каждая — вызов /api/make). */
+export const MAX_MAKES = 3
+
+/**
+ * Привести результат к каталогу и библиотеке кита.
+ * kit с известным id → как есть; прежние item/popup → kit; неизвестный id → синоним, слово по-русски, слово цитаты;
+ * make → kit, если такое слово уже есть в библиотеке; иначе кристалл (тоже предмет библиотеки).
+ */
+export function fixResult(raw: unknown, quote = ''): { result: BeatResult; fixed: boolean } {
   const r = isObj(raw) ? raw : {}
   const kind = asStr(r.kind)
   const id = asStr(r.id)
-  if (kind === 'crystal') return { result: CRYSTAL, fixed: id !== 'crystal' }
-  if (RESULT_LISTS[kind]?.includes(id)) return { result: { kind, id } as BeatResult, fixed: false }
-  // id есть, но в другом разделе каталога
-  for (const [k, list] of Object.entries(RESULT_LISTS)) if (list.includes(id)) return { result: { kind: k, id } as BeatResult, fixed: true }
-  const syn = RESULT_SYNONYMS[key(id)]
-  if (syn) return { result: syn, fixed: true }
-  // id по-русски — через словарь
-  if (id) {
-    const nid = norm(id)
-    for (const e of LEXICON) if (e.stems.some((s) => findStem(nid, s) >= 0)) return { result: e.result, fixed: true }
+  if (kind === 'effect' || kind === 'person') {
+    if (RESULT_LISTS[kind].includes(id)) return { result: { kind, id } as BeatResult, fixed: false }
   }
-  return { result: CRYSTAL, fixed: true }
+  if (kind === 'kit' && kitById(id)) return { result: kitResult(id), fixed: false }
+  if ((kind === 'item' || kind === 'popup') && kitById(id)) return { result: kitResult(id), fixed: false }
+  if (kind === 'make') {
+    const name = asStr(r.name).trim() || quote
+    // одно слово, которое уже есть в библиотеке, — не дорисовывать. Составное («швейная машинка») —
+    // не дробить по словам: «машинка» в нём не машина.
+    const lib = name.includes(' ') ? findByName(name) : findByWord(name)
+    if (lib) return { result: kitResult(lib.id), fixed: true }
+    if (name) return { result: makeResult(name, asStr(r.hint), Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === 'string') : []), fixed: false }
+  }
+  if (kind === 'crystal') return { result: kitResult('crystal'), fixed: id !== 'crystal' }
+  // id есть, но в другом разделе каталога
+  if (kitById(id)) return { result: kitResult(id), fixed: true }
+  for (const [k, list] of Object.entries(RESULT_LISTS)) if (list.includes(id)) return { result: toKit({ kind: k, id } as BeatResult), fixed: true }
+  const syn = RESULT_SYNONYMS[key(id)]
+  if (syn) return { result: toKit(syn), fixed: true }
+  // id по-русски или английское слово — через библиотеку и словарь
+  if (id) {
+    const lib = findByWord(id)
+    if (lib) return { result: kitResult(lib.id), fixed: true }
+    const nid = norm(id)
+    for (const e of LEXICON) if (e.stems.some((s) => findStem(nid, s) >= 0)) return { result: toKit(e.result), fixed: true }
+  }
+  const byQuote = kitFromQuote(quote)
+  if (byQuote) return { result: kitResult(byQuote.id), fixed: true }
+  return { result: kitResult('crystal'), fixed: true }
 }
 
 function fixEnum<T extends string>(list: string[], syn: Record<string, T>, v: unknown, dflt: T): { value: T; fixed: boolean } {
@@ -124,7 +150,7 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
     }
     usedQuotes.add(fq.quote)
     const action = fixEnum<ActionId>(ids.actions, ACTION_SYNONYMS, b.action, 'pull')
-    const result = fixResult(b.result)
+    const result = fixResult(b.result, fq.quote)
     const camera = fixEnum<CameraId>(ids.cameras, CAMERA_SYNONYMS, b.camera, 'wide')
     let effect: SceneEffectId | null = null
     let effFixed = false
@@ -144,6 +170,15 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
     issues.push(`битов ${beats.length} → 7`)
     beats.length = 7
   }
+  // не больше MAX_MAKES дорисовок: лишние — кристалл (каждая дорисовка — отдельный вызов)
+  let makes = 0
+  for (const b of beats) {
+    if (b.result.kind !== 'make') continue
+    if (++makes > MAX_MAKES) {
+      b.result = CRYSTAL
+      issues.push(`лишняя дорисовка «${b.quote}» → кристалл`)
+    }
+  }
 
   // Меньше 4 — добрать из запасного словаря, потом кристаллами на самых длинных словах.
   if (beats.length < 4) {
@@ -151,7 +186,7 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
       if (beats.length >= 4) break
       if (usedQuotes.has(fbBeat.quote)) continue
       usedQuotes.add(fbBeat.quote)
-      beats.push({ ...fbBeat, action: fbBeat.result.kind === 'crystal' ? 'walk' : fbBeat.action })
+      beats.push({ ...fbBeat, action: fbBeat.result.kind === 'crystal' || fbBeat.result.id === 'crystal' ? 'walk' : fbBeat.action })
       stats.padded++
     }
     const long = words(text).filter((w) => !usedQuotes.has(w.text)).sort((a, b) => b.text.length - a.text.length)
@@ -242,8 +277,15 @@ export function checkScript(s: DayScript, text: string): string[] {
     if (!ids.actions.includes(b.action)) errs.push(`action ${b.action}`)
     if (!ids.cameras.includes(b.camera)) errs.push(`camera ${b.camera}`)
     if (b.effect !== null && !ids.sceneEffects.includes(b.effect)) errs.push(`effect ${b.effect}`)
-    const list = b.result?.kind === 'crystal' ? ['crystal'] : RESULT_LISTS[b.result?.kind]
-    if (!list || !list.includes(b.result.id)) errs.push(`result ${b.result?.kind}:${b.result?.id}`)
+    const r = b.result
+    if (r?.kind === 'kit') {
+      if (!kitById(r.id)) errs.push(`kit ${r.id}`)
+    } else if (r?.kind === 'make') {
+      if (!r.name?.trim() || !r.id?.startsWith('make:') || !Array.isArray(r.tags)) errs.push(`make ${r.name}`)
+    } else {
+      const list = r?.kind === 'crystal' ? ['crystal'] : RESULT_LISTS[r?.kind]
+      if (!list || !list.includes(r.id)) errs.push(`result ${r?.kind}:${r?.id}`)
+    }
   }
   for (const k of ['warmth', 'tension', 'energy', 'openness'] as const) {
     const v = s.mood?.[k]

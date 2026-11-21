@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { World } from './scene/World'
 import { PALETTE, css } from './scene/palette'
 import { SpriteBank } from './actors/sprites'
@@ -39,7 +39,23 @@ function isUrl(s?: string) {
   }
 }
 
+/** Витрины для проверки: ?lab=kit — все предметы кита. */
+const LAB = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lab') : null
+const KitLab = lazy(() => import('./lab/KitLab'))
+const Kit2DLab = lazy(() => import('./lab/Kit2DLab'))
+const LAB_MODE = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mode') : null
+
 export function App() {
+  if (LAB === 'kit')
+    return (
+      <Suspense fallback={null}>
+        {LAB_MODE === '3d' ? <KitLab /> : <Kit2DLab />}
+      </Suspense>
+    )
+  return <DiaryApp />
+}
+
+function DiaryApp() {
   const host = useRef<HTMLDivElement>(null)
   const worldRef = useRef<World | null>(null)
   const songRef = useRef<SongPlayer | null>(null)
@@ -254,7 +270,7 @@ export function App() {
         console.warn('[song] не запустилась, фильм идёт без звука', e)
       }
     }
-    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock })
+    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock, photoCount: cur.photos.length })
     if (clock && sp) player.setAudio(sp)
     playerRef.current = player
     player.onEnd(async () => {
