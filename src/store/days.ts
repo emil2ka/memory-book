@@ -32,10 +32,40 @@ export interface StoredDay {
   /** имена цветов каталога по фото */
   photoPalette?: string[]
   song: StoredSong | null
+  /**
+   * Сценарий фильма. У записи без фильма («Сохранить запись», без ИИ) — заглушка без битов: название
+   * «… · без фильма», бледный корешок; «Собрать день» потом соберёт настоящий (isNoFilm).
+   */
   script: DayScript
   source: DirectorSource
   seed: number
   createdAt: number
+  /** Запись без фильма (сохранена без сборки и без ИИ). В облаке не хранится — признак: у сценария нет битов. */
+  noFilm?: boolean
+}
+
+/** День сохранён без фильма: в книге запись и сургуч «Собрать», а не фильм. */
+export const isNoFilm = (d: Pick<StoredDay, 'script' | 'noFilm'>) => !!d.noFilm || !d.script?.beats?.length
+
+/** Сценарий-заглушка записи без фильма: название из первых слов и «· без фильма», бледный корешок (вялое настроение). */
+export function noFilmScript(text: string, palette: string[] = []): DayScript {
+  // первые слова первого предложения, без хвостовой запятой и союза («Сегодня шёл снег, и» → «Сегодня шёл снег»)
+  const first = text.replace(/\s+/g, ' ').trim().split(/[.!?…]/)[0] ?? ''
+  const ws = first.split(' ').filter(Boolean).slice(0, 4)
+  while (ws.length > 1 && /^(и|а|но|что|как|я|мы)$/i.test(ws[ws.length - 1].replace(/[,;:—-]+$/, ''))) ws.pop()
+  const words = ws.join(' ').replace(/[,;:—-]+$/, '')
+  return {
+    title: `${words || 'Запись'} · без фильма`,
+    mood: { warmth: 0, tension: 0, energy: -0.5, openness: 0 },
+    contradiction: null,
+    time_of_day: 'day',
+    weather: 'clear',
+    place: 'home',
+    palette_hint: palette.length ? palette.slice(0, 4) : ['cream', 'grey_blue'],
+    song: { tempo: 'medium', energy: 0.5, estimated: true },
+    beats: [],
+    why: ['Запись без фильма: «Собрать день» соберёт фильм', '', ''],
+  } as unknown as DayScript
 }
 
 const DB = 'memory-book'

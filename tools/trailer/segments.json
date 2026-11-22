@@ -1,0 +1,159 @@
+[
+ {
+  "name": "open",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    0.0,
+    8.4
+   ]
+  ]
+ },
+ {
+  "name": "hero",
+  "kind": "still",
+  "img": "stills_local/still_hd_02_hero.jpg",
+  "dur": 6.0
+ },
+ {
+  "name": "text",
+  "kind": "still",
+  "img": "stills/still_hd_07b_write_text.jpg",
+  "dur": 5.0
+ },
+ {
+  "name": "photo",
+  "kind": "still",
+  "img": "stills/up_ready.jpg",
+  "dur": 5.0
+ },
+ {
+  "name": "songs",
+  "kind": "still",
+  "img": "stills/up_songs.jpg",
+  "dur": 6.5
+ },
+ {
+  "name": "ready",
+  "kind": "still",
+  "img": "stills_local/still_hd_09_write_ready.jpg",
+  "dur": 3.4
+ },
+ {
+  "name": "busy",
+  "kind": "still",
+  "img": "stills_local/still_hd_10_busy.jpg",
+  "dur": 3.0
+ },
+ {
+  "name": "story1",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    5.0,
+    21.0
+   ]
+  ]
+ },
+ {
+  "name": "story2",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    25.5,
+    31.5
+   ]
+  ]
+ },
+ {
+  "name": "story3",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    38.5,
+    52.0
+   ]
+  ]
+ },
+ {
+  "name": "bored",
+  "kind": "film",
+  "parts": [
+   [
+    "bored",
+    5.0,
+    26.6
+   ]
+  ]
+ },
+ {
+  "name": "beats",
+  "kind": "film",
+  "parts": [
+   [
+    "aul",
+    6.0,
+    8.5
+   ],
+   [
+    "aul",
+    12.5,
+    15.0
+   ],
+   [
+    "aul",
+    16.0,
+    18.5
+   ],
+   [
+    "aul",
+    26.0,
+    28.5
+   ]
+  ]
+ },
+ {
+  "name": "finale",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    53.0,
+    59.5
+   ],
+   [
+    "aul",
+    30.0,
+    35.5
+   ]
+  ]
+ },
+ {
+  "name": "close",
+  "kind": "film",
+  "parts": [
+   [
+    "park",
+    59.5,
+    63.5
+   ]
+  ]
+ },
+ {
+  "name": "after",
+  "kind": "still",
+  "img": "stills/up_after.jpg",
+  "dur": 4.5
+ },
+ {
+  "name": "title",
+  "kind": "still",
+  "img": "stills/title.png",
+  "dur": 6.5,
+  "zoom": 0.03
+ }
+]

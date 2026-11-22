@@ -11,9 +11,9 @@ beforeAll(() => {
 beforeEach(() => resetAiLimit())
 
 describe('лимит дней с ИИ на клиенте', () => {
-  it('7 дней с ИИ за неделю, восьмой — без ИИ; во время седьмого фильма ИИ есть, черновик восьмого — без ИИ', () => {
-    expect(aiDaysLeft()).toBe(7)
-    for (let i = 0; i < 7; i++) expect(beginAiDay()).toBe(true)
+  it('20 сборок с ИИ за неделю, 21-я — без ИИ; во время 20-го фильма ИИ есть, черновик следующего — без ИИ', () => {
+    expect(aiDaysLeft()).toBe(20)
+    for (let i = 0; i < 20; i++) expect(beginAiDay()).toBe(true)
     expect(aiOff()).toBe(false) // седьмой день ещё собирается — сценки с ИИ
     aiDraft()
     expect(aiOff()).toBe(true) // новый черновик: лимит исчерпан
@@ -22,7 +22,7 @@ describe('лимит дней с ИИ на клиенте', () => {
   })
   it('окно скользит: через 7 суток день снова с ИИ', () => {
     const t = Date.UTC(2026, 10, 22, 10)
-    for (let i = 0; i < 7; i++) beginAiDay(t + i * 3600_000)
+    for (let i = 0; i < 20; i++) beginAiDay(t + i * 3600_000)
     expect(aiDaysLeft(t + 24 * 3600_000)).toBe(0)
     expect(aiDaysLeft(t + 7 * 24 * 3600_000 + 1)).toBe(1)
   })

@@ -11,8 +11,8 @@ import os
 import subprocess
 import sys
 
-WORK = sys.argv[1]
-OUT = sys.argv[2]
+WORK = os.path.abspath(sys.argv[1])
+OUT = os.path.abspath(sys.argv[2])
 FPS = 24
 X = 0.4  # длина перехода
 SEG = os.path.join(WORK, 'seg')

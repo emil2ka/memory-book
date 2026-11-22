@@ -5,7 +5,7 @@ import { MAX_TEXT, type Need } from './checks'
 import { Cassette, type SongDraft } from './Cassette'
 import type { SongPick } from './SongAdvice'
 import { isImageFile } from '../photos/files'
-import { CardButton, FlagButton, Icon, PinNote, SealButton, Sheet, Spinner, Tape } from './paper'
+import { CardButton, FlagButton, Icon, PinNote, SealButton, Sheet, SlipButton, Spinner, Tape } from './paper'
 
 export interface PageRect { x: number; y: number; w: number; h: number }
 export interface PageRects { left: PageRect; right: PageRect; scale: number }
@@ -36,6 +36,12 @@ interface Props {
   photoSeen?: string
   /** песня выбрана (файл, ссылка или песня из записки): без неё «Собрать день» заперта на вид, клик показывает, чего не хватает */
   songReady?: boolean
+  /** записка от руки у сургуча: лимит дней с ИИ исчерпан («на этой неделе уже 7 дней с ИИ — этот соберу сам») */
+  aiNote?: string
+  /** записка у песни: «файл песни не сохранился — выбери снова» (черновик восстановлен без файла) */
+  songNote?: string
+  /** «Сохранить запись»: день на полку без фильма и без ИИ (песня не обязательна) */
+  onSaveRecord?: () => void
   onCollect: () => void
   onBack: () => void
   /** спрятать (плавно) — идёт фильм */
@@ -198,7 +204,7 @@ export function WriteLayer(p: Props) {
           <span>нужно хотя бы одно фото</span>
         ) : null}
         {p.songReady === false && !p.busy && (
-          <span className={`song-hint${p.need.includes('song') ? ' warn' : ''}`} role="status">♪ выбери песню дня</span>
+          <span className={`song-hint${p.need.includes('song') ? ' warn' : ''}`} role="status">♪ {p.songNote || 'выбери песню дня'}</span>
         )}
       </div>
 
@@ -221,6 +227,24 @@ export function WriteLayer(p: Props) {
         ariaLabel={p.songReady === false && !p.busy ? 'Собрать день — сначала выбери песню дня' : 'Собрать день'}
         title={p.songReady === false && !p.busy ? 'сначала выбери песню дня' : 'Собрать'}
       />
+      {/* «Сохранить запись» — вторая бирка у сургуча: день на полку без фильма и без ИИ */}
+      {p.onSaveRecord && !p.busy && (
+        <SlipButton
+          className="save-record"
+          seed="save-record"
+          onClick={p.onSaveRecord}
+          title="сохранить запись на полку без фильма — фильм можно собрать потом"
+          style={{ left: Math.max(6, Math.min(vw - 170, sealX + seal / 2 - 80)), top: sealY + sealH + 6 }}
+        >
+          Сохранить запись
+        </SlipButton>
+      )}
+      {/* лимит дней с ИИ: записка от руки у сургуча (во время сборки тот же текст — в записке «собираю») */}
+      {p.aiNote && !p.busy && (
+        <PinNote className="busy-note ai-note" seed="ai-limit" role="note" style={{ right: Math.max(6, vw - sealX + 6), top: Math.max(6, sealY + seal * 0.05) }}>
+          {p.aiNote}
+        </PinNote>
+      )}
       {p.busy && (
         <PinNote className="busy-note" spinner seed="busy" style={{ right: Math.max(6, vw - sealX + 6), top: Math.max(6, sealY + seal * 0.05) }}>
           {p.busyText ?? 'собираю…'}

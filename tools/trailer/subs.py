@@ -46,6 +46,13 @@ def subtitle(text, path):
     lines = text.split('\n')
     lh = 84
     y0 = H - 90 - lh * len(lines)
+    # мягкая тёмная полоса под титром: читается поверх подписей и цитат самого фильма
+    band = Image.new('L', (W, H), 0)
+    db = ImageDraw.Draw(band)
+    top = y0 - 70
+    for y in range(top, H):
+        db.line((0, y, W, y), fill=int(150 * min(1, (y - top) / 90)))
+    im.paste((10, 6, 4, 255), (0, 0), band)
     # мягкая тень: размытая тёмная копия
     sh = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     ds = ImageDraw.Draw(sh)

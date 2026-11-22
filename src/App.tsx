@@ -1,11 +1,11 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { World } from './scene/World'
 import { PALETTE, css } from './scene/palette'
 import { SpriteBank } from './actors/sprites'
 import { SongPlayer } from './audio/SongPlayer'
 import { directDay } from './director'
 import { byTakenTime, dayPalette, photoCardNote, photoFromStored, photoProblem, preparePhoto, type PreparedPhoto } from './photos'
-import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, listDays, localDate, newDayId, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
+import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, isNoFilm, listDays, localDate, newDayId, noFilmScript, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
 import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
 import { AccountCard, CloudBadge, MovePrompt, Welcome, type SaveState } from './ui/Account'
 import { DayPager, DaysBook } from './ui/DayNav'
@@ -33,6 +33,7 @@ import { Shelf } from './ui/Shelf'
 import { applyKnobs, fadeOut, linkMeta, makeSongClock, unlockSong } from './ui/song'
 import { MAX_PHOTOS, WriteLayer, type PageRects } from './ui/WriteLayer'
 import { AI_DAY_NOTE, aiDaysLeft, aiDraft, aiRefused, beginAiDay } from './kit/aiLimit'
+import { clearDraft, loadDraft, loadDraftFile, saveDraft, saveDraftFile, SONG_FILE_LOST, type DraftData, type DraftKind, type DraftSong } from './store/draft'
 
 type Phase = 'loading' | 'shelf' | 'opening' | 'write' | 'directing' | 'film' | 'after'
 
@@ -46,17 +47,6 @@ interface Current {
 }
 
 const EMPTY_SONG: SongDraft = { kind: 'none' }
-/** Черновик новой записи в localStorage (текст, снимки, песня-ссылка). */
-const DRAFT_KEY = 'mb-draft'
-function clearDraft(): void {
-  try {
-    localStorage.removeItem(DRAFT_KEY)
-  } catch {
-    /* нет хранилища */
-  }
-}
-/** Записка-вопрос посередине экрана (перезаписать день, удалить день). */
-const ASK_STYLE: CSSProperties = { position: 'fixed', left: '50%', top: '42%', transform: 'translate(-50%, -50%)', zIndex: 60, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', maxWidth: 'min(86vw, 360px)' }
 
 /** Песня сохранённого дня → черновик кассеты (правка дня). */
 function songDraftOf(s: StoredSong | null): SongDraft {
@@ -191,48 +181,59 @@ function DiaryApp() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Черновик не теряется: текст, снимки и песня-ссылка новой записи лежат в localStorage — переживают «На полку»
-  // и закрытую вкладку; при следующем «Записать день» запись продолжается («Дописать день»).
+  // Черновик не теряется (src/store/draft.ts): новый день и правка сохранённого дня — отдельно; текст, снимки и
+  // песня-ссылка — в localStorage, файл песни — в IndexedDB. Переживают «На полку» и закрытую вкладку.
+  const editingTitle = useRef('')
+  const [songNote, setSongNote] = useState('')
+  const [editDraft, setEditDraft] = useState<DraftData | null>(() => loadDraft('edit'))
   useEffect(() => {
-    if (phase !== 'write' || editingId.current) return
+    if (phase !== 'write') return
+    const kind: DraftKind = editingId.current ? 'edit' : 'new'
     const t = setTimeout(() => {
-      if (!text.trim() && !photos.length) return void clearDraft()
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ text, photos: photos.map((p) => p.dataUrl), song: song.kind === 'link' ? { ...song } : null }))
-      } catch {
-        // снимки не влезли — хотя бы текст
-        try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ text, photos: [], song: song.kind === 'link' ? { ...song } : null }))
-        } catch {
-          /* нет хранилища */
-        }
-      }
+      if (!text.trim() && !photos.length) return void clearDraft(kind)
+      const ds: DraftSong | null = song.kind === 'link' ? { ...song, kind: 'link' } : song.kind === 'file' ? { kind: 'file', title: song.title, bpm: song.bpm } : null
+      const edit = kind === 'edit' && editingId.current && editingMeta.current ? { id: editingId.current, title: editingTitle.current, ...editingMeta.current } : undefined
+      saveDraft(kind, { text, photos: photos.map((p) => p.dataUrl), song: ds, ...(edit ? { edit } : {}) })
     }, 600)
     return () => clearTimeout(t)
   }, [phase, text, photos, song])
+  // файл песни — отдельно и только когда он меняется (до 15 МБ)
+  const draftFile = song.kind === 'file' ? (song.file ?? null) : null
   useEffect(() => {
-    let raw: { text?: string; photos?: string[]; song?: SongDraft | null } | null = null
-    try {
-      raw = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null')
-    } catch {
-      raw = null
-    }
-    if (!raw || (!raw.text?.trim() && !raw.photos?.length)) return
-    const r = raw
-    void (async () => {
-      const restored: PreparedPhoto[] = []
-      for (const url of r.photos ?? []) {
-        try {
-          restored.push(await photoFromStored(await (await fetch(url)).blob()))
-        } catch {
-          /* битый снимок — без него */
-        }
+    if (phase !== 'write') return
+    void saveDraftFile(editingId.current ? 'edit' : 'new', draftFile)
+  }, [phase, draftFile])
+  /** Черновик → снимки и песня (файл — из IndexedDB; не сохранился — записка у песни). */
+  const restoreDraft = async (d: DraftData, kind: DraftKind): Promise<{ photos: PreparedPhoto[]; song: SongDraft }> => {
+    const restored: PreparedPhoto[] = []
+    for (const url of d.photos) {
+      try {
+        restored.push(await photoFromStored(await (await fetch(url)).blob()))
+      } catch {
+        /* битый снимок — без него */
       }
-      setText((t) => t || r.text || '')
-      setPhotos((ps) => (ps.length ? ps : restored))
-      if (r.song?.kind === 'link') setSong((cur) => (cur.kind === 'none' ? (r.song as SongDraft) : cur))
+    }
+    let sd: SongDraft = EMPTY_SONG
+    if (d.song?.kind === 'link') sd = { ...d.song, kind: 'link' }
+    else if (d.song?.kind === 'file') {
+      const f = await loadDraftFile(kind)
+      if (f) sd = { kind: 'file', file: f, title: d.song.title, analyzing: true }
+      else setSongNote(SONG_FILE_LOST)
+    }
+    return { photos: restored, song: sd }
+  }
+  // новый день, начатый до закрытия вкладки, — продолжается («Дописать день»)
+  useEffect(() => {
+    const d = loadDraft('new')
+    if (!d) return
+    void (async () => {
+      const r = await restoreDraft(d, 'new')
+      setText((t) => t || d.text)
+      setPhotos((ps) => (ps.length ? ps : r.photos))
+      if (r.song.kind !== 'none') changeSong(r.song)
       draftPending.current = true
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [need, setNeed] = useState<Need[]>([])
   /** записка «ты не поставил песню» на кассете (план 14 § 2): песни от ИИ по записи и фото; null — записки нет */
@@ -607,6 +608,8 @@ function DiaryApp() {
   }
 
   const toShelf = () => {
+    // начатая правка сохранённого дня ждёт на полке («Дописать правку»)
+    setEditDraft(loadDraft('edit'))
     stopFilm()
     worldRef.current?.setDraftPhotos([])
     worldRef.current?.idle()
@@ -643,6 +646,7 @@ function DiaryApp() {
     const demo = isDemo(d.id)
     editingId.current = demo ? null : d.id
     editingMeta.current = demo ? null : { date: d.date, createdAt: d.createdAt }
+    editingTitle.current = demo ? '' : d.script.title
     const draftSong = songDraftOf(d.song)
     setText(d.text)
     setPhotos(current.photos)
@@ -657,10 +661,64 @@ function DiaryApp() {
     toWrite({ text: d.text, photos: current.photos })
   }
 
+  /** «Дописать правку «…»»: правка сохранённого дня из черновика (пережила закрытую вкладку). */
+  const resumeEdit = async () => {
+    const d = editDraft
+    if (!d?.edit) return
+    const r = await restoreDraft(d, 'edit')
+    editingId.current = d.edit.id
+    editingMeta.current = { date: d.edit.date, createdAt: d.edit.createdAt }
+    editingTitle.current = d.edit.title
+    overwriteAsked.current = false
+    lastBuilt.current = null
+    setText(d.text)
+    setPhotos(r.photos)
+    setSongAdvice(null)
+    adviceFor.current = null
+    if (r.song.kind !== 'none') changeSong(r.song)
+    else setSong(EMPTY_SONG)
+    draftPending.current = true
+    aiDraft()
+    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
+    toWrite({ text: d.text, photos: r.photos })
+  }
+  const cancelEdit = () => {
+    clearDraft('edit')
+    setEditDraft(null)
+  }
+
+  /** Открыть запись без фильма: текст, фото и песня в книге; собрать — перезаписать этот же день. */
+  const openRecord = async (d: StoredDay) => {
+    let prepared: PreparedPhoto[] = []
+    try {
+      prepared = await Promise.all(d.photos.map((b) => photoFromStored(b)))
+    } catch (e) {
+      console.warn('[photos]', e)
+    }
+    editingId.current = d.id
+    editingMeta.current = { date: d.date, createdAt: d.createdAt }
+    editingTitle.current = d.script.title
+    lastBuilt.current = null
+    setText(d.text)
+    setPhotos(prepared)
+    const ds = songDraftOf(d.song)
+    if (ds.kind === 'file') changeSong({ ...ds, analyzing: true })
+    else setSong(ds)
+    setSongAdvice(null)
+    adviceFor.current = null
+    draftPending.current = true
+    aiDraft()
+    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
+    toWrite({ text: d.text, photos: prepared })
+    // это та же запись — «перезаписать?» не спрашиваем
+    overwriteAsked.current = true
+  }
+
   newDayRef.current = () => newDay()
   const newDay = () => {
     editingId.current = null
     editingMeta.current = null
+    editingTitle.current = ''
     overwriteAsked.current = false
     // новый черновик: лимит дней с ИИ решится при «Собрать»; записка — если на сегодня ИИ уже нет
     aiDraft()
@@ -815,6 +873,7 @@ function DiaryApp() {
 
   const changeSong = (s: SongDraft) => {
     setSong(s)
+    setSongNote('')
     setNeed((n) => n.filter((x) => x !== 'song'))
     if (s.kind === 'file' && s.file && songLoadedFor.current !== s.file) {
       const file = s.file
@@ -866,6 +925,65 @@ function DiaryApp() {
     }
   }
 
+  /** Песня черновика → песня дня для хранения. */
+  const storedSongOf = (sp: ReturnType<typeof getSong> | null): StoredSong | null =>
+    song.kind === 'file'
+      ? { kind: 'file', blob: song.file, title: song.title, bpm: sp?.analysis?.bpm || song.bpm }
+      : song.kind === 'link'
+        ? {
+            kind: 'link',
+            url: song.url,
+            title: song.title,
+            artist: song.artist,
+            tempo: song.tempo,
+            energy: song.energy,
+            ...(draftYt ? { yt: draftYt } : {}),
+            ...(song.suggested ? { suggested: true, why: songAdvice?.why || song.why } : {}),
+          }
+        : null
+
+  /**
+   * «Сохранить запись»: день (текст, фото, песня) — на полку и в облако без сценария и без ИИ, лимит не тратится,
+   * песня не обязательна. На полке — «… · без фильма», бледный корешок; открыть — запись и «Собрать день».
+   */
+  const saveRecord = async () => {
+    if (!text.trim()) {
+      setNeed(['text'])
+      return
+    }
+    setNeed([])
+    const now = new Date()
+    const meta = editingId.current ? editingMeta.current : null
+    const palette = dayPalette(photos.map((p) => p.swatches))
+    const day: StoredDay = {
+      id: editingId.current ?? newDayId(now),
+      date: meta?.date ?? localDate(now),
+      text: text.trim(),
+      photos: photos.map((p) => p.blob),
+      photoPalette: palette,
+      song: storedSongOf(null),
+      script: noFilmScript(text, palette),
+      source: 'fallback',
+      seed: seedFromString(text + now.toISOString().slice(0, 10)),
+      createdAt: meta?.createdAt ?? now.getTime(),
+      noFilm: true,
+    }
+    try {
+      await persistDay(day)
+      if (editingTitle.current) {
+        clearDraft('edit')
+        setEditDraft(null)
+      } else clearDraft('new')
+      draftPending.current = false
+      await refreshDays()
+      toShelf()
+      setStatus('запись на полке — фильм соберёшь потом')
+    } catch (e) {
+      console.error('[store]', e)
+      setStatus('не получилось сохранить')
+    }
+  }
+
   const collectDirected = async (sp: ReturnType<typeof getSong> | null, ai = true, reuse: { script: DayScript; source: StoredDay['source'] } | null = null) => {
     const input: DirectorInput = {
       text: text.trim(),
@@ -904,21 +1022,7 @@ function DiaryApp() {
     if (sp) {
       await Promise.race([sp.analysisReady, new Promise((r) => setTimeout(r, 6000))])
     }
-    const storedSong: StoredSong | null =
-      song.kind === 'file'
-        ? { kind: 'file', blob: song.file, title: song.title, bpm: sp?.analysis?.bpm || song.bpm }
-        : song.kind === 'link'
-          ? {
-              kind: 'link',
-              url: song.url,
-              title: song.title,
-              artist: song.artist,
-              tempo: song.tempo,
-              energy: song.energy,
-              ...(draftYt ? { yt: draftYt } : {}),
-              ...(song.suggested ? { suggested: true, why: songAdvice?.why || song.why } : {}),
-            }
-          : null
+    const storedSong = storedSongOf(sp)
     const now = new Date()
     // перезапись дня: тот же id, дата и время создания остаются
     const meta = editingId.current ? editingMeta.current : null
@@ -936,7 +1040,11 @@ function DiaryApp() {
     }
     if (res.source === 'fallback') console.info('[director] запасной сценарий:', res.reason)
     draftPending.current = false
-    clearDraft()
+    // собран: черновик своего вида стирается (правка — и её черновик)
+    if (editingTitle.current) {
+      clearDraft('edit')
+      setEditDraft(null)
+    } else clearDraft('new')
     worldRef.current?.setWaiting(false)
     await startFilm({ day, photos, stored: false, saved: false }, !!sp)
   }
@@ -946,6 +1054,8 @@ function DiaryApp() {
   openDayRef.current = (d: StoredDay) => void openDay(d)
   const openDay = async (d: StoredDay) => {
     setStatus('')
+    // запись без фильма: в книге запись, «Собрать день» соберёт фильм и перезапишет этот же день (без вопроса)
+    if (isNoFilm(d)) return void openRecord(d)
     // день с песней YouTube: в клике по книге разблокируем плеер (если ролик уже готов)
     const dYt = d.song?.kind === 'link' ? d.song.yt ?? youTubeId(d.song.url) : null
     if (dYt) {
@@ -1115,7 +1225,7 @@ function DiaryApp() {
         )}
         {/* правка сохранённого дня: перезаписать его или сохранить как новый (записка «канцелярия») */}
         {askOverwrite && phase === 'write' && (
-          <PinNote className="ask-note" role="dialog" seed="overwrite" style={ASK_STYLE}>
+          <PinNote className="ask-note" role="dialog" seed="overwrite">
             <span>перезаписать этот день?</span>
             <SlipButton
               seed="overwrite-yes"
@@ -1146,7 +1256,7 @@ function DiaryApp() {
         )}
         {/* удалить день — с подтверждением; удаляет и из облака */}
         {askDelete && current && phase === 'after' && (
-          <PinNote className="ask-note" role="dialog" seed="delete" style={ASK_STYLE}>
+          <PinNote className="ask-note" role="dialog" seed="delete">
             <span>удалить день «{current.day.script.title}»? вернуть не получится</span>
             <SlipButton seed="delete-yes" onClick={() => void remove(true)}>
               удалить
@@ -1170,12 +1280,22 @@ function DiaryApp() {
                 onClick={() => {
                   // новый день — с чистого листа: начатый черновик стирается
                   draftPending.current = false
-                  clearDraft()
+                  clearDraft('new')
                   newDay()
                 }}
               >
                 с чистого листа
               </SlipButton>
+            ) : null}
+            {editDraft?.edit ? (
+              <>
+                <TagButton onClick={() => void resumeEdit()} seed="cta-edit">
+                  Дописать правку «{editDraft.edit.title}»
+                </TagButton>
+                <SlipButton seed="cta-edit-cancel" onClick={cancelEdit}>
+                  отменить правку
+                </SlipButton>
+              </>
             ) : null}
             <span className="cta-hint">
               <Sheet edge="torn" w={170} h={24} seed="cta-hint" />
@@ -1199,6 +1319,9 @@ function DiaryApp() {
             song={song}
             // песня обязательна (план 15): без неё сургуч «Собрать» бледный, под страницей «♪ выбери песню дня»
             songReady={(song.kind === 'file' && !!song.file) || (song.kind === 'link' && (isUrl(song.url) || !!song.title))}
+            aiNote={aiNote}
+            songNote={songNote}
+            onSaveRecord={() => void saveRecord()}
             onSong={changeSong}
             songAdvice={songAdvice}
             need={need}
