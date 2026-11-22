@@ -12,7 +12,7 @@ import { kitSize } from '../src/kit/validate'
 import { runModel, type ModelRun } from './_model'
 import { photoCardText, sanitizePhotoCard } from '../src/kit/scenePhoto'
 import { findByName } from '../src/kit/library'
-import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
+import { dayLimitReply, overDayLimit, whoFromRequest } from './_dayLimit'
 
 export const config = { maxDuration: 20 }
 
@@ -307,7 +307,7 @@ export async function handleScene(body: unknown, ip: string): Promise<{ status: 
   try {
     if (rateLimited(ip)) throw new SceneError('rate_limited', 'Слишком много запросов, подождите', 429)
     // человек уже упёрся в лимит дней с ИИ — его сценки, фото, песни и дорисовки тоже без ИИ (api/_dayLimit.ts)
-    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers)
+    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers, ip)
     const run = await runScene(parseSceneInput(body))
     headers['x-scene-latency'] = String(run.latencyMs)
     headers['x-scene-attempts'] = String(run.attempts)
@@ -326,7 +326,8 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handleScene(body, whoOf(ip, request.headers.get('x-mb-user')))
+  // «вошёл» — только по проверенному токену Supabase; иначе гость по IP
+  const r = await handleScene(body, await whoFromRequest(ip, request.headers.get('authorization')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

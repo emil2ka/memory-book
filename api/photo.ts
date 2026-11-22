@@ -8,7 +8,7 @@ import { SCENE_LIBRARY } from '../src/kit/sceneCheck'
 import { sanitizePhotoCard } from '../src/kit/scenePhoto'
 import { COLOR_NAMES } from '../src/kit/validate'
 import type { PhotoCard } from '../src/types/script'
-import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
+import { dayLimitReply, overDayLimit, whoFromRequest } from './_dayLimit'
 
 export const config = { maxDuration: 15 }
 
@@ -173,7 +173,7 @@ export async function handlePhoto(body: unknown, ip: string): Promise<{ status: 
   try {
     if (rateLimited(ip)) throw new PhotoError('rate_limited', 'Слишком много запросов, подождите', 429)
     // человек уже упёрся в лимит дней с ИИ — его сценки, фото, песни и дорисовки тоже без ИИ (api/_dayLimit.ts)
-    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers)
+    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers, ip)
     const run = await runPhoto(parsePhotoInput(body))
     headers['x-photo-latency-ms'] = String(run.latencyMs)
     return { status: 200, json: run.card, headers }
@@ -191,7 +191,8 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handlePhoto(body, whoOf(ip, request.headers.get('x-mb-user')))
+  // «вошёл» — только по проверенному токену Supabase; иначе гость по IP
+  const r = await handlePhoto(body, await whoFromRequest(ip, request.headers.get('authorization')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

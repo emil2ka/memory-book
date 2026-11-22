@@ -6,7 +6,7 @@ import { SongPlayer } from './audio/SongPlayer'
 import { directDay } from './director'
 import { byTakenTime, dayPalette, photoCardNote, photoFromStored, photoProblem, preparePhoto, type PreparedPhoto } from './photos'
 import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, isNoFilm, listDays, localDate, newDayId, noFilmScript, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
-import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
+import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, cloudToken, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
 import { AccountCard, CloudBadge, MovePrompt, Welcome, type SaveState } from './ui/Account'
 import { DayPager, DaysBook } from './ui/DayNav'
 import { seedFromString } from './timeline/rng'
@@ -32,7 +32,7 @@ import { HeroPick } from './ui/HeroPick'
 import { Shelf } from './ui/Shelf'
 import { applyKnobs, fadeOut, linkMeta, makeSongClock, unlockSong } from './ui/song'
 import { MAX_PHOTOS, WriteLayer, type PageRects } from './ui/WriteLayer'
-import { AI_DAY_NOTE, aiDaysLeft, aiDraft, aiRefused, beginAiDay } from './kit/aiLimit'
+import { aiDaysLeft, aiDraft, aiNoteText, aiRefused, beginAiDay, setAiSignedIn } from './kit/aiLimit'
 import { clearDraft, loadDraft, loadDraftFile, saveDraft, saveDraftFile, SONG_FILE_LOST, type DraftData, type DraftKind, type DraftSong } from './store/draft'
 
 type Phase = 'loading' | 'shelf' | 'opening' | 'write' | 'directing' | 'film' | 'after'
@@ -47,6 +47,8 @@ interface Current {
 }
 
 const EMPTY_SONG: SongDraft = { kind: 'none' }
+// лимит сборок с ИИ: вошедший — 20 в неделю, гость — 5 (src/kit/aiLimit)
+setAiSignedIn(() => !!currentUser())
 
 /** Песня сохранённого дня → черновик кассеты (правка дня). */
 function songDraftOf(s: StoredSong | null): SongDraft {
@@ -167,7 +169,7 @@ function DiaryApp() {
 
   const [song, setSong] = useState<SongDraft>(EMPTY_SONG)
   /** записка у сургуча: «на этой неделе уже 7 дней с ИИ — этот соберу сам» (лимит дней с ИИ, src/kit/aiLimit) */
-  const [aiNote, setAiNote] = useState(() => (aiDaysLeft() > 0 ? '' : AI_DAY_NOTE))
+  const [aiNote, setAiNote] = useState(() => (aiDaysLeft() > 0 ? '' : aiNoteText()))
 
   // Esc закрывает записки-вопросы и «Мои дни»
   useEffect(() => {
@@ -679,7 +681,7 @@ function DiaryApp() {
     else setSong(EMPTY_SONG)
     draftPending.current = true
     aiDraft()
-    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
+    setAiNote(aiDaysLeft() > 0 ? '' : aiNoteText())
     toWrite({ text: d.text, photos: r.photos })
   }
   const cancelEdit = () => {
@@ -708,7 +710,7 @@ function DiaryApp() {
     adviceFor.current = null
     draftPending.current = true
     aiDraft()
-    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
+    setAiNote(aiDaysLeft() > 0 ? '' : aiNoteText())
     toWrite({ text: d.text, photos: prepared })
     // это та же запись — «перезаписать?» не спрашиваем
     overwriteAsked.current = true
@@ -722,7 +724,7 @@ function DiaryApp() {
     overwriteAsked.current = false
     // новый черновик: лимит дней с ИИ решится при «Собрать»; записка — если на сегодня ИИ уже нет
     aiDraft()
-    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
+    setAiNote(aiDaysLeft() > 0 ? '' : aiNoteText())
     // Ушли на полку посреди записи — черновик ждёт; после собранного дня начинаем с чистого листа.
     const keep = draftPending.current
     if (!keep) {
@@ -909,7 +911,7 @@ function DiaryApp() {
     const reuse = lastBuilt.current?.key === buildKey(text, photos, song) ? lastBuilt.current : null
     // лимит дней с ИИ (7 за скользящую неделю): нет — этот день соберёт запасной режиссёр, фильм всё равно будет
     const ai = reuse ? true : beginAiDay()
-    setAiNote(ai ? '' : AI_DAY_NOTE)
+    setAiNote(ai ? '' : aiNoteText())
     const sp = song.kind === 'file' ? getSong() : null
     // Звук разблокируется в том же клике, иначе браузер не даст играть после ответа режиссёра.
     if (draftYt) ytRef.current?.prime()
@@ -1008,12 +1010,13 @@ function DiaryApp() {
               }
             : null,
     }
-    const res: { script: DayScript; source: StoredDay['source']; reason?: string } = reuse ? { script: reuse.script, source: reuse.source } : await directDay(input, { offline: !ai, user: currentUser()?.id })
+    const token = currentUser() ? ((await cloudToken()) ?? undefined) : undefined
+    const res: { script: DayScript; source: StoredDay['source']; reason?: string } = reuse ? { script: reuse.script, source: reuse.source } : await directDay(input, { offline: !ai, token })
     lastBuilt.current = { key: buildKey(text, photos, song), script: res.script, source: res.source }
     // сервер сказал «лимит дней с ИИ» — на сегодня всё; день уже собран запасным режиссёром
     if (ai && res.reason?.includes('day_limit')) {
       aiRefused()
-      setAiNote(AI_DAY_NOTE)
+      setAiNote(aiNoteText())
     }
     let script = song.kind === 'link' ? applyKnobs(res.script, { tempo: song.tempo, energy: song.energy }) : res.script
     const photoPalette = dayPalette(photos.map((p) => p.swatches))

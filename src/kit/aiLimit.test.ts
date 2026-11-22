@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { aiDaysLeft, aiDraft, aiOff, aiRefused, beginAiDay, resetAiLimit } from './aiLimit'
+import { aiDaysLeft, aiDraft, aiNoteText, aiOff, aiRefused, beginAiDay, resetAiLimit, setAiSignedIn } from './aiLimit'
 import { offlineSongAdvice } from './sceneSong'
 import { directDay } from '../director'
 import { exemplars } from '../director/exemplars'
@@ -8,7 +8,10 @@ beforeAll(() => {
   const mem = new Map<string, string>()
   ;(globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) }
 })
-beforeEach(() => resetAiLimit())
+beforeEach(() => {
+  resetAiLimit()
+  setAiSignedIn(() => true)
+})
 
 describe('лимит дней с ИИ на клиенте', () => {
   it('20 сборок с ИИ за неделю, 21-я — без ИИ; во время 20-го фильма ИИ есть, черновик следующего — без ИИ', () => {
@@ -25,6 +28,16 @@ describe('лимит дней с ИИ на клиенте', () => {
     for (let i = 0; i < 20; i++) beginAiDay(t + i * 3600_000)
     expect(aiDaysLeft(t + 24 * 3600_000)).toBe(0)
     expect(aiDaysLeft(t + 7 * 24 * 3600_000 + 1)).toBe(1)
+  })
+  it('гость без входа — 5 сборок, записка зовёт войти; вошёл — 20', () => {
+    setAiSignedIn(() => false)
+    expect(aiDaysLeft()).toBe(5)
+    for (let i = 0; i < 5; i++) expect(beginAiDay()).toBe(true)
+    expect(beginAiDay()).toBe(false)
+    expect(aiNoteText()).toMatch(/без аккаунта — 5 сборок/)
+    setAiSignedIn(() => true)
+    expect(aiDaysLeft()).toBe(15)
+    expect(aiNoteText()).toMatch(/20 сборок/)
   })
   it('сервер сказал day_limit — на этой неделе всё', () => {
     expect(beginAiDay()).toBe(true)

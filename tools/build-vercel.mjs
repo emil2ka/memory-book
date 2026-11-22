@@ -18,6 +18,20 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, '.vercel/output')
 const skipSite = process.argv.includes('--skip-site')
 
+// Публичный адрес и anon-ключ Supabase (они и так в клиентской сборке) — в функции: сервер проверяет ими токен
+// вошедшего (лимит сборок с ИИ, api/_dayLimit.ts). Секретов здесь нет; значения не печатаются.
+const envLocal = {}
+for (const name of ['.env.local', '.env']) {
+  try {
+    for (const line of (await import('node:fs')).readFileSync(join(root, name), 'utf8').split(/\r?\n/)) {
+      const m = /^\s*(VITE_SUPABASE_URL|VITE_SUPABASE_ANON_KEY)\s*=\s*(.*?)\s*$/.exec(line)
+      if (m && m[2] && !envLocal[m[1]]) envLocal[m[1]] = m[2].replace(/^['"]|['"]$/g, '')
+    }
+  } catch {
+    /* файла нет */
+  }
+}
+
 /** Функции и их бюджет (с). */
 const FUNCTIONS = { direct: 30, scene: 20, make: 15, photo: 15, song: 15 }
 
@@ -69,6 +83,10 @@ for (const [name, maxDuration] of Object.entries(FUNCTIONS)) {
     banner: { js: "import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);" },
     legalComments: 'none',
     logLevel: 'warning',
+    define: {
+      'process.env.BUILD_SUPABASE_URL': JSON.stringify(envLocal.VITE_SUPABASE_URL ?? ''),
+      'process.env.BUILD_SUPABASE_ANON_KEY': JSON.stringify(envLocal.VITE_SUPABASE_ANON_KEY ?? ''),
+    },
   })
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ type: 'module' }))
   writeFileSync(join(dir, '.vc-config.json'), JSON.stringify({ runtime: 'nodejs22.x', handler: 'index.mjs', launcherType: 'Nodejs', maxDuration, shouldAddHelpers: false }, null, 1))

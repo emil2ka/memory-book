@@ -4,9 +4,22 @@
 // Сверх лимита день собирает запасной режиссёр — фильм всё равно получается; сценки — из библиотеки, песни — из
 // проверенного списка без ИИ. Демо-дни и повторный просмотр сохранённых дней лимит не тратят.
 
+/** Сборок с ИИ за скользящие 7 суток: вошедший — 20, гость без входа — 5. */
 export const AI_DAYS = 20
+export const AI_GUEST_DAYS = 5
 export const AI_WINDOW_MS = 7 * 24 * 3600_000
 export const AI_DAY_NOTE = 'на этой неделе уже 20 сборок с ИИ — этот соберу сам'
+export const AI_GUEST_NOTE = 'без аккаунта — 5 сборок с ИИ в неделю. Войди, и будет 20 — этот соберу сам'
+
+/** Вошёл ли человек (App подставляет currentUser из облака); по умолчанию — гость. */
+let signedIn: () => boolean = () => false
+export function setAiSignedIn(f: () => boolean): void {
+  signedIn = f
+}
+/** Предел сборок для этого человека. */
+export const aiLimitNow = () => (signedIn() ? AI_DAYS : AI_GUEST_DAYS)
+/** Записка у сургуча, когда лимит исчерпан: гостю — про вход, вошедшему — про неделю. */
+export const aiNoteText = () => (signedIn() ? AI_DAY_NOTE : AI_GUEST_NOTE)
 const KEY = 'mb-ai-days'
 
 function read(now: number): number[] {
@@ -27,7 +40,7 @@ function write(days: number[]): void {
 }
 
 /** Сколько новых дней с ИИ осталось в скользящей неделе. */
-export const aiDaysLeft = (now = Date.now()) => Math.max(0, AI_DAYS - read(now).length)
+export const aiDaysLeft = (now = Date.now()) => Math.max(0, aiLimitNow() - read(now).length)
 
 /** null — день ещё пишется (черновик); true / false — этот день собирается с ИИ / без ИИ. */
 let dayAi: boolean | null = null
@@ -40,7 +53,7 @@ export function aiDraft(): void {
 /** «Собрать»: взять день из лимита. false — лимит исчерпан, день собирается без ИИ. */
 export function beginAiDay(now = Date.now()): boolean {
   const days = read(now)
-  if (days.length >= AI_DAYS) {
+  if (days.length >= aiLimitNow()) {
     dayAi = false
     return false
   }
@@ -52,7 +65,7 @@ export function beginAiDay(now = Date.now()): boolean {
 /** Сервер ответил day_limit: неделя исчерпана, этот день — без ИИ. */
 export function aiRefused(now = Date.now()): void {
   const days = read(now)
-  while (days.length < AI_DAYS) days.push(now)
+  while (days.length < aiLimitNow()) days.push(now)
   write(days)
   dayAi = false
 }

@@ -37,8 +37,8 @@ export interface DirectDayOptions {
   fetchImpl?: typeof fetch
   /** День без ИИ (лимит дней с ИИ исчерпан): сразу запасной режиссёр. */
   offline?: boolean
-  /** id пользователя (вошёл) — сервер считает лимит дней и по нему. */
-  user?: string
+  /** Токен Supabase вошедшего: сервер проверяет его и считает лимит сборок по пользователю (20 в неделю, гость — 5). */
+  token?: string
 }
 
 export async function directDay(input: DirectorInput, opts: DirectDayOptions = {}): Promise<DirectDayResult> {
@@ -76,7 +76,7 @@ export async function directDay(input: DirectorInput, opts: DirectDayOptions = {
   const request = (async (): Promise<DirectDayResult> => {
     const res = await doFetch(opts.endpoint ?? '/api/direct', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...(opts.user ? { 'x-mb-user': opts.user } : {}) },
+      headers: { 'content-type': 'application/json', ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}) },
       body: JSON.stringify(body),
       signal: hardAbort.signal,
     })

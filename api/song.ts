@@ -8,7 +8,7 @@ import { photoCardText, sanitizePhotoCard } from '../src/kit/scenePhoto'
 import { entryLanguage, sanitizeSongAdvice } from '../src/kit/sceneSong'
 import { LANG_GROUP, SONG_BY_ID, SONG_LIST, type ListedSong, type SongLang } from '../src/director/songList'
 import type { PhotoCard, SongAdvice } from '../src/types/script'
-import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
+import { dayLimitReply, overDayLimit, whoFromRequest } from './_dayLimit'
 
 export const config = { maxDuration: 15 }
 
@@ -203,7 +203,7 @@ export async function handleSong(body: unknown, ip: string): Promise<{ status: n
   try {
     if (rateLimited(ip)) throw new SongError('rate_limited', 'Слишком много запросов, подождите', 429)
     // человек уже упёрся в лимит дней с ИИ — его сценки, фото, песни и дорисовки тоже без ИИ (api/_dayLimit.ts)
-    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers)
+    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers, ip)
     const run = await runSong(parseSongInput(body))
     headers['x-song-latency-ms'] = String(run.latencyMs)
     return { status: 200, json: run.advice, headers }
@@ -221,7 +221,8 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handleSong(body, whoOf(ip, request.headers.get('x-mb-user')))
+  // «вошёл» — только по проверенному токену Supabase; иначе гость по IP
+  const r = await handleSong(body, await whoFromRequest(ip, request.headers.get('authorization')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

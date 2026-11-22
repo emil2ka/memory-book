@@ -74,6 +74,8 @@ const listeners = new Set<(u: CloudUser | null) => void>()
 const emit = () => listeners.forEach((f) => f(session?.user ?? null))
 
 export const currentUser = (): CloudUser | null => session?.user ?? null
+/** Свежий токен доступа (обновляется, если истекает) — сервер по нему узнаёт вошедшего (лимит сборок с ИИ). null — не вошёл. */
+export const cloudToken = (): Promise<string | null> => token().catch(() => null)
 export function onUserChange(f: (u: CloudUser | null) => void): () => void {
   listeners.add(f)
   return () => listeners.delete(f)
