@@ -9,6 +9,8 @@ import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, isNoFi
 import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, cloudToken, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
 import { AccountCard, CloudBadge, MovePrompt, Welcome, type SaveState } from './ui/Account'
 import { DayPager, DaysBook } from './ui/DayNav'
+import { MusicToggle } from './ui/MusicToggle'
+import { ambient } from './audio/ambient'
 import { seedFromString } from './timeline/rng'
 import type { SongShape } from './timeline/songShape'
 import { findListedByYt, findListedSong } from './director/songList'
@@ -278,6 +280,9 @@ function DiaryApp() {
   const [status, setStatus] = useState<string>('')
   /** В сцене идёт фильм (в том числе запущенный в обход App, например из консоли). */
   const [sceneFilm, setSceneFilm] = useState(false)
+  // фоновая музыка: на полке и в записи — играет, в фильме (у него своя песня) — уходит
+  const filmPlaying = phase === 'film' || (sceneFilm && phase !== 'write' && phase !== 'directing' && phase !== 'after')
+  useEffect(() => ambient.setWanted(phase !== 'loading' && !filmPlaying), [phase, filmPlaying])
 
   const getSong = () => (songRef.current ??= new SongPlayer())
   /** песня по ссылке YouTube (своя или предложенная ИИ) — встроенный плеер, src/ui/youtube.ts */
@@ -1270,6 +1275,7 @@ function DiaryApp() {
           </PinNote>
         )}
         {phase === 'shelf' && !sceneFilm && <PersonPick value={person} onChange={pickPerson} />}
+        {(phase === 'shelf' || phase === 'after') && !sceneFilm && <MusicToggle />}
         {/* «Кто ведёт дневник?» — один раз, на первом экране полки (после входа) */}
         {phase === 'shelf' && !sceneFilm && !welcome && <HeroPick value={person} onChange={pickPerson} />}
         {phase === 'shelf' && !sceneFilm && ctaReady && (
