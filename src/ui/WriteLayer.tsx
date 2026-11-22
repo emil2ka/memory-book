@@ -93,6 +93,12 @@ export function WriteLayer(p: Props) {
   const sealY = Math.min(right.y + right.h - seal * 0.62, vh - sealH - 4)
   // кассета под книгой — левее печати, чтобы ленты печати её не задели
   if (cassBelow) cassStyle.left = Math.max(8, Math.min(vw - cassW - 10, sealX - cassW - 16))
+  // кассета с запиской песен выше расчётной: не уходит за нижний край экрана, а прокручивается внутри (телефон вертикально)
+  if (!cassCompact && typeof cassStyle.top === 'number') {
+    cassStyle.maxHeight = Math.max(160, vh - cassStyle.top - 8)
+    cassStyle.overflowY = 'auto'
+    cassStyle.overscrollBehavior = 'contain'
+  }
   const hintRightEdge = cassBelow ? Math.min(sealX - 10, (cassStyle.left as number) - 8) : sealX - 10
   // карточка для фото — в верхней трети правой страницы (ниже наискось лежит рука с ручкой)
   const cardW = Math.round(Math.min(right.w * 0.62, 300))

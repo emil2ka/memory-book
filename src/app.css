@@ -715,3 +715,4 @@ img.art { display: block; pointer-events: none; user-select: none; filter: drop-
 /* нарисованные иконки (assets/ui/icons, ChatGPT): чуть крупнее линий SVG — у рисунка есть поля и брызги-акценты */
 .icon.drawn { display: inline-block; flex: none; object-fit: contain; transform: scale(1.18); pointer-events: none; user-select: none; }
 .card-btn:disabled .icon.drawn, .slip-btn:disabled .icon.drawn { filter: grayscale(0.6); }
+.acc-link-note { display: block; margin-top: 2px; font: 500 11px var(--sans); color: var(--brown); text-align: center; }

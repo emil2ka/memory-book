@@ -5,6 +5,7 @@
 import { PALETTE, type PaletteName } from '../scene/palette'
 import type { PhotoAccessory, PhotoAction, PhotoCard, PhotoWhere, TimeOfDay, Weather } from '../types/script'
 import { sceneRef } from './sceneCheck'
+import { aiOff } from './aiLimit'
 
 const WHERE: readonly PhotoWhere[] = ['hand', 'table', 'ground', 'wall', 'sky']
 const ACCESSORIES: readonly PhotoAccessory[] = ['none', 'cap', 'bun', 'headscarf', 'kalpak', 'glasses', 'moustache', 'long_hair']
@@ -162,6 +163,8 @@ export function requestPhotoCard(dataUrl: string, day = '', opts: PhotoCardOptio
     const cached = await cacheGet(key)
     if (cached) return cached
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null
+    // лимит дней с ИИ исчерпан (src/kit/aiLimit) — карточки нет, снимок всё равно в фильме
+    if (aiOff()) return null
     const f = opts.fetchImpl ?? (typeof fetch !== 'undefined' ? fetch : null)
     if (!f) return null
     const ac = new AbortController()

@@ -30,9 +30,11 @@ function directorApi(): Plugin {
       // .env проекта важнее окружения оболочки (там может быть чужой ключ), поэтому читаем файл сами:
       // loadEnv отдаёт приоритет process.env.
       const env = readDotEnv(server.config.root)
-      for (const k of ['ANTHROPIC_API_KEY', 'DIRECTOR_MODEL', 'DIRECTOR_EFFORT', 'DIRECTOR_BASE_URL', 'MAKE_MODEL', 'SCENE_MODEL', 'SCENE_EFFORT']) {
+      for (const k of ['ANTHROPIC_API_KEY', 'DIRECTOR_MODEL', 'DIRECTOR_EFFORT', 'DIRECTOR_BASE_URL', 'MAKE_MODEL', 'SCENE_MODEL', 'SCENE_EFFORT', 'AI_DAY_LIMIT']) {
         if (env[k]) process.env[k] = env[k]
       }
+      // лимит «3 дня с ИИ в сутки» — для живого сайта; локально (разработка, прогоны) без лимита, если .env не задал свой
+      process.env.AI_DAY_LIMIT ||= '1000'
       // одна обвязка на все серверные функции: тело JSON → handler из api/*.ts → ответ
       const routes: Record<string, [string, string]> = {
         '/api/direct': ['/api/direct.ts', 'handleDirect'],

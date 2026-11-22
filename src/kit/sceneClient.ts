@@ -7,6 +7,7 @@ import type { Timeline } from '../types/timeline'
 import { dayAround, SCENE_DAY_MAX, type KitScene, type SceneObject, type SceneRequest } from './scene'
 import { ROLE_HEIGHT, ROLE_WIDTH, SCENE_ACTIONS_SET, actionFor, fitHeight, sceneFromRef, sceneRef } from './sceneCheck'
 import { validateKit } from './validate'
+import { aiOff } from './aiLimit'
 
 /** claude — собрала Haiku; library — главный предмет и место нашлись в библиотеке, ИИ не нужен; cache; fallback. */
 export type SceneSource = 'claude' | 'library' | 'cache' | 'fallback'
@@ -372,7 +373,8 @@ export async function makeScene(req: SceneRequest, opts: MakeSceneOptions = {}):
     if (cached) return done({ scene: cached, source: 'cache' })
     // первый бит: только библиотека — сценка нужна через ~5 с, хвост ИИ бывает до 8 с
     if (req.fast) return done({ scene: fallbackScene({ ...req, quote, day }), source: 'fallback', reason: 'первый бит — только библиотека' })
-    if (opts.offline || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    // без сети или лимит дней с ИИ исчерпан (src/kit/aiLimit) — сценка из библиотеки
+    if (opts.offline || aiOff() || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
       return done({ scene: fallbackScene({ ...req, quote, day }), source: 'fallback', reason: 'нет сети' })
     }
     const f = opts.fetchImpl ?? (typeof fetch !== 'undefined' ? fetch : null)

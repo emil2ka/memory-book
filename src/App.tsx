@@ -7,7 +7,8 @@ import { directDay } from './director'
 import { byTakenTime, dayPalette, photoCardNote, photoFromStored, photoProblem, preparePhoto, type PreparedPhoto } from './photos'
 import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, listDays, localDate, newDayId, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
 import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
-import { AccountCard, CloudBadge, MovePrompt, MyDays, Welcome, type SaveState } from './ui/Account'
+import { AccountCard, CloudBadge, MovePrompt, Welcome, type SaveState } from './ui/Account'
+import { DayPager, DaysBook } from './ui/DayNav'
 import { seedFromString } from './timeline/rng'
 import type { SongShape } from './timeline/songShape'
 import { findListedByYt, findListedSong } from './director/songList'
@@ -31,6 +32,7 @@ import { HeroPick } from './ui/HeroPick'
 import { Shelf } from './ui/Shelf'
 import { applyKnobs, fadeOut, linkMeta, makeSongClock, unlockSong } from './ui/song'
 import { MAX_PHOTOS, WriteLayer, type PageRects } from './ui/WriteLayer'
+import { AI_DAY_NOTE, aiDaysLeft, aiDraft, aiRefused, beginAiDay } from './kit/aiLimit'
 
 type Phase = 'loading' | 'shelf' | 'opening' | 'write' | 'directing' | 'film' | 'after'
 
@@ -142,6 +144,8 @@ function DiaryApp() {
   const cardOf = (p: PreparedPhoto) => photoCards[photoHash(p.dataUrl)] ?? null
 
   const [song, setSong] = useState<SongDraft>(EMPTY_SONG)
+  /** записка у сургуча: «на этой неделе уже 7 дней с ИИ — этот соберу сам» (лимит дней с ИИ, src/kit/aiLimit) */
+  const [aiNote, setAiNote] = useState(() => (aiDaysLeft() > 0 ? '' : AI_DAY_NOTE))
   const [need, setNeed] = useState<Need[]>([])
   /** записка «ты не поставил песню» на кассете (план 14 § 2): песни от ИИ по записи и фото; null — записки нет */
   const [songAdvice, setSongAdvice] = useState<{ state: 'loading' | 'ready'; songs: SongSuggestion[]; why?: string; withPhotos?: boolean } | null>(null)
@@ -207,7 +211,7 @@ function DiaryApp() {
     'ставлю свет…',
     'почти готово…',
   ]
-  const busyText = busySteps[Math.min(busyStep, busySteps.length - 1)]
+  const busyText = aiNote || busySteps[Math.min(busyStep, busySteps.length - 1)]
 
   // Узкий портретный экран: кадр сцены 16:9, книга мелкая — советуем повернуть телефон.
   const [portrait, setPortrait] = useState(() => typeof innerWidth === 'number' && innerWidth < 600 && innerHeight > innerWidth)
@@ -543,6 +547,9 @@ function DiaryApp() {
   newDayRef.current = () => newDay()
   const newDay = () => {
     editingId.current = null
+    // новый черновик: лимит дней с ИИ решится при «Собрать»; записка — если на сегодня ИИ уже нет
+    aiDraft()
+    setAiNote(aiDaysLeft() > 0 ? '' : AI_DAY_NOTE)
     // Ушли на полку посреди записи — черновик ждёт; после собранного дня начинаем с чистого листа.
     const keep = draftPending.current
     if (!keep) {
@@ -719,6 +726,9 @@ function DiaryApp() {
       return
     }
     setNeed([])
+    // лимит дней с ИИ (7 за скользящую неделю): нет — этот день соберёт запасной режиссёр, фильм всё равно будет
+    const ai = beginAiDay()
+    setAiNote(ai ? '' : AI_DAY_NOTE)
     const sp = song.kind === 'file' ? getSong() : null
     // Звук разблокируется в том же клике, иначе браузер не даст играть после ответа режиссёра.
     if (draftYt) ytRef.current?.prime()
@@ -727,14 +737,14 @@ function DiaryApp() {
     // живое ожидание (план 13 § 5): рука постукивает ручкой, человечек выглядывает из книги
     worldRef.current?.setWaiting(true)
     try {
-      await collectDirected(sp)
+      await collectDirected(sp, ai)
     } catch (e) {
       worldRef.current?.setWaiting(false)
       throw e
     }
   }
 
-  const collectDirected = async (sp: ReturnType<typeof getSong> | null) => {
+  const collectDirected = async (sp: ReturnType<typeof getSong> | null, ai = true) => {
     const input: DirectorInput = {
       text: text.trim(),
       // род героя для строк рассказа: «я встретился» / «я встретилась»
@@ -758,7 +768,12 @@ function DiaryApp() {
               }
             : null,
     }
-    const res = await directDay(input)
+    const res = await directDay(input, { offline: !ai, user: currentUser()?.id })
+    // сервер сказал «лимит дней с ИИ» — на сегодня всё; день уже собран запасным режиссёром
+    if (ai && res.reason?.includes('day_limit')) {
+      aiRefused()
+      setAiNote(AI_DAY_NOTE)
+    }
     let script = song.kind === 'link' ? applyKnobs(res.script, { tempo: song.tempo, energy: song.energy }) : res.script
     const photoPalette = dayPalette(photos.map((p) => p.swatches))
     // Запасной режиссёр фото не видит — палитру берём из фото.
@@ -930,7 +945,7 @@ function DiaryApp() {
           </button>
         )}
         {myDaysOpen && (phase === 'shelf' || phase === 'after') && (
-          <MyDays
+          <DaysBook
             days={days}
             covers={covers}
             inCloud={cloudIds}
@@ -1023,6 +1038,9 @@ function DiaryApp() {
               пропустить »
             </FlagButton>
           </div>
+        )}
+        {phase === 'after' && current && !myDaysOpen && (
+          <DayPager days={days} currentId={current.day.id} onOpen={(d) => void openDay(d)} />
         )}
         {phase === 'after' && current && (
           <Bookmark

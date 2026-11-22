@@ -1,0 +1,44 @@
+/* Навигация по дням — бумажная «канцелярия»: лист с календарём, бирки «прошлый / следующий день». */
+.daysbook { position: fixed; top: 56px; left: 12px; z-index: 9; width: min(340px, calc(100vw - 24px)); max-height: calc(100vh - 68px); display: flex; flex-direction: column; gap: 8px; padding: 14px 12px 12px; background: var(--grain, none), var(--cream); box-shadow: 0 8px 20px rgba(27, 14, 6, 0.5); transform: rotate(-0.4deg); animation: fade-in 0.35s ease both; }
+.daysbook::before { content: ''; position: absolute; top: -9px; left: 46%; width: 70px; height: 20px; background: rgba(196, 92, 72, 0.55); transform: rotate(-3deg); }
+.dn-head { display: flex; justify-content: space-between; align-items: center; font: 700 21px var(--hand); color: var(--inkBlue); }
+.dn-x { all: unset; cursor: pointer; font: 700 22px / 1 var(--hand); color: var(--brown); padding: 0 4px; }
+.dn-x:hover, .dn-x:focus-visible { color: var(--brickDark); }
+.dn-tools { display: flex; flex-direction: column; gap: 6px; }
+.dn-search { all: unset; padding: 5px 8px; font: 500 13px var(--sans); color: var(--inkBlue); background: rgba(255, 255, 255, 0.55); border-bottom: 1.5px dashed rgba(60, 45, 30, 0.35); }
+.dn-search::placeholder { color: rgba(90, 70, 50, 0.55); }
+.dn-search:focus-visible { background: rgba(255, 255, 255, 0.8); }
+.dn-tabs { display: flex; gap: 6px; }
+.dn-tabs button { all: unset; cursor: pointer; padding: 2px 10px 3px; font: 700 15px var(--hand); color: var(--brown); border-radius: 2px; }
+.dn-tabs button.on { color: var(--inkBlue); background: rgba(255, 255, 255, 0.6); box-shadow: 0 1px 3px rgba(27, 14, 6, 0.25); }
+.dn-tabs button:focus-visible { outline: 2px solid var(--brickDark); }
+.dn-month { display: flex; justify-content: space-between; align-items: center; font: 700 19px var(--hand); color: var(--inkBlue); }
+.dn-month button { all: unset; cursor: pointer; width: 30px; height: 30px; text-align: center; font: 700 22px / 30px var(--hand); color: var(--brown); border-radius: 50%; }
+.dn-month button:hover, .dn-month button:focus-visible { background: rgba(255, 255, 255, 0.6); color: var(--brickDark); }
+.dn-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.dn-wd { text-align: center; font: 600 10px var(--sans); color: rgba(90, 70, 50, 0.7); text-transform: uppercase; letter-spacing: 0.04em; }
+.dn-cell { position: relative; height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 3px; font: 600 12px var(--sans); color: rgba(60, 45, 30, 0.55); border-radius: 2px; }
+.dn-cell.has { all: unset; position: relative; height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 3px; cursor: pointer; font: 700 12px var(--sans); color: var(--inkBlue); background: rgba(255, 255, 255, 0.55); box-shadow: 0 1px 3px rgba(27, 14, 6, 0.22); border-radius: 2px; transition: transform 0.15s; }
+.dn-cell.has:hover, .dn-cell.has:focus-visible { transform: translateY(-2px) rotate(-1deg); background: #fff; }
+.dn-cell.today .dn-n { border: 1.5px solid var(--brickDark); border-radius: 50%; padding: 0 4px; }
+.dn-spines { display: flex; gap: 2px; margin-top: 3px; }
+.dn-spines i { display: block; width: 6px; height: 14px; border-radius: 1px; box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.2); }
+.dn-list { list-style: none; margin: 4px 0 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.dn-day { all: unset; cursor: pointer; display: flex; gap: 10px; align-items: center; width: 100%; padding: 4px; border-radius: 3px; }
+.dn-day:hover, .dn-day:focus-visible { background: rgba(255, 255, 255, 0.5); }
+.dn-cover { flex: none; width: 40px; height: 52px; background-size: cover; background-position: center; box-shadow: 0 2px 4px rgba(27, 14, 6, 0.4), inset 3px 0 0 rgba(0, 0, 0, 0.18); }
+.dn-text { display: flex; flex-direction: column; min-width: 0; }
+.dn-text b { font: 700 17px / 1.1 var(--hand); color: var(--inkBlue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dn-text small { font: 500 11px var(--sans); color: var(--brown); }
+.dn-empty { font: 600 16px var(--hand); color: var(--brown); padding: 6px 2px; }
+
+/* после фильма: бирки на бечёвке внизу */
+.day-pager { position: fixed; left: 50%; bottom: 14px; z-index: 8; transform: translateX(-50%); width: min(720px, calc(100vw - 24px)); display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
+.dp-tag { all: unset; pointer-events: auto; cursor: pointer; max-width: 46%; display: flex; flex-direction: column; gap: 1px; padding: 6px 14px 7px; background: var(--grain, none), var(--cream); box-shadow: 0 4px 10px rgba(27, 14, 6, 0.45); transition: transform 0.15s; }
+.dp-prev { transform: rotate(-1.5deg); }
+.dp-next { transform: rotate(1.5deg); text-align: right; }
+.dp-tag:hover, .dp-tag:focus-visible { transform: translateY(-3px); }
+.dp-tag:focus-visible { outline: 2px solid var(--brickDark); }
+.dp-tag small { font: 600 11px var(--sans); color: var(--brown); }
+.dp-tag b { font: 700 18px / 1.1 var(--hand); color: var(--inkBlue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) { .dp-tag b { font-size: 15px; } .daysbook { top: 50px; } }

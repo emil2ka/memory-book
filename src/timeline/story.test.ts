@@ -287,3 +287,41 @@ describe('род: подлежащее после глагола', () => {
     expect(genderize('Потом позвонила подруге', 'boy')).toBe('Потом позвонил подруге')
   })
 })
+
+describe('живой сайт 22.11: снег, «еле шла», одинаковые строки', () => {
+  const text = 'Утром шёл снег, я устала, но вечером мы смеялись с подругой.'
+  it('«Утром шёл снег» у героини — не «шла снег»; «пошёл дождь», «пришёл папа» не трогаем; «пошёл в кино» — про автора', () => {
+    expect(genderize('Утром шёл снег, я устала', 'girl')).toBe('Утром шёл снег, я устала')
+    expect(genderize('Потом пошёл дождь', 'girl')).toBe('Потом пошёл дождь')
+    expect(genderize('Вечером пришёл папа', 'girl')).toBe('Вечером пришёл папа')
+    expect(genderize('Потом пошёл в кино', 'girl')).toBe('Потом пошла в кино')
+    expect(genderize('Пришёл домой поздно', 'girl')).toBe('Пришла домой поздно')
+    expect(cleanStory('Утром шёл снег, и я устала', text, { hero: 'girl' })).toBe('Утром шёл снег, и я устала')
+  })
+  it('«Потом весь день я устала и еле шла» — досочинено → строка заменяется', () => {
+    expect(cleanStory('Потом весь день я устала и еле шла', text, { hero: 'girl' })).toBeNull()
+    expect(cleanStory('Потом я очень устала', text, { hero: 'girl' })).toBe('Потом я очень устала')
+  })
+  it('одинаковая строка рассказа у двух битов подряд — второй бит уходит', () => {
+    const mk = (quote: string, story: string): Beat => ({ quote, action: 'pull', result: { kind: 'kit', id: 'crystal' }, camera: 'hold', effect: null, story })
+    const beats = [mk('шёл снег', 'Утром шёл снег'), mk('я устала', 'Потом я устала'), mk('мы смеялись', 'Но вечером мы смеялись с подругой'), mk('с подругой', 'Но вечером мы смеялись с подругой')]
+    expect(dropRepeats(beats, 2).beats.map((b) => b.quote)).toEqual(['шёл снег', 'я устала', 'мы смеялись'])
+    const v = validateScript({ ...exemplars[0].script, beats }, text, { hero: 'girl' })
+    const lines = v.script.beats.map((b) => b.story)
+    expect(new Set(lines).size).toBe(lines.length)
+    expect(lines.join(' ')).not.toMatch(/шла снег/)
+  })
+})
+
+describe('живой сайт 22.11, повтор после замены строк', () => {
+  it('два бита в одной части предложения — после запасных строк остаётся один; «и всё стало легче» — оценка, нельзя', () => {
+    const text = 'Утром шёл снег, я устала, но вечером мы смеялись с подругой.'
+    const mk = (quote: string, story: string): Beat => ({ quote, action: 'pull', result: { kind: 'kit', id: 'crystal' }, camera: 'hold', effect: null, story })
+    const beats = [mk('шёл снег', 'Утром на улице шёл снег, и я вышла из дома'), mk('я устала', 'Весь день я работала и очень устала'), mk('вечером мы смеялись', 'А вечером мы смеялись до слёз'), mk('с подругой', 'И это было лучшее, что случилось со мной')]
+    const v = validateScript({ ...exemplars[0].script, beats }, text, { hero: 'girl' })
+    const lines = v.script.beats.map((b) => b.story!)
+    expect(new Set(lines).size).toBe(lines.length)
+    expect(lines.filter((l) => /смеялись/.test(l))).toHaveLength(1)
+    expect(cleanStory('А вечером мы смеялись, и всё стало легче', text)).toBeNull()
+  })
+})

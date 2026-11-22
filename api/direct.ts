@@ -7,6 +7,7 @@ import type { DayScript, DirectorInput } from '../src/types/script'
 import { buildUserText, SYSTEM_PROMPT } from '../src/director/prompt'
 import { buildScriptSchema } from '../src/director/schema'
 import { validateScript } from '../src/director/validate'
+import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
 
 export const config = { maxDuration: 30 }
 
@@ -152,6 +153,8 @@ export async function handleDirect(body: unknown, ip: string): Promise<{ status:
   try {
     if (rateLimited(ip)) throw new DirectorError('rate_limited', 'Слишком много запросов, подождите', 429)
     const input = parseInput(body)
+    // лимит дней с ИИ: не больше 7 новых дней с режиссёром за скользящую неделю на человека (api/_dayLimit.ts)
+    if (overDayLimit(ip, 'direct')) return dayLimitReply(headers)
     const run = await runDirector(input)
     headers['x-director-model'] = run.model
     headers['x-director-latency'] = String(run.latencyMs)
@@ -173,7 +176,7 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handleDirect(body, ip)
+  const r = await handleDirect(body, whoOf(ip, request.headers.get('x-mb-user')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

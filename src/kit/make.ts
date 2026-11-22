@@ -5,6 +5,7 @@ import type { KitModel } from './format'
 import { findByName, findByWord, makeKey, normWord, registerExtra, similar } from './library'
 import { pictureById } from './pictures'
 import { validatePicture, type KitPicture } from './svg'
+import { aiOff } from './aiLimit'
 
 export type MakeSource = 'library' | 'cache' | 'claude' | 'similar' | 'crystal'
 
@@ -159,6 +160,8 @@ export function makeKit(req: MakeRequest, opts: MakeOptions = {}): Promise<MakeR
   const libPic = lib ? pictureFor(lib.id) : null
   if (libPic) return Promise.resolve({ model: libPic, source: lib!.by === 'claude' ? 'cache' : 'library' })
   if (!key) return Promise.resolve(fallbackKit(req.tags))
+  // лимит дней с ИИ исчерпан (src/kit/aiLimit) — без дорисовки: похожий предмет или кристалл
+  if (aiOff()) return Promise.resolve(fallbackKit(req.tags))
   // один и тот же предмет просят дважды (повтор фильма, два бита) — один запрос
   let p = inflight.get(key)
   if (!p) {

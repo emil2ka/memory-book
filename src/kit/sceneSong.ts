@@ -2,6 +2,9 @@
 // известные песни (только названия, файлов нет — правило 7). POST /api/song → SongAdvice, кэш по хэшу текста и карточек.
 // Без сети — null (фильм идёт как без песни). Никогда не бросает. sanitizeSongAdvice — общий для сервера и клиента.
 import type { DirectorInput, PhotoCard, SongAdvice, SongSuggestion } from '../types/script'
+import { aiOff } from './aiLimit'
+import { SONG_LIST } from '../director/songList'
+import { emotionFromText } from '../director/emotions'
 
 const str = (v: unknown, n: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, n) : '')
 const unit = (v: unknown, d = 0.5) => {
@@ -31,6 +34,29 @@ export function sanitizeSongAdvice(raw: unknown): SongAdvice | null {
   }
   if (!songs.length) return null
   return { songs, why: str(r.why, 120) }
+}
+
+/**
+ * Три песни без ИИ (лимит дней с ИИ исчерпан): из проверенного списка, язык по записи, энергия по чувству записи —
+ * медленнее, ровно и быстрее. Только настоящие песни с роликом.
+ */
+export function offlineSongAdvice(day: string): SongAdvice | null {
+  const lang = entryLanguage(day)
+  const group: readonly string[] = { kk: ['kk'], ru: ['ru', 'kz_ru'], mixed: ['kk', 'kz_ru', 'ru'], en: ['world'] }[lang]
+  const e = emotionFromText(day)
+  const target = e && ['joy', 'excited', 'laugh', 'proud', 'love'].includes(e) ? 0.7 : e && ['sad', 'tired', 'sleepy', 'lonely', 'cry', 'calm'].includes(e) ? 0.3 : 0.5
+  const pool = SONG_LIST.filter((s) => s.yt)
+  const pick = (langs: readonly string[], energy: number, taken: Set<string>) =>
+    pool.filter((s) => langs.includes(s.lang) && !taken.has(s.id)).sort((a, b) => Math.abs(a.energy - energy) - Math.abs(b.energy - energy) || a.id.localeCompare(b.id))[0]
+  const taken = new Set<string>()
+  const out: SongSuggestion[] = []
+  for (const [langs, energy] of [[group, target - 0.15], [group, target + 0.15], [lang === 'en' ? group : ['world'], target]] as const) {
+    const s = pick(langs, energy, taken)
+    if (!s) continue
+    taken.add(s.id)
+    out.push({ title: s.title, artist: s.artist, why: s.mood, tempo: s.tempo, energy: s.energy, ...(s.yt ? { yt: s.yt } : {}) })
+  }
+  return out.length ? { songs: out, why: 'подобрал сам, без ИИ: по языку и настроению записи' } : null
 }
 
 /** Язык записи — от него зависит, какие песни предлагать. */
@@ -162,6 +188,8 @@ export function fetchSongAdvice(
   const run = (async (): Promise<SongAdvice | null> => {
     const cached = await cacheGet(key)
     if (cached) return cached
+    // лимит дней с ИИ исчерпан — три песни из проверенного списка без ИИ (песня обязательна, выбор должен быть)
+    if (aiOff()) return offlineSongAdvice(text)
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null
     const f = opts.fetchImpl ?? (typeof fetch !== 'undefined' ? fetch : null)
     if (!f) return null

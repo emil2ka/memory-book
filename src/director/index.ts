@@ -35,6 +35,10 @@ export interface DirectDayOptions {
   /** Вызывается, если LLM ответила уже после таймаута. */
   onLateScript?: (script: DayScript) => void
   fetchImpl?: typeof fetch
+  /** День без ИИ (лимит дней с ИИ исчерпан): сразу запасной режиссёр. */
+  offline?: boolean
+  /** id пользователя (вошёл) — сервер считает лимит дней и по нему. */
+  user?: string
 }
 
 export async function directDay(input: DirectorInput, opts: DirectDayOptions = {}): Promise<DirectDayResult> {
@@ -61,6 +65,7 @@ export async function directDay(input: DirectorInput, opts: DirectDayOptions = {
     return { script, source: 'fallback', reason }
   }
   if (!input.text || !input.text.trim()) return fallback('пустой текст')
+  if (opts.offline) return fallback('day_limit: лимит дней с ИИ на сегодня')
   // у всех снимков есть карточки — режиссёру хватит текста, картинки не шлём (быстрее)
   const allCards = !!input.photos?.length && cards.length === input.photos.length && cards.every(Boolean)
   const body: DirectorInput = { ...input, photos: allCards ? [] : input.photos, ...(hasCards ? { photoCards: cards } : {}) }
@@ -71,7 +76,7 @@ export async function directDay(input: DirectorInput, opts: DirectDayOptions = {
   const request = (async (): Promise<DirectDayResult> => {
     const res = await doFetch(opts.endpoint ?? '/api/direct', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...(opts.user ? { 'x-mb-user': opts.user } : {}) },
       body: JSON.stringify(body),
       signal: hardAbort.signal,
     })

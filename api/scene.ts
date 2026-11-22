@@ -12,6 +12,7 @@ import { kitSize } from '../src/kit/validate'
 import { runModel, type ModelRun } from './_model'
 import { photoCardText, sanitizePhotoCard } from '../src/kit/scenePhoto'
 import { findByName } from '../src/kit/library'
+import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
 
 export const config = { maxDuration: 20 }
 
@@ -305,6 +306,8 @@ export async function handleScene(body: unknown, ip: string): Promise<{ status: 
   const headers: Record<string, string> = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
   try {
     if (rateLimited(ip)) throw new SceneError('rate_limited', 'Слишком много запросов, подождите', 429)
+    // человек уже упёрся в лимит дней с ИИ — его сценки, фото, песни и дорисовки тоже без ИИ (api/_dayLimit.ts)
+    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers)
     const run = await runScene(parseSceneInput(body))
     headers['x-scene-latency'] = String(run.latencyMs)
     headers['x-scene-attempts'] = String(run.attempts)
@@ -323,7 +326,7 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handleScene(body, ip)
+  const r = await handleScene(body, whoOf(ip, request.headers.get('x-mb-user')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

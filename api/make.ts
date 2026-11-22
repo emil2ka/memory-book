@@ -9,6 +9,7 @@ import type { KitModel } from '../src/kit/format'
 import { kitById, similar } from '../src/kit/library'
 import { PALETTE_HEX, SVG_LIMITS, validatePicture, type KitPicture } from '../src/kit/svg'
 import { FX_KINDS, HOLDS } from '../src/kit/validate'
+import { dayLimitReply, overDayLimit, whoOf } from './_dayLimit'
 
 export const config = { maxDuration: 15 }
 
@@ -248,6 +249,8 @@ export async function handleMake(body: unknown, ip: string): Promise<{ status: n
   const headers: Record<string, string> = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
   try {
     if (rateLimited(ip)) throw new MakeError('rate_limited', 'Слишком много запросов, подождите', 429)
+    // человек уже упёрся в лимит дней с ИИ — его сценки, фото, песни и дорисовки тоже без ИИ (api/_dayLimit.ts)
+    if (overDayLimit(ip, 'aux')) return dayLimitReply(headers)
     const run = await runMake(parseMakeInput(body))
     headers['x-make-latency'] = String(run.latencyMs)
     headers['x-make-attempts'] = String(run.attempts)
@@ -266,7 +269,7 @@ export async function POST(request: Request): Promise<Response> {
     body = null
   }
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const r = await handleMake(body, ip)
+  const r = await handleMake(body, whoOf(ip, request.headers.get('x-mb-user')))
   return new Response(JSON.stringify(r.json), { status: r.status, headers: r.headers })
 }
 

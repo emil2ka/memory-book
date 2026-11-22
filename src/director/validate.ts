@@ -338,6 +338,12 @@ export function validateScript(raw: unknown, text: string, ctx: { photos?: numbe
   const st = fillStories(beats, text, { hero: ctx.hero, ref: [text, ...photoRef(ctx.cards)].join('\n') })
   beats.splice(0, beats.length, ...st.beats)
   issues.push(...st.issues)
+  // ещё раз «одна мысль — один раз» по итоговым строкам: запасная строка могла сказать и мысль следующего бита
+  const rep2 = dropRepeats(beats, MIN_BEATS, emotionOnly)
+  if (rep2.issues.length) {
+    issues.push(...rep2.issues)
+    beats.splice(0, beats.length, ...rep2.beats)
+  }
   let palette = (Array.isArray(src.palette_hint) ? src.palette_hint : []).filter((c): c is string => inList(ids.paletteColors, c))
   palette = [...new Set(palette)].slice(0, 5)
   if (palette.length === 0) {
