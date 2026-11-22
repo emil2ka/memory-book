@@ -26,6 +26,19 @@ export const HERO_COLORS: HeroColors = {
   boots: 'brown',
 }
 
+/** Героиня фильма, если дневник ведёт девочка: тёмные длинные волосы, бирюзовая куртка, коралловый шарф. */
+export const GIRL_COLORS: HeroColors = {
+  skin: 'skin',
+  hair: 'brownDark',
+  jacket: 'teal',
+  jacketDark: 'tealDark',
+  scarf: 'coral',
+  scarfDark: 'brick',
+  trousers: 'navy',
+  boots: 'brownDark',
+}
+export const GIRL_ACCESSORY = 'long_hair' as const
+
 export const SECOND_COLORS: HeroColors = {
   skin: 'skin',
   hair: 'slateDark',
@@ -38,9 +51,19 @@ export const SECOND_COLORS: HeroColors = {
 }
 
 /** Что делает человечек. Ходьба накладывается на любое действие, если он движется. */
-export type HeroAction = 'idle' | 'walk' | 'pull' | 'shake' | 'carry' | 'drink' | 'sit' | 'shiver' | 'cheer' | 'climb' | 'wave' | 'dangle'
+type BaseAction = 'idle' | 'walk' | 'pull' | 'shake' | 'carry' | 'drink' | 'sit' | 'shiver' | 'cheer' | 'climb' | 'wave' | 'dangle'
+/** Эмоции и действия дня (план 15): человечек сам играет «скучно», «грустно», «танцевали» — без слова-предмета. */
+export type EmotionAction =
+  | 'bored' | 'sad' | 'joy' | 'excited' | 'tired' | 'sleepy' | 'angry' | 'scared' | 'surprised' | 'love'
+  | 'laugh' | 'cry' | 'calm' | 'proud' | 'think' | 'nervous' | 'lonely'
+export type DoAction =
+  | 'run' | 'dance' | 'hug' | 'read' | 'write' | 'phone' | 'eat' | 'cook' | 'sleep' | 'guitar'
+  | 'photo' | 'clap' | 'point' | 'look' | 'throw' | 'kick'
+export type HeroAction = BaseAction | EmotionAction | DoAction
 
-type Eyes = 'open' | 'closed' | 'happy' | 'strain'
+type Eyes = 'open' | 'closed' | 'happy' | 'strain' | 'sad' | 'wide' | 'angry' | 'sleepy' | 'heart'
+/** Значок у головы: слеза, пот, «z», сердечко, «!», «?», метка злости, нота. */
+export type Emote = 'none' | 'tear' | 'sweat' | 'z' | 'heart' | 'bang' | 'q' | 'anger' | 'note'
 type V3 = [number, number, number]
 
 /** Поза: смещение бёдер и повороты суставов (радианы). Всё в единицах кита. */
@@ -59,6 +82,7 @@ interface Pose {
   shinR: number
   eyes: Eyes
   mouth: number
+  emote: Emote
 }
 
 const rest = (): Pose => ({
@@ -76,6 +100,7 @@ const rest = (): Pose => ({
   shinR: 0,
   eyes: 'open',
   mouth: 0,
+  emote: 'none',
 })
 
 const clamp01 = (k: number) => Math.min(1, Math.max(0, k))
@@ -103,6 +128,7 @@ function blend(a: Pose, b: Pose, k: number): Pose {
     shinR: lerp(a.shinR, b.shinR, k),
     eyes: k < 0.5 ? a.eyes : b.eyes,
     mouth: lerp(a.mouth, b.mouth, k),
+    emote: k < 0.5 ? a.emote : b.emote,
   }
 }
 
@@ -138,7 +164,9 @@ function walkOver(p: Pose, phase: number, w: number, arms: boolean) {
 }
 
 /** Позы действий. u — доля пройденного действия 0..1, t — секунды от начала. */
-const ACTIONS: Record<HeroAction, (t: number, dur: number) => { pose: Pose; arms: boolean }> = {
+type PoseFn = (t: number, dur: number) => { pose: Pose; arms: boolean }
+
+const BASE_ACTIONS: Record<BaseAction, PoseFn> = {
   idle(t) {
     const p = rest()
     breathe(p, t)
@@ -184,6 +212,7 @@ const ACTIONS: Record<HeroAction, (t: number, dur: number) => { pose: Pose; arms
         shinR: 0.25,
         eyes: 'strain',
         mouth: 0,
+        emote: 'none',
       }
       Object.assign(p, blend(p, heave, b))
     }
@@ -343,7 +372,562 @@ const ACTIONS: Record<HeroAction, (t: number, dur: number) => { pose: Pose; arms
   },
 }
 
+/** Руки висят вдоль тела, плечи опущены. */
+const droop = (p: Pose, k = 1) => {
+  p.armL = [0.05 * k, 0, -0.06]
+  p.armR = [0.05 * k, 0, 0.06]
+  p.foreL = p.foreR = -0.08
+}
+/** Сидит на бумаге, колени к груди. */
+const huddle = (p: Pose, s: number) => {
+  p.hip[1] = -7.4 * s
+  p.thighL = [-2.1 * s, 0, -0.1 * s]
+  p.thighR = [-2.1 * s, 0, 0.1 * s]
+  p.shinL = p.shinR = 2.1 * s
+  p.torso[0] = 0.32 * s
+  p.armL = [-1.25 * s, 0, 0.35 * s]
+  p.armR = [-1.25 * s, 0, -0.35 * s]
+  p.foreL = p.foreR = -1.1 * s
+}
+const loopU = (t: number, period: number) => (t % period) / period
+
+const EXTRA_ACTIONS: Record<EmotionAction | DoAction, PoseFn> = {
+  // ---------- эмоции ----------
+  bored(t) {
+    // сник, качается с ноги на ногу; раз в 3 с — вздох плечами и зевок
+    const p = rest()
+    breathe(p, t, 0.6)
+    droop(p)
+    p.torso[0] = 0.26
+    p.head = [0.32, 0, 0.18 + 0.06 * Math.sin(t * 0.8)]
+    p.hip[0] = 0.5 * Math.sin(t * 0.9)
+    p.eyes = 'sleepy'
+    const c = loopU(t, 3.2)
+    const yawn = Math.sin(clamp01((c - 0.55) / 0.35) * Math.PI)
+    if (yawn > 0) {
+      p.head[0] = lerp(p.head[0], -0.3, yawn)
+      p.armR = [lerp(0.05, -2.2, yawn), 0, lerp(0.06, 0.4, yawn)]
+      p.foreR = lerp(-0.08, -1.2, yawn)
+      p.eyes = yawn > 0.3 ? 'closed' : 'sleepy'
+      p.mouth = yawn > 0.3 ? 1 : 0
+    }
+    const sigh = Math.sin(clamp01(c / 0.25) * Math.PI)
+    p.hip[1] += 0.6 * sigh
+    return { pose: p, arms: false }
+  },
+  sad(t) {
+    const p = rest()
+    breathe(p, t, 0.4)
+    droop(p)
+    p.torso[0] = 0.16
+    p.head = [0.24, 0, 0.12 + 0.05 * Math.sin(t * 0.6)]
+    p.hip[1] = -0.6
+    p.armL[2] = 0.05
+    p.armR[2] = -0.05
+    p.eyes = 'sad'
+    p.emote = 'tear'
+    return { pose: p, arms: false }
+  },
+  joy(t) {
+    // лёгкие подскоки, руки чуть в стороны
+    const p = rest()
+    const h = Math.abs(Math.sin(t * 6))
+    p.hip[1] = 2.2 * h
+    p.thighL[0] = p.thighR[0] = -0.2 * h
+    p.shinL = p.shinR = 0.4 * h
+    p.armL = [-0.2, 0, -0.9 - 0.3 * h]
+    p.armR = [-0.2, 0, 0.9 + 0.3 * h]
+    p.foreL = p.foreR = -0.4
+    p.head[2] = 0.08 * Math.sin(t * 6)
+    p.eyes = 'happy'
+    p.mouth = 1
+    return { pose: p, arms: false }
+  },
+  excited(t, dur) {
+    const r = BASE_ACTIONS.cheer(t * 1.25, dur)
+    r.pose.emote = 'bang'
+    return r
+  },
+  tired(t) {
+    const p = rest()
+    breathe(p, t * 0.6, 1.4)
+    droop(p)
+    p.torso[0] = 0.3
+    p.head = [0.16, 0, 0.14]
+    p.hip[1] = -1.4
+    p.thighL[0] = p.thighR[0] = -0.25
+    p.shinL = p.shinR = 0.45
+    p.armL[0] = p.armR[0] = 0.25
+    p.eyes = 'sleepy'
+    p.emote = 'sweat'
+    return { pose: p, arms: false }
+  },
+  sleepy(t) {
+    // клюёт носом: голова падает и вздрагивает, иногда тянется
+    const p = rest()
+    breathe(p, t, 0.8)
+    droop(p)
+    const c = loopU(t, 2.6)
+    const nod = c < 0.8 ? ease(c / 0.8) : 1 - ease((c - 0.8) / 0.2)
+    p.head = [0.55 * nod, 0, 0.12 * nod]
+    p.torso[0] = 0.18 + 0.12 * nod
+    p.eyes = nod > 0.4 ? 'closed' : 'sleepy'
+    p.emote = 'z'
+    return { pose: p, arms: false }
+  },
+  angry(t) {
+    // топает по очереди, кулаки вниз, корпус вперёд
+    const p = rest()
+    const c = loopU(t, 0.6)
+    const left = Math.floor(t / 0.6) % 2 === 0
+    const lift = Math.sin(c * Math.PI)
+    if (left) {
+      p.thighL[0] = -0.7 * lift
+      p.shinL = 0.9 * lift
+    } else {
+      p.thighR[0] = -0.7 * lift
+      p.shinR = 0.9 * lift
+    }
+    p.hip[1] = -0.8 + 0.6 * lift
+    p.torso[0] = 0.22
+    p.head = [0.12, 0, 0.04 * Math.sin(t * 30)]
+    p.armL = [0.25, 0, -0.42]
+    p.armR = [0.25, 0, 0.42]
+    p.foreL = p.foreR = -1.25
+    p.eyes = 'angry'
+    p.mouth = c < 0.5 ? 1 : 0
+    p.emote = 'anger'
+    return { pose: p, arms: false }
+  },
+  scared(t) {
+    // присел, руки закрывают лицо, дрожит
+    const p = rest()
+    const j = Math.sin(t * 48)
+    p.hip = [0.3 * j, -2.6, -0.6]
+    p.thighL[0] = p.thighR[0] = -0.55
+    p.shinL = p.shinR = 0.95
+    p.torso = [0.25, 0, 0.04 * j]
+    p.head = [0.2, 0, 0.05 * Math.sin(t * 40)]
+    p.armL = [-1.55, 0, 0.55]
+    p.armR = [-1.55, 0, -0.55]
+    p.foreL = p.foreR = -1.65
+    p.eyes = 'wide'
+    p.emote = 'sweat'
+    return { pose: p, arms: false }
+  },
+  surprised(t) {
+    // отпрыгивает назад, руки вверх в стороны, рот «о»
+    const p = rest()
+    const jump = Math.sin(clamp01(t / 0.35) * Math.PI)
+    const back = ease(t / 0.35)
+    p.hip = [0, 3.2 * jump, -2.2 * back]
+    p.torso[0] = -0.22 * back
+    p.head[0] = -0.16 * back
+    p.armL = [-0.3, 0, -1.9 * back]
+    p.armR = [-0.3, 0, 1.9 * back]
+    p.foreL = p.foreR = -0.5
+    if (t > 0.35) breathe(p, t, 0.5)
+    p.eyes = 'wide'
+    p.mouth = 1
+    p.emote = 'bang'
+    return { pose: p, arms: false }
+  },
+  love(t) {
+    // ладони у груди, качается из стороны в сторону, сердечки
+    const p = rest()
+    breathe(p, t)
+    const s = Math.sin(t * 2.4)
+    p.hipR[2] = 0.08 * s
+    p.torso[2] = 0.1 * s
+    p.head = [-0.08, 0, 0.18 * s]
+    p.armL = [-1.25, 0, 0.62]
+    p.armR = [-1.25, 0, -0.62]
+    p.foreL = p.foreR = -1.5
+    p.eyes = 'heart'
+    p.mouth = 1
+    p.emote = 'heart'
+    return { pose: p, arms: false }
+  },
+  laugh(t) {
+    // хохочет: корпус качается вперёд-назад, руки на животе
+    const p = rest()
+    const b = Math.sin(t * 14)
+    p.torso[0] = -0.18 + 0.16 * b
+    p.head[0] = -0.3 + 0.12 * b
+    p.hip[1] = -0.4 * Math.abs(b)
+    p.armL = [-0.75, 0, 0.42]
+    p.armR = [-0.75, 0, -0.42]
+    p.foreL = p.foreR = -1.25
+    p.eyes = 'happy'
+    p.mouth = 1
+    return { pose: p, arms: false }
+  },
+  cry(t) {
+    // трёт глаза кулаками по очереди, плечи вздрагивают
+    const p = rest()
+    const sob = Math.abs(Math.sin(t * 7))
+    p.torso[0] = 0.25
+    p.head = [0.28, 0, 0.06 * Math.sin(t * 3)]
+    p.hip[1] = -0.5 - 0.4 * sob
+    const rub = Math.sin(t * 5)
+    p.armL = [-1.7 - 0.15 * rub, 0, 0.5]
+    p.armR = [-1.7 + 0.15 * rub, 0, -0.5]
+    p.foreL = p.foreR = -2.0
+    p.eyes = 'closed'
+    p.mouth = sob > 0.5 ? 1 : 0
+    p.emote = 'tear'
+    return { pose: p, arms: false }
+  },
+  calm(t) {
+    // большой потягушечный вдох, потом спокойное дыхание с закрытыми глазами
+    const p = rest()
+    const st = Math.sin(clamp01(t / 2.2) * Math.PI)
+    p.armL = [-0.3 * st, 0, -0.18 - 2.2 * st]
+    p.armR = [-0.3 * st, 0, 0.18 + 2.2 * st]
+    p.foreL = p.foreR = -0.25 + 0.15 * st
+    p.torso[0] = -0.12 * st
+    p.head[0] = -0.2 * st
+    p.hip[1] = 0.5 * st
+    breathe(p, t * 0.7, 1.2)
+    p.eyes = t > 0.4 ? 'happy' : 'open'
+    return { pose: p, arms: false }
+  },
+  proud(t) {
+    // руки в боки, грудь вперёд, подбородок вверх
+    const p = rest()
+    breathe(p, t)
+    p.torso[0] = -0.16
+    p.head = [-0.18, 0.15 * Math.sin(t * 0.7), 0]
+    p.armL = [0.5, 0, -0.85]
+    p.armR = [0.5, 0, 0.85]
+    p.foreL = p.foreR = -1.7
+    p.thighL[2] = -0.12
+    p.thighR[2] = 0.12
+    p.eyes = 'happy'
+    return { pose: p, arms: false }
+  },
+  think(t) {
+    // рука у подбородка, голова набок, «?»
+    const p = rest()
+    breathe(p, t)
+    p.armR = [-1.25, 0, -0.42]
+    p.foreR = -2.05 + 0.08 * Math.sin(t * 6)
+    p.armL = [-0.75, 0, 0.55]
+    p.foreL = -1.2
+    p.head = [-0.12, 0.2 * Math.sin(t * 0.5), 0.2]
+    p.torso[2] = 0.05
+    p.emote = 'q'
+    return { pose: p, arms: false }
+  },
+  nervous(t) {
+    // переминается, теребит руки, оглядывается
+    const p = rest()
+    const s = Math.sin(t * 4)
+    p.hip[0] = 0.6 * s
+    p.hipR[2] = 0.06 * s
+    p.thighL[0] = -0.15 * Math.max(0, s)
+    p.thighR[0] = -0.15 * Math.max(0, -s)
+    p.armL = [-0.95, 0, 0.5 + 0.08 * Math.sin(t * 11)]
+    p.armR = [-0.95, 0, -0.5 + 0.08 * Math.sin(t * 13)]
+    p.foreL = p.foreR = -0.9
+    p.head = [0.08, 0.45 * Math.sin(t * 1.7), 0]
+    p.eyes = 'wide'
+    p.emote = 'sweat'
+    return { pose: p, arms: false }
+  },
+  lonely(t) {
+    const p = rest()
+    huddle(p, ease(t / 0.8))
+    p.head = [0.42, 0, 0.12]
+    if (t > 0.8) p.torso[0] += 0.03 * Math.sin(t * 1.6)
+    p.eyes = 'sad'
+    return { pose: p, arms: false }
+  },
+  // ---------- действия ----------
+  run(t) {
+    const p = rest()
+    p.torso[0] = 0.32
+    p.head[0] = -0.12
+    const s = Math.sin(t * 10)
+    p.armL = [0.9 * s, 0, -0.2]
+    p.armR = [-0.9 * s, 0, 0.2]
+    p.foreL = p.foreR = -1.5
+    p.eyes = 'strain'
+    return { pose: p, arms: false }
+  },
+  dance(t) {
+    // бёдра влево-вправо, руки по очереди вверх, шаг в сторону
+    const p = rest()
+    const s = Math.sin(t * 5)
+    const c = Math.cos(t * 5)
+    p.hip = [1.2 * s, -0.8 * Math.abs(c), 0]
+    p.hipR[2] = 0.1 * s
+    p.torso[2] = -0.14 * s
+    p.head[2] = 0.12 * s
+    p.armL = [-0.3, 0, -1.2 - 1.0 * Math.max(0, s)]
+    p.armR = [-0.3, 0, 1.2 + 1.0 * Math.max(0, -s)]
+    p.foreL = p.foreR = -0.6
+    p.thighL[0] = -0.35 * Math.max(0, c)
+    p.thighR[0] = -0.35 * Math.max(0, -c)
+    p.shinL = 0.5 * Math.max(0, c)
+    p.shinR = 0.5 * Math.max(0, -c)
+    p.eyes = 'happy'
+    p.mouth = 1
+    p.emote = 'note'
+    return { pose: p, arms: false }
+  },
+  hug(t) {
+    // раскрыл руки — обнял
+    const p = rest()
+    breathe(p, t)
+    const k = ease(clamp01((t - 0.3) / 0.5))
+    p.armL = [-1.25, 0, lerp(-1.3, 0.7, k)]
+    p.armR = [-1.25, 0, lerp(1.3, -0.7, k)]
+    p.foreL = p.foreR = lerp(-0.3, -1.25, k)
+    p.torso[0] = 0.12 * k
+    p.head[2] = 0.14 * k
+    p.eyes = k > 0.5 ? 'happy' : 'open'
+    p.emote = k > 0.7 ? 'heart' : 'none'
+    return { pose: p, arms: false }
+  },
+  read(t) {
+    // книга перед собой, голова вниз, раз в 2.5 с перелистывает
+    const p = rest()
+    breathe(p, t, 0.5)
+    p.armL = [-1.2, 0, 0.32]
+    p.armR = [-1.2, 0, -0.32]
+    p.foreL = p.foreR = -0.9
+    p.head[0] = 0.32
+    const flip = Math.sin(clamp01((loopU(t, 2.5) - 0.8) / 0.2) * Math.PI)
+    p.armR[2] = -0.32 + 0.5 * flip
+    return { pose: p, arms: false }
+  },
+  write(t) {
+    // пишет: левая придерживает, правая водит ручкой
+    const p = rest()
+    breathe(p, t, 0.5)
+    p.torso[0] = 0.25
+    p.head[0] = 0.38
+    p.armL = [-0.95, 0, 0.35]
+    p.foreL = -0.9
+    p.armR = [-1.0, 0, -0.15 + 0.12 * Math.sin(t * 9)]
+    p.foreR = -0.95 + 0.1 * Math.sin(t * 13)
+    return { pose: p, arms: false }
+  },
+  phone(t) {
+    // смотрит в телефон, большой палец листает
+    const p = rest()
+    breathe(p, t, 0.5)
+    p.armR = [-1.25, 0, -0.32]
+    p.foreR = -1.55 + 0.06 * Math.sin(t * 8)
+    p.armL = [-1.1, 0, 0.42]
+    p.foreL = -1.45
+    p.head[0] = 0.42
+    return { pose: p, arms: false }
+  },
+  eat(t) {
+    // ложка ко рту чаще, чем кружка, жуёт
+    const p = rest()
+    breathe(p, t, 0.5)
+    const c = loopU(t, 1.1)
+    const up = Math.sin(clamp01(c / 0.6) * Math.PI)
+    p.armR = [lerp(-0.9, -1.6, up), 0, lerp(-0.2, -0.55, up)]
+    p.foreR = lerp(-0.9, -1.7, up)
+    p.armL = [-0.9, 0, 0.3]
+    p.foreL = -0.9
+    p.mouth = c > 0.6 ? (Math.sin(t * 16) > 0 ? 1 : 0) : up > 0.6 ? 1 : 0
+    p.eyes = 'happy'
+    return { pose: p, arms: false }
+  },
+  cook(t) {
+    // мешает в кастрюле перед собой по кругу
+    const p = rest()
+    breathe(p, t, 0.5)
+    p.torso[0] = 0.15
+    p.head[0] = 0.3
+    p.armR = [-0.95 + 0.15 * Math.sin(t * 5), 0, -0.2 + 0.15 * Math.cos(t * 5)]
+    p.foreR = -0.9
+    p.armL = [-0.8, 0, 0.45]
+    p.foreL = -0.8
+    return { pose: p, arms: false }
+  },
+  sleep(t) {
+    // лёг на бок прямо на бумагу, дышит
+    const p = rest()
+    const s = ease(t / 0.8)
+    p.hip = [0, -HIP_Y + 4.2 * s + (1 - s) * HIP_Y * 0, 0]
+    p.hip[1] = lerp(0, -HIP_Y + 4.4, s)
+    p.hipR = [0, 0, 1.45 * s]
+    p.thighL = [-0.5 * s, 0, 0]
+    p.thighR = [-0.6 * s, 0, 0]
+    p.shinL = p.shinR = 0.7 * s
+    p.armL = [-0.6 * s, 0, 0.2]
+    p.armR = [-1.4 * s, 0, 0.6 * s]
+    p.foreL = p.foreR = -0.9 * s
+    p.head[2] = -0.25 * s
+    if (s >= 1) p.torso[0] = 0.04 * Math.sin(t * 1.8)
+    p.eyes = 'closed'
+    p.emote = s > 0.8 ? 'z' : 'none'
+    return { pose: p, arms: false }
+  },
+  guitar(t) {
+    // левая на грифе в сторону, правая бьёт по струнам у живота
+    const p = rest()
+    breathe(p, t, 0.5)
+    p.armL = [-0.85, 0, -0.85]
+    p.foreL = -0.5
+    p.armR = [-0.6, 0, -0.25]
+    p.foreR = -1.35 + 0.25 * Math.sin(t * 16)
+    p.head = [0.15, 0, 0.12 * Math.sin(t * 2.5)]
+    p.hip[0] = 0.3 * Math.sin(t * 2.5)
+    p.eyes = 'happy'
+    p.emote = 'note'
+    return { pose: p, arms: false }
+  },
+  photo(t) {
+    // камера у лица двумя руками, щелчок
+    const p = rest()
+    breathe(p, t, 0.4)
+    p.armL = [-1.55, 0, 0.42]
+    p.armR = [-1.55, 0, -0.42]
+    p.foreL = p.foreR = -1.45
+    const click = loopU(t, 1.6)
+    p.head[0] = 0.04 + (click > 0.7 && click < 0.78 ? 0.05 : 0)
+    p.eyes = click > 0.7 && click < 0.78 ? 'closed' : 'open'
+    p.emote = click > 0.72 && click < 0.95 ? 'bang' : 'none'
+    return { pose: p, arms: false }
+  },
+  clap(t) {
+    const p = rest()
+    const s = Math.abs(Math.sin(t * 8))
+    p.armL = [-1.15, 0, 0.12 + 0.4 * s]
+    p.armR = [-1.15, 0, -0.12 - 0.4 * s]
+    p.foreL = p.foreR = -0.95
+    p.hip[1] = -0.3 * s
+    p.eyes = 'happy'
+    p.mouth = 1
+    return { pose: p, arms: false }
+  },
+  point(t) {
+    // показывает рукой вперёд-вбок, голова туда же
+    const p = rest()
+    breathe(p, t)
+    p.armR = [-1.45, 0, 0.55]
+    p.foreR = -0.05
+    p.head = [-0.05, -0.35, 0]
+    p.torso[1] = -0.15
+    p.mouth = 1
+    return { pose: p, arms: false }
+  },
+  look(t) {
+    // ладонь козырьком, медленно оглядывается
+    const p = rest()
+    breathe(p, t)
+    p.armR = [-1.9, 0, -0.35]
+    p.foreR = -1.85
+    p.head = [-0.1, 0.65 * Math.sin(t * 0.9), 0]
+    p.torso[1] = 0.2 * Math.sin(t * 0.9)
+    return { pose: p, arms: false }
+  },
+  throw(t) {
+    // замах назад — бросок вперёд, по кругу
+    const p = rest()
+    const c = loopU(t, 1.4)
+    const wind = span(c, 0, 0.45) * (1 - span(c, 0.45, 0.6))
+    const fling = span(c, 0.45, 0.6) * (1 - span(c, 0.8, 1))
+    p.armR = [lerp(lerp(0, 1.4, wind), -2.0, fling), 0, 0.3]
+    p.foreR = -0.9 * wind - 0.1
+    p.armL = [-0.8 * wind + 0.4 * fling, 0, -0.35]
+    p.torso = [0.25 * fling - 0.1 * wind, 0.35 * wind - 0.3 * fling, 0]
+    p.thighL[0] = -0.45 * fling
+    p.eyes = fling > 0.3 ? 'strain' : 'open'
+    return { pose: p, arms: false }
+  },
+  kick(t) {
+    // удар правой ногой вперёд, руки для равновесия
+    const p = rest()
+    const c = loopU(t, 1.2)
+    const back = span(c, 0, 0.35) * (1 - span(c, 0.35, 0.45))
+    const hit = span(c, 0.35, 0.5) * (1 - span(c, 0.7, 0.95))
+    p.thighR = [0.6 * back - 1.5 * hit, 0, 0]
+    p.shinR = 1.2 * back + 0.1 * hit
+    p.torso[0] = -0.15 * hit
+    p.armL = [-0.6 * hit, 0, -0.9]
+    p.armR = [0.4 * hit, 0, 0.7]
+    p.foreL = p.foreR = -0.3
+    p.eyes = hit > 0.4 ? 'strain' : 'open'
+    return { pose: p, arms: false }
+  },
+}
+
+const ACTIONS: Record<HeroAction, PoseFn> = { ...BASE_ACTIONS, ...EXTRA_ACTIONS }
+
+/** Сердечко из двух шаров и ромба — для глаз «влюблён» и значка над головой. */
+function heartMesh(size: number, m: THREE.Material): THREE.Group {
+  const g = new THREE.Group()
+  for (const sx of [-1, 1]) {
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.5 * size, 10, 8), m)
+    b.position.set(sx * 0.42 * size, 0.25 * size, 0)
+    g.add(b)
+  }
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(0.85 * size, 0.85 * size, 0.7 * size), m)
+  tip.rotation.z = Math.PI / 4
+  tip.position.set(0, -0.2 * size, 0)
+  g.add(tip)
+  return g
+}
+
 const part = (s: Part['s'], p: Part['p'], d: Part['d'], c: PaletteName, extra: Partial<Part> = {}): Part => ({ s, p, d, c, ...extra })
+
+/** Вещи на голову второго человечка — закрытый список (assets/kit/companions.json, accessories). */
+export type HeroAccessory = 'none' | 'cap' | 'bun' | 'headscarf' | 'kalpak' | 'glasses' | 'moustache' | 'long_hair'
+
+/** Фигуры вещи в координатах головы: лицо — сфера в (0, 6.8, 0) размером 15.6×14×13.6, смотрит на +Z. */
+function accessoryParts(a: HeroAccessory, c: HeroColors): Part[] {
+  switch (a) {
+    case 'headscarf':
+      // платок: шапкой сверху и сзади, концы по щекам, узел под подбородком
+      return [
+        part('sph', [0, 11.0, -0.9], [18.2, 10.8, 16.8], c.scarf),
+        part('sph', [-7.5, 6.2, -1.2], [3.6, 9.4, 9.6], c.scarf),
+        part('sph', [7.5, 6.2, -1.2], [3.6, 9.4, 9.6], c.scarf),
+        part('sph', [0, 6.4, -6.2], [14, 10, 4], c.scarfDark),
+        part('sph', [0, 0.6, 4.6], [3.4, 2.4, 2.4], c.scarfDark),
+      ]
+    case 'cap':
+      // кепка козырьком вперёд
+      return [
+        part('sph', [0, 12.2, -0.3], [16.8, 8.4, 15.8], c.jacketDark),
+        part('box', [0, 10.4, 7.6], [11, 1.2, 6.2], c.jacketDark, { r: [-8, 0, 0] }),
+      ]
+    case 'kalpak':
+      // ак калпак: высокий белый колпак с чёрными отворотами
+      return [
+        part('cone', [0, 18.6, -0.4], [14.6, 11.6, 14.0], 'cream'),
+        part('cyl', [0, 12.9, -0.4], [17.4, 2.6, 16.4], 'ink', { k: 16 }),
+      ]
+    case 'glasses':
+      return [
+        part('torus', [-3.0, 5.8, 7.0], [3.8, 3.8, 0.9], 'ink', { k: 12 }),
+        part('torus', [3.0, 5.8, 7.0], [3.8, 3.8, 0.9], 'ink', { k: 12 }),
+        part('box', [0, 6.2, 7.1], [1.8, 0.6, 0.6], 'ink'),
+      ]
+    case 'moustache':
+      return [part('sph', [-1.4, 3.9, 6.6], [3.0, 1.3, 1.4], c.hair), part('sph', [1.4, 3.9, 6.6], [3.0, 1.3, 1.4], c.hair)]
+    case 'long_hair':
+      // волосы до плеч: сзади и по бокам
+      return [
+        part('sph', [0, 4.2, -3.4], [16.4, 16.4, 8.6], c.hair),
+        part('sph', [-7.0, 3.0, -0.8], [3.8, 13.4, 8.4], c.hair),
+        part('sph', [7.0, 3.0, -0.8], [3.8, 13.4, 8.4], c.hair),
+      ]
+    case 'bun':
+      // пучок на макушке
+      return [part('sph', [0, 16.6, -2.6], [6.4, 6.0, 6.4], c.hair), part('torus', [0, 14.4, -2.2], [5.2, 5.2, 1.2], c.scarf, { k: 12, r: [90, 0, 0] })]
+    default:
+      return []
+  }
+}
 
 /** Кусок тела как предмет кита: строим тем же сборщиком, что и предметы. */
 function piece(id: string, parts: Part[], mat: MaterialFor) {
@@ -379,7 +963,9 @@ export class Hero3D {
   /** Точка между ладонями перед грудью (для предметов в обеих руках). */
   readonly chest = new THREE.Object3D()
 
-  private eyeSets: Record<Eyes, THREE.Object3D[]> = { open: [], closed: [], happy: [], strain: [] }
+  private eyeSets: Record<Eyes, THREE.Object3D[]> = { open: [], closed: [], happy: [], strain: [], sad: [], wide: [], angry: [], sleepy: [], heart: [] }
+  /** Значки у головы (план 15): показывается один, по позе. */
+  private emotes: Partial<Record<Emote, THREE.Object3D>> = {}
   private mouth: THREE.Object3D
   private scarfLinks: THREE.Object3D[] = []
   private scarfAnchor = new THREE.Object3D()
@@ -398,7 +984,12 @@ export class Hero3D {
   private from: Pose = rest()
   private last: Pose = rest()
 
-  constructor(readonly colors: HeroColors = HERO_COLORS, mat: MaterialFor = toonFor) {
+  constructor(
+    readonly colors: HeroColors = HERO_COLORS,
+    mat: MaterialFor = toonFor,
+    /** Одна вещь на голове второго человечка (assets/kit/companions.json): бабушке — платок, дедушке — калпак. */
+    readonly accessory: HeroAccessory = 'none',
+  ) {
     const c = colors
     this.object.add(this.body)
     this.body.scale.setScalar(KIT_UNIT)
@@ -529,6 +1120,10 @@ export class Hero3D {
       ),
     )
 
+    // вещь на голове: крупно и одним силуэтом, чтобы роль читалась издалека
+    const acc = accessoryParts(accessory, c)
+    if (acc.length) this.head.add(piece('accessory', acc, mat))
+
     // глаза: четыре набора, показывается один
     const ink = mat('ink', false)
     const stroke = (w: number, h: number, x: number, y: number, rz: number) => {
@@ -539,7 +1134,7 @@ export class Hero3D {
     }
     for (const side of [-1, 1]) {
       const at = new THREE.Vector3(side * 2.9, 5.7, 6.3)
-      const make = (kind: Eyes, parts: THREE.Mesh[]) => {
+      const make = (kind: Eyes, parts: THREE.Object3D[]) => {
         const g = new THREE.Group()
         g.position.copy(at)
         g.add(...parts)
@@ -551,7 +1146,49 @@ export class Hero3D {
       make('happy', [stroke(1.5, 0.7, -0.5, 0, 0.75), stroke(1.5, 0.7, 0.5, 0, -0.75)])
       // «> <»: остриё к носу
       make('strain', [stroke(1.6, 0.7, 0, 0.45, side * 0.55), stroke(1.6, 0.7, 0, -0.45, -side * 0.55)])
+      // брови домиком, глаза меньше — грусть
+      make('sad', [stroke(1.4, 2.0, 0, -0.3, 0), stroke(2.2, 0.6, 0, 2.0, side * 0.45)])
+      // большие глаза и брови вверх — удивление, страх
+      make('wide', [stroke(2.1, 3.3, 0, 0, 0), stroke(2.0, 0.6, 0, 2.9, -side * 0.12)])
+      // брови к носу — злость
+      make('angry', [stroke(1.6, 2.2, 0, -0.3, 0), stroke(2.4, 0.7, 0, 1.8, -side * 0.55)])
+      // полуприкрытые веки — сонный, скучно
+      make('sleepy', [stroke(2.2, 1.1, 0, -0.5, 0), stroke(2.4, 0.5, 0, 0.3, 0)])
+      // сердечки вместо глаз
+      make('heart', [heartMesh(1.0, mat('coral', false))])
     }
+    // значки у головы: слеза, пот, «z», сердечко, «!», «?», метка злости, нота
+    const em = (key: Emote, parts: THREE.Object3D[], at: [number, number, number]) => {
+      const g = new THREE.Group()
+      g.position.set(...at)
+      g.add(...parts)
+      g.visible = false
+      this.head.add(g)
+      this.emotes[key] = g
+    }
+    const blob = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material) => {
+      const o = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), m)
+      o.scale.set(w, h, d)
+      o.position.set(x, y, z)
+      return o
+    }
+    const bar = (w: number, h: number, x: number, y: number, rz: number, m: THREE.Material) => {
+      const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, 1.4), m)
+      o.position.set(x, y, 0)
+      o.rotation.z = rz
+      return o
+    }
+    const water = mat('ice', false)
+    const sun = mat('yellow', false)
+    const red = mat('brick', false)
+    em('tear', [blob(1.3, 2.0, 1.2, 0, 0, 0, water)], [2.9, 3.6, 6.9])
+    em('sweat', [blob(1.8, 2.6, 1.4, 0, 0, 0, water)], [8.2, 11.5, 2.5])
+    em('z', [bar(3.2, 0.8, 0, 1.4, 0, ink), bar(3.6, 0.8, 0, 0, 0.8, ink), bar(3.2, 0.8, 0, -1.4, 0, ink), bar(2.0, 0.6, 3.4, 3.6, 0, ink), bar(2.2, 0.6, 3.4, 2.8, 0.8, ink), bar(2.0, 0.6, 3.4, 2.0, 0, ink)], [8.5, 17, 1])
+    em('heart', [heartMesh(2.2, mat('coral', false))], [8.5, 16.5, 1])
+    em('bang', [bar(1.3, 4.0, 0, 1.2, 0, red), bar(1.3, 1.2, 0, -2.0, 0, red)], [8.6, 17, 1])
+    em('q', [bar(3.0, 0.9, 0, 2.6, 0, sun), bar(0.9, 1.8, 1.2, 1.6, 0, sun), bar(1.8, 0.9, 0.5, 0.4, -0.5, sun), bar(0.9, 1.0, 0, -0.6, 0, sun), bar(0.9, 0.9, 0, -2.2, 0, sun)], [8.6, 17, 1])
+    em('anger', [bar(2.6, 0.8, 0, 0.9, 0.4, red), bar(2.6, 0.8, 0, -0.9, -0.4, red), bar(0.8, 2.6, 0.9, 0, 0.4, red), bar(0.8, 2.6, -0.9, 0, -0.4, red)], [7.2, 13.5, 3])
+    em('note', [blob(1.9, 1.5, 1.2, 0, 0, 0, ink), bar(0.6, 4.2, 0.8, 2.1, 0, ink), bar(1.8, 0.7, 1.6, 4.0, -0.5, ink)], [9, 15.5, 1])
     this.mouth = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.3, 1.0), mat(c.scarfDark, false))
     this.mouth.position.set(0, 3.3, 6.0)
     this.head.add(this.mouth)
@@ -634,6 +1271,26 @@ export class Hero3D {
     const eyes: Eyes = blink ? 'closed' : p.eyes
     for (const kind of Object.keys(this.eyeSets) as Eyes[]) for (const e of this.eyeSets[kind]) e.visible = kind === eyes
     this.mouth.visible = p.mouth > 0.5
+    for (const [key, g] of Object.entries(this.emotes) as [Emote, THREE.Object3D][]) {
+      const on = key === p.emote
+      g.visible = on
+      if (!on) continue
+      const base = g.userData.base ?? (g.userData.base = g.position.clone())
+      const u = (time * 0.8) % 1
+      if (key === 'tear') {
+        // капля сбегает по щеке и появляется снова
+        g.position.set(base.x, base.y - 3.2 * u, base.z)
+        g.scale.setScalar(u < 0.85 ? 1 : 1 - (u - 0.85) / 0.15)
+      } else if (key === 'z' || key === 'heart' || key === 'note') {
+        // всплывают вверх и тают
+        g.position.set(base.x + 0.8 * Math.sin(time * 2), base.y + 3 * u, base.z)
+        g.scale.setScalar(0.7 + 0.5 * Math.sin(u * Math.PI))
+      } else {
+        // подпрыгивают на месте
+        g.position.set(base.x, base.y + 0.6 * Math.abs(Math.sin(time * 6)), base.z)
+        g.scale.setScalar(1)
+      }
+    }
   }
 
   private updateScarf(dt: number) {

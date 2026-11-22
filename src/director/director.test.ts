@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { DayScript } from '../types/script'
-import { choreograph } from '../timeline/choreograph'
+import { choreograph, MIN_DURATION } from '../timeline/choreograph'
 import { exemplars } from './exemplars'
 import { fallbackDirect } from './fallback'
 import { directDay } from './index'
 import { buildScriptSchema } from './schema'
 import { SYSTEM_PROMPT } from './prompt'
 import { MAX_MAKES, checkScript, fixQuote, fixResult, validateScript } from './validate'
+import { emotionOnly, isAbstractProp, MAX_BEATS, MIN_BEATS } from './beatFields'
+import { findByName } from '../kit/library'
 
 const day1 = exemplars[0]
 
@@ -57,13 +59,13 @@ describe('validateScript', () => {
     // слово уже есть в библиотеке — дорисовывать не надо
     expect(fixResult({ kind: 'make', name: 'самовар', hint: '', tags: [] }).result).toEqual({ kind: 'kit', id: 'samovar' })
     expect(fixResult({ kind: 'make', name: 'швейная машинка', hint: '', tags: ['home'] }).result).toMatchObject({ kind: 'make', name: 'швейная машинка' })
-    const m = fixResult({ kind: 'make', name: 'Самокат', hint: 'детский', tags: ['transport', 'нет-такого', 'CITY'] }).result
-    expect(m).toEqual({ kind: 'make', id: 'make:самокат', name: 'Самокат', hint: 'детский', tags: ['transport', 'city'] })
-    const text = 'Купили самокат, глобус, пылесос, утюг и фен.'
+    const m = fixResult({ kind: 'make', name: 'Дирижабль', hint: 'серебристый', tags: ['transport', 'нет-такого', 'CITY'] }).result
+    expect(m).toEqual({ kind: 'make', id: 'make:дирижабль', name: 'Дирижабль', hint: 'серебристый', tags: ['transport', 'city'] })
+    const text = 'Купили дирижабль, телескоп, арфу, утюг и фен.'
     const raw = {
       title: 'День новых вещей дома', mood: { warmth: 0.5, tension: 0, energy: 0.5, openness: 0.5 }, contradiction: null,
       time_of_day: 'day', weather: 'clear', place: 'home', palette_hint: ['cream', 'amber', 'teal'], song: { tempo: 'medium', energy: 0.5, estimated: true },
-      beats: ['самокат', 'глобус', 'пылесос', 'утюг', 'фен'].map((w) => ({ quote: w, action: 'pull', result: { kind: 'make', name: w, hint: '', tags: ['home'] }, camera: 'wide', effect: null })),
+      beats: ['дирижабль', 'телескоп', 'арфу', 'утюг', 'фен'].map((w) => ({ quote: w, action: 'pull', result: { kind: 'make', name: w, hint: '', tags: ['home'] }, camera: 'wide', effect: null })),
       why: ['Текст: вещи → предметы', 'Фото: нет', 'Песня: нет'],
     }
     const r = validateScript(raw, text)
@@ -90,7 +92,7 @@ describe('validateScript', () => {
     }
     const r = validateScript(raw, day1.text)
     expect(checkScript(r.script, day1.text)).toEqual([])
-    expect(r.script.beats.length).toBeGreaterThanOrEqual(4)
+    expect(r.script.beats.length).toBeGreaterThanOrEqual(MIN_BEATS)
     expect(r.script.beats.some((b) => b.quote === 'какао' && b.action === 'drink' && b.result.kind === 'kit' && b.result.id === 'cocoa' && b.camera === 'push_in' && b.effect === 'lamp_flicker')).toBe(true)
     expect(r.script.beats.some((b) => b.quote === 'единорог')).toBe(false)
     expect(r.script.mood.warmth).toBe(1)
@@ -131,18 +133,27 @@ describe('fallbackDirect', () => {
     'Утром был дедлайн, я очень устал, но вечером мы с друзьями пошли в кафе и смеялись. Coffee was great.',
     'Весь день лил дождь, автобус опоздал, я промок и замёрз, но дома ждал горячий чай и кот.',
   ]
-  it.each(texts.map((t) => [t.slice(0, 30), t]))('«%s…» → валидный сценарий 4–7 битов', (_n, t) => {
+  it.each(texts.map((t) => [t.slice(0, 30), t]))('«%s…» → валидный сценарий 2–8 битов', (_n, t) => {
     const s = fallbackDirect({ text: t, photos: [], song: null })
     expect(checkScript(s, t)).toEqual([])
-    const tl = choreograph(s, { seed: 1 })
-    expect(tl.duration).toBeGreaterThanOrEqual(30)
-    expect(tl.duration).toBeLessThanOrEqual(60)
+    const tl = choreograph(s, { seed: 1, text: t })
+    // пауза бита уходит в дорогу — короткая запись (одно-два слова) может быть чуть короче MIN_DURATION
+    expect(tl.duration).toBeGreaterThanOrEqual(MIN_DURATION - 2)
+    expect(tl.duration).toBeLessThanOrEqual(75)
+    // строки рассказа: у каждого бита полное предложение со связкой, не обрывок
+    for (const w of tl.beats) expect(w.story.split(/\s+/).length).toBeGreaterThanOrEqual(2)
   })
 
   it('берёт осмысленные слова и противоречие', () => {
     const s = fallbackDirect({ text: day1.text, photos: [], song: null })
     const ids = s.beats.map((b) => `${b.result.kind}:${b.result.id}`)
-    expect(ids).toEqual(expect.arrayContaining(['kit:tree', 'effect:leaves', 'effect:frost', 'kit:cocoa', 'person:second_person']))
+    expect(ids).toEqual(expect.arrayContaining(['kit:tree', 'effect:leaves', 'effect:frost', 'kit:cocoa']))
+    // план 13: «мы» — второй человечек рядом (companion), в руках у героя вещь, а не person
+    const we = s.beats.find((b) => b.quote === 'мы')!
+    expect(we.companion).toEqual({ name: 'друг', role: 'друг' })
+    expect(we.kind).toBe('person')
+    expect(we.result.kind).toBe('kit')
+    for (const b of s.beats) expect(b.hero_prop?.length).toBeGreaterThan(0)
     expect(s.contradiction?.staging).toBe('frost_edges_warm_center')
     expect(s.place).toBe('park')
     expect(s.time_of_day).toBe('evening')
@@ -224,6 +235,54 @@ describe('режиссёр знает библиотеку кита', () => {
     const s = fallbackDirect({ text: 'Вечером пили чай из самовара в юрте, ели баурсаки и слушали домбру.' })
     const got = s.beats.map((b) => `${b.result.kind}:${b.result.id}`)
     expect(got).toEqual(expect.arrayContaining(['kit:samovar', 'kit:yurt', 'kit:baursak', 'kit:dombra']))
+  })
+
+  it('образцы по плану 13: 4–6 битов, hero_prop — предмет библиотеки и он же result, без повторов подряд', () => {
+    for (const e of exemplars) {
+      const b = e.script.beats
+      expect(b.length).toBeGreaterThanOrEqual(4)
+      expect(b.length).toBeLessThanOrEqual(6)
+      b.forEach((x, i) => {
+        // бит-чувство: предмета нет, есть эмоция
+        if (emotionOnly(x)) {
+          expect(x.hero_prop).toBe('')
+          expect(x.emotion).toBeTruthy()
+          return
+        }
+        const m = findByName(x.hero_prop!)
+        expect(m, x.hero_prop).toBeTruthy()
+        expect(x.result).toEqual({ kind: 'kit', id: m!.id })
+        if (i) expect(x.hero_prop).not.toBe(b[i - 1].hero_prop)
+        expect(x.weight).toBeGreaterThanOrEqual(1)
+      })
+    }
+  })
+
+  it('правила истории: чувство → вещь, result = hero_prop, повтор подряд убран, не больше 6', () => {
+    const r = validateScript(
+      {
+        ...day1.script,
+        beats: [
+          { ...day1.script.beats[0], hero_prop: 'тепло на душе', result: { kind: 'kit', id: 'leaf' } },
+          { ...day1.script.beats[1], hero_prop: 'какао', result: { kind: 'kit', id: 'thermometer' } },
+          ...day1.script.beats.slice(2),
+          { quote: 'долго разговаривали', action: 'pull', result: { kind: 'kit', id: 'phone' }, camera: 'hold', effect: null, hero_prop: 'телефон' },
+          { quote: 'зажглись раньше', action: 'pull', result: { kind: 'kit', id: 'street_lamp' }, camera: 'hold', effect: null, hero_prop: 'фонарь', weight: 1 },
+        ],
+      },
+      day1.text,
+    )
+    const b = r.script.beats
+    expect(b.length).toBeLessThanOrEqual(MAX_BEATS)
+    expect(b[0].hero_prop).toBe('лист')
+    // result = предмет hero_prop
+    for (const x of b) if (x.result.kind === 'kit') expect(findByName(x.hero_prop!)?.id ?? x.result.id).toBe(x.result.id)
+    for (let i = 1; i < b.length; i++) expect(b[i].hero_prop).not.toBe(b[i - 1].hero_prop)
+    // повтор «какао» подряд: лёгкий бит «Было холодно» берёт свою вещь, бит с человеком держит какао
+    expect(b.find((x) => x.companion)?.result).toEqual({ kind: 'kit', id: 'cocoa' })
+    expect(b.find((x) => x.quote === 'Было холодно')?.hero_prop).not.toBe('какао')
+    expect(isAbstractProp('усталость')).toBe(true)
+    expect(isAbstractProp('кружка с паром')).toBe(false)
   })
 
   it('образцы — только kit, effect, person', () => {

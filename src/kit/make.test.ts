@@ -4,12 +4,13 @@ import { closeKitDb, fallbackKit, loadMadeKits, makeKey, makeKit } from './make'
 import { findByWord } from './library'
 
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + '<rect x="10" y="10" width="20" height="20" fill="#3b8483" stroke="#1b1410" stroke-width="2.5"/>'.repeat(6) + '</svg>'
+// слово, которого в библиотеке точно не будет (самокат mb-assets уже перенесли в библиотеку)
 const scooter = {
-  id: 'scooter',
-  ru: 'самокат',
-  kk: 'самокат',
-  en: 'scooter',
-  stems: ['самокат'],
+  id: 'airship',
+  ru: 'дирижабль',
+  kk: 'дирижабль',
+  en: 'airship',
+  stems: ['дирижабл'],
   tags: ['transport', 'city', 'summer'],
   hold: 'both',
   svg,
@@ -31,15 +32,15 @@ describe('makeKit', () => {
 
   it('новое слово — Claude, потом кэш; слово находится в тексте', async () => {
     const f = ok(scooter)
-    const r1 = await makeKit({ name: 'Самокат', hint: 'детский', tags: ['transport'] }, { fetchImpl: f as unknown as typeof fetch })
+    const r1 = await makeKit({ name: 'Дирижабль', hint: 'серебристый', tags: ['transport'] }, { fetchImpl: f as unknown as typeof fetch })
     expect(r1.source).toBe('claude')
     expect(r1.model.by).toBe('claude')
     expect(f).toHaveBeenCalledTimes(1)
-    const r2 = await makeKit({ name: 'самокат' }, { fetchImpl: f as unknown as typeof fetch })
+    const r2 = await makeKit({ name: 'дирижабль' }, { fetchImpl: f as unknown as typeof fetch })
     expect(r2.source).toBe('cache') // зарегистрирован в поиске
-    expect(findByWord('самокате')?.id).toBe('scooter')
+    expect(findByWord('дирижабле')?.id).toBe('airship')
     expect(f).toHaveBeenCalledTimes(1)
-    expect((await loadMadeKits()).map((m) => m.id)).toContain('scooter')
+    expect((await loadMadeKits()).map((m) => m.id)).toContain('airship')
   })
 
   it('два одинаковых запроса — один вызов', async () => {

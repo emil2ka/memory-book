@@ -1,11 +1,33 @@
 // Пачка 7: дастархан с едой (stand) и детали сценок (detail, 6–20): урна, кот спит, лужа, сугроб,
 // листья кучкой, стопка книг, связка шариков. Мяч, рюкзак и кружка уже есть (ball, backpack, tea / cocoa).
+import type { Part } from '../../../src/kit/format'
 import { box, cone, cyl, item, onXZ, ring, ry, sph, sym, torus } from './dsl'
+
+/** «Z» сна: три бруска. */
+const zz = (x: number, y: number, s: number): Part[] => [
+  box([x, y + s, 2], [s * 1.8, s * 0.45, 0.4], 'navy'),
+  box([x, y, 2], [s * 0.45, s * 2.5, 0.4], 'navy', { r: [0, 0, -50] }),
+  box([x, y - s, 2], [s * 1.8, s * 0.45, 0.4], 'navy'),
+]
 import type { Entry } from './pack1'
 
 const e = (cat: string, model: Entry['model']): Entry => ({ cat, model })
 
 export const pack7: Entry[] = [
+  // ракета (была только картинкой): белый корпус, красный нос и стабилизаторы, иллюминатор, пламя снизу
+  e('transport', item(
+    { id: 'rocket', ru: 'ракета', kk: 'зымыран', en: 'rocket', stems: ['ракет', 'космос', 'космонавт', 'ғарыш', 'зымыран', 'rocket', 'space'], tags: ['transport', 'dream', 'sky', 'energy', 'joy'], hold: 'hand', grip: [0, 5.5, 0], scene: 'hand', fx: [{ kind: 'flame', at: [0, 1, 0] }] },
+    cyl([0, 6.2, 0], [4.6, 6.4, 4.6], 'white', { k: 14, n: 'body' }),
+    cone([0, 10.6, 0], [4.6, 2.8, 4.6], 'brick', { k: 14, n: 'nose' }),
+    cyl([0, 4.3, 0], [4.8, 0.8, 4.8], 'brick', { k: 14 }),
+    cyl([0, 7.4, 2.25], [2.6, 0.5, 2.6], 'navy', { r: [90, 0, 0], k: 12, n: 'window' }),
+    cyl([0, 7.4, 2.45], [1.8, 0.4, 1.8], 'ice', { r: [90, 0, 0], k: 12 }),
+    ...sym(box([3, 3.6, 0], [2.4, 4, 0.9], 'brick', { r: [0, 0, -22], n: 'fin' })),
+    box([0, 3.4, 2.6], [0.9, 3.6, 2.2], 'brick'),
+    cyl([0, 2.6, 0], [3, 1, 3], 'slate', { k: 12, n: 'nozzle' }),
+    cone([0, 1.2, 0], [3, 2.4, 3], 'amber', { r: [180, 0, 0], k: 10, glow: true, n: 'flame' }),
+    cone([0, 1.4, 0], [1.6, 1.8, 1.6], 'yellow', { r: [180, 0, 0], k: 10, glow: true }),
+  )),
   e('kz', item(
     { id: 'dastarkhan_feast', ru: 'дастархан с угощением', kk: 'дастарқан', en: 'dastarkhan feast', stems: ['застоль', 'угощени', 'той$', 'feast'], tags: ['kz', 'food', 'family', 'guests', 'holiday', 'warm', 'place'], hold: 'ground', scene: 'stand', fx: [{ kind: 'steam', at: [-6, 27, -3] }] },
     // низкий круглый стол на корпе
@@ -53,17 +75,21 @@ export const pack7: Entry[] = [
     { id: 'cat_sleeping', ru: 'кот спит', kk: 'ұйықтап жатқан мысық', en: 'sleeping cat', stems: ['дремал', 'мурлык', 'мурчал', 'клубочк', 'sleeping cat'], tags: ['animal', 'home', 'calm', 'sleep', 'cat', 'detail'], hold: 'ground', scene: 'detail', fx: [{ kind: 'bob' }] },
     cyl([0, 0.75, 0], [15, 1.5, 11], 'teal', { k: 16, n: 'pillow' }),
     torus([0, 1.5, 0], [15, 11, 0.8], 'tealDark', { r: [90, 0, 0] }),
-    sph([0, 4, 0], [11, 5.5, 8], 'ochre', { n: 'body' }),
-    ...[-2.5, 0, 2.5].map((x) => box([x, 6.4, -1], [1, 1, 5], 'amber', { r: [0, 0, x * 6] })),
-    sph([4.5, 4.5, 2.5], [5, 4.5, 4.5], 'ochre', { n: 'head' }),
-    cone([6, 7, 2.5], [1.8, 2.5, 1.5], 'ochre', { r: [0, 0, -20] }),
-    cone([3, 7, 2.5], [1.8, 2.5, 1.5], 'ochre', { r: [0, 0, 20] }),
-    box([5.7, 4.8, 4.8], [1.4, 0.5, 0.5], 'ink'),
-    box([3.3, 4.8, 4.8], [1.4, 0.5, 0.5], 'ink'),
-    box([4.5, 3.8, 4.8], [0.8, 0.6, 0.5], 'coral'),
+    sph([0, 4, 0], [11, 5.5, 8], 'amber', { n: 'body' }),
+    ...[-2.5, 0, 2.5].map((x) => box([x, 6.4, -1], [1.2, 1, 5], 'brick', { r: [0, 0, x * 6] })),
+    sph([4.5, 4.8, 2.5], [5.4, 4.8, 4.6], 'amber', { n: 'head' }),
+    cone([6.3, 7.8, 2.5], [2.8, 3.4, 2], 'amber', { r: [0, 0, -20] }),
+    cone([2.7, 7.8, 2.5], [2.8, 3.4, 2], 'amber', { r: [0, 0, 20] }),
+    cone([6.2, 7.6, 3.2], [1.4, 2, 0.6], 'coral', { r: [0, 0, -20] }),
+    cone([2.8, 7.6, 3.2], [1.4, 2, 0.6], 'coral', { r: [0, 0, 20] }),
+    box([5.8, 5, 4.9], [1.4, 0.5, 0.5], 'ink'),
+    box([3.2, 5, 4.9], [1.4, 0.5, 0.5], 'ink'),
+    box([4.5, 4, 4.9], [0.8, 0.6, 0.5], 'coral'),
     sph([2, 2.5, 4], [3, 2, 2.5], 'cream', { n: 'paw' }),
-    cyl([-2, 2.5, 3.8], [1.8, 9, 1.8], 'ochre', { r: [0, 20, 90], n: 'tail' }),
-    sph([-6, 2.5, 2.5], [2, 2, 2], 'cream'),
+    cyl([-2, 2.5, 3.8], [2, 9, 2], 'amber', { r: [0, 20, 90], n: 'tail' }),
+    sph([-6, 2.5, 2.5], [2.2, 2.2, 2.2], 'brick'),
+    ...zz(8.5, 12, 1.2),
+    ...zz(11, 15.5, 0.8),
   )),
   e('weather', item(
     { id: 'puddle', ru: 'лужа', kk: 'шалшық', en: 'puddle', stems: ['луж', 'шалшық', 'puddle'], tags: ['weather', 'rain', 'autumn', 'street', 'detail'], hold: 'ground', scene: 'detail', fx: [{ kind: 'drip', at: [2, 7, 1] }] },
@@ -82,24 +108,26 @@ export const pack7: Entry[] = [
   )),
   e('weather', item(
     { id: 'snowdrift', ru: 'сугроб', kk: 'көрт', en: 'snowdrift', stems: ['сугроб', 'көрт', 'snowdrift'], tags: ['weather', 'winter', 'cold', 'snow', 'detail'], hold: 'ground', scene: 'detail' },
-    sph([0, 3, 0], [18, 7, 11], 'white', { n: 'snow' }),
-    sph([5, 4.5, -1], [10, 8, 8], 'white'),
-    sph([-5.5, 3.5, 1], [9, 6, 8], 'frost'),
-    ...[[2, 7.5, 2], [-4, 6, 3.5], [7, 8, 1.5]].map((p) => sph(p as [number, number, number], [2, 1, 1.5], 'ice')),
-    cyl([7, 9, 0], [1, 12, 1], 'wood', { r: [0, 0, -15], n: 'shovel' }),
-    box([5.5, 3.5, 0.5], [4, 4.5, 0.8], 'brick', { r: [0, 0, -15] }),
-    box([8.6, 15, 0], [3, 1, 1], 'brownDark', { r: [0, 0, -15] }),
-    ...[[-8, 3.5], [-10, 1]].map(([x, z]) => box([x, 0.25, z], [2, 0.5, 3], 'ice')),
+    // снежная горка: голубая тень, блёстки, цепочка следов по склону, снежок рядом
+    sph([0, 1, 0], [20, 2, 13], 'ice'),
+    sph([0, 4, 0], [18, 8, 11], 'white', { n: 'snow' }),
+    sph([4.5, 6, -1], [10, 9, 8], 'white'),
+    sph([-5.5, 4.5, 1], [9, 6.5, 8], 'frost'),
+    sph([-1.5, 3, 4.2], [10, 3, 3], 'frost'),
+    ...[[-7, 1.4, 5], [-5, 2.6, 4.5], [-3, 3.8, 4.2], [-1, 4.8, 3.8]].map(([x, y, z]) => sph([x, y, z], [1.4, 0.5, 2], 'greyBlue', { r: [20, 30, 0] })),
+    ...[[2, 9.6, 2], [-4, 7.4, 3], [6.5, 10.2, 1], [0, 7.8, 4]].map(([x, y, z]) => cone([x, y, z], [1, 1.6, 1], 'ice', { k: 4 })),
+    sph([8, 1.6, 4], [3, 3, 3], 'white'),
   )),
   e('nature', item(
     { id: 'leaf_pile', ru: 'листья кучкой', kk: 'жапырақ үйіндісі', en: 'leaf pile', stems: ['листопад', 'куча листьев', 'листву', 'листва', 'leaf pile'], tags: ['nature', 'autumn', 'park', 'detail'], hold: 'ground', scene: 'detail' },
-    sph([0, 2.5, 0], [16, 6, 11], 'amber', { n: 'pile' }),
-    ...([[-5, 4, 3, 'brick', 20], [-1, 5, 4, 'yellow', -30], [3, 4.5, 3.5, 'ochre', 60], [6, 3, 3, 'coral', -10], [-3, 5.5, -1, 'brick', 45],
-      [2, 5.5, 0, 'yellow', 10], [5, 4, -2.5, 'brick', -50], [-6, 2.5, -2, 'ochre', 80], [0, 3, 5, 'coral', 30], [-8.5, 0.5, 5, 'brick', 15],
-      [9, 0.5, 3, 'yellow', -40]] as const).map(([x, y, z, c, a]) => box([x, y, z], [3, 0.5, 2], c, { r: [15, a, 10] })),
-    cyl([9, 8, -3], [1, 16, 1], 'wood', { r: [0, 0, 22], n: 'rake' }),
-    box([5.5, 0.75, -3], [6, 1, 1], 'grey', { r: [0, 0, 22] }),
-    ...[3.5, 5, 6.5, 8].map((x) => box([x - 0.5, 0.5, -2.2], [0.5, 1.5, 0.5], 'grey')),
+    sph([0, 3, 0], [16, 7, 11], 'ochre', { n: 'pile' }),
+    ...([[-5, 4.6, 3, 'brick', 20], [-1, 6, 3.4, 'yellow', -30], [3, 5.4, 3.6, 'brick', 60], [6, 3.6, 3, 'coral', -10], [-3, 6.2, -1, 'brick', 45],
+      [2, 6.4, 0, 'yellow', 10], [5, 4.6, -2.5, 'coral', -50], [-6, 3, -2, 'yellow', 80], [0, 4, 5, 'coral', 30], [-8.5, 0.6, 5, 'brick', 15],
+      [9, 0.6, 3, 'yellow', -40], [-2, 1, 6.5, 'brick', 70], [4, 1, 5.5, 'yellow', -20]] as const).flatMap(([x, y, z, c, a]) => [
+      sph([x, y, z], [4, 0.6, 2.6], c, { r: [15, a, 10] }),
+      box([x, y + 0.2, z], [3.6, 0.3, 0.3], 'brownDark', { r: [15, a, 10] }),
+    ]),
+    ...([[-3, 11, 1, 'brick', 40], [3.5, 13.5, 0, 'yellow', -30], [0.5, 16, -1, 'coral', 60]] as const).map(([x, y, z, c, a]) => sph([x, y, z], [3.6, 0.6, 2.4], c, { r: [70, a, 30] })),
   )),
   e('study', item(
     { id: 'book_stack', ru: 'стопка книг', kk: 'кітаптар', en: 'book stack', stems: ['стопк', 'учебник', 'конспект', 'book stack'], tags: ['study', 'school', 'home', 'calm', 'detail'], hold: 'ground', scene: 'detail' },

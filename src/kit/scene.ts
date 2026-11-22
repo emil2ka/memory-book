@@ -3,6 +3,7 @@
 // декорация за спиной и, если нужно, деталь рядом. Сценку составляет Haiku (POST /api/scene),
 // по возможности из готовых предметов библиотеки кита; недостающие предметы она дорисовывает
 // в формате кита. Расставляет, масштабирует и анимирует сцена (src/scene/FilmStage.ts).
+import type { Companion, PhotoCard } from '../types/script'
 import type { KitModel } from './format'
 
 /** Что человечек делает в сценке. Подмножество поз Hero3D. */
@@ -11,9 +12,9 @@ export type SceneAction = (typeof SCENE_ACTIONS)[number]
 
 /**
  * Роль предмета в сценке; место по роли выбирает код:
- * - hand — в руке (одна рука; при carry — обе), 6–12 единиц;
- * - stand — декорация за спиной или сбоку, 25–60 единиц;
- * - detail — маленькая деталь на бумаге рядом, 6–20 единиц.
+ * - hand — главный предмет фразы, в руке (одна рука; при carry — обе), 6–12 единиц;
+ * - stand — место, сбоку (side left/right), 25–60 единиц; только если у бита есть place;
+ * - detail — больше не выдаётся (план 13: деталь мельчит кадр); тип оставлен для старых кэшей.
  */
 export type SceneRole = 'hand' | 'stand' | 'detail'
 
@@ -40,10 +41,39 @@ export interface KitScene {
   by?: 'claude' | 'fallback'
 }
 
-/** Запрос сценки: цитата бита и контекст дня (до 600 символов текста — чтобы сценка подходила дню). */
+/** Сколько текста дня видит сценограф (план 15 § 1.5: запись до 3000 знаков). */
+export const SCENE_DAY_MAX = 1500
+
+/**
+ * Контекст дня для сценки: весь текст, если он не длиннее n, иначе — окно n символов вокруг цитаты
+ * (по границам слов), чтобы у бита из конца длинной записи был свой контекст.
+ */
+export function dayAround(day: string, quote: string, n = SCENE_DAY_MAX): string {
+  const d = day.trim()
+  if (d.length <= n) return d
+  const at = Math.max(0, quote ? d.indexOf(quote) : 0)
+  let a = Math.max(0, Math.min(d.length - n, at + Math.floor(quote.length / 2) - Math.floor(n / 2)))
+  let b = Math.min(d.length, a + n)
+  if (a > 0) a = d.indexOf(' ', a) + 1 || a
+  if (b < d.length) b = d.lastIndexOf(' ', b) > a ? d.lastIndexOf(' ', b) : b
+  return `${a > 0 ? '…' : ''}${d.slice(a, b).trim()}${b < d.length ? '…' : ''}`
+}
+
+/** Запрос сценки: цитата бита и контекст дня (до SCENE_DAY_MAX символов вокруг цитаты — чтобы сценка подходила дню). */
 export interface SceneRequest {
   quote: string
   day: string
   /** Подсказка режиссёра: что получается из слова (id библиотеки или имя предмета). */
   hint?: string
+  // Поля бита плана 13 (из Timeline.beats): сценограф строит «главный предмет + место».
+  /** Главный предмет фразы — он в руках или прямо перед человечком. */
+  hero_prop?: string
+  /** Место, если важно, — один стенд сбоку; null — места нет. */
+  place?: string | null
+  /** Человек из фразы. Его играет второй человечек сцены — сценограф людей не рисует. */
+  companion?: Companion | null
+  /** Быстрый путь (первый бит): только библиотека, без ИИ — сценка нужна через ~5 с после старта. */
+  fast?: boolean
+  /** Карточка снимка бита (роль фото): место и вещи сценки — с фото, чтобы сценка совпала со снимком. */
+  photo_card?: PhotoCard | null
 }

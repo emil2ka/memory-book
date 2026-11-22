@@ -13,8 +13,15 @@ import { PALETTE, css } from '../scene/palette'
 
 const params = new URLSearchParams(location.search)
 const SHEET = params.get('sheet') === '1'
-/** Пикселей слоя на единицу мира: человечек (34 ед. кита) ≈ 64 px — как на среднем плане фильма. */
-const DENSITY = 64 / (34 * KIT_UNIT)
+/** Пикселей слоя на единицу мира: человечек (34 ед. кита) ≈ 64 px — как на среднем плане фильма; &hero=120 — крупный план бита. */
+const HERO_PX = Number(params.get('hero')) || 64
+const DENSITY = HERO_PX / (34 * KIT_UNIT)
+/** &toy=1 — игрушечный масштаб из плана 13 § 2④: вещь в руках ≈ 52 % роста человечка, место ≥ 110 %. */
+const TOY = params.get('toy') === '1'
+const HERO_U = 34
+/** &as=table — вещь «со стола» на диораме фото: стоит на бумаге перед человечком, высотой TABLE_U единиц. */
+const AS_TABLE = params.get('as') === 'table'
+const TABLE_U = Number(params.get('size')) || 10
 const COLS = 5
 const CELL_W = 300
 const CELL_H = 330
@@ -25,7 +32,7 @@ const roleOf = (m: KitModel): Role =>
 
 function pickModels(): KitModel[] {
   const q = params.get('kitscene') ?? 'all'
-  if (q === 'all') return [...KIT_LIBRARY]
+  if (q === 'all') return KIT_LIBRARY.filter((m) => m.parts.length > 0)
   if (/^pack\d+$/.test(q)) return (KIT_PACKS[q] ?? []).map((id) => kitById(id)).filter((m): m is KitModel => !!m)
   return q.split(',').map((id) => kitById(id.trim())).filter((m): m is KitModel => !!m)
 }
@@ -48,7 +55,7 @@ export default function KitSceneLab() {
 
     const cells = models.map((model, i) => {
       const scene = new THREE.Scene()
-      const role = roleOf(model)
+      const role: Role = AS_TABLE ? 'detail' : roleOf(model)
       // бумага страницы
       const ground = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshLambertMaterial({ color: PALETTE.paper }))
       ground.rotation.x = -Math.PI / 2
@@ -83,8 +90,12 @@ export default function KitSceneLab() {
         }
         hero.object.updateMatrixWorld(true)
         item.remove(inner)
-        inner.scale.setScalar(1)
-        const g = model.grip ?? [(b.min.x + b.max.x) / 2, h * (role === 'both' ? 0.5 : 0.35), (b.min.z + b.max.z) / 2]
+        // размер — по наибольшему габариту: плоское (хот-дог, суши) не раздувается вширь
+        const big = Math.max(h, 0.7 * Math.max(b.max.x - b.min.x, b.max.z - b.min.z))
+        const s = TOY ? Math.min(2.5, Math.max(1, (HERO_U * 0.52) / big)) : 1
+        inner.scale.setScalar(s)
+        const g0 = model.grip ?? [(b.min.x + b.max.x) / 2, h * (role === 'both' ? 0.5 : 0.35), (b.min.z + b.max.z) / 2]
+        const g = g0.map((v) => v * s)
         const holder = new THREE.Group()
         anchor.add(holder)
         holder.quaternion.copy(anchor.getWorldQuaternion(new THREE.Quaternion()).invert())
@@ -92,10 +103,19 @@ export default function KitSceneLab() {
         inner.position.set(-g[0], -g[1], -g[2])
       } else if (role === 'stand') {
         // декорация слева сзади, человечек справа впереди — видно и то и другое
-        const w = (b.max.x - b.min.x) * KIT_UNIT
+        const s = TOY ? Math.min(1.6, Math.max(1, (HERO_U * 1.1) / h)) : 1
+        item.scale.multiplyScalar(s)
+        const w = (b.max.x - b.min.x) * KIT_UNIT * s
         item.position.set(-w * 0.32, 0, -0.55)
         scene.add(item)
         hero.object.position.set(Math.max(0.6, w * 0.25 + 0.45), 0, 0.35)
+      } else if (AS_TABLE) {
+        // перед человечком, чуть сбоку, как вещь на столе перед людьми на диораме
+        const big = Math.max(h, 0.7 * Math.max(b.max.x - b.min.x, b.max.z - b.min.z))
+        item.scale.multiplyScalar(TABLE_U / big)
+        item.position.set(0.32, 0, 0.62)
+        scene.add(item)
+        hero.object.position.set(-0.2, 0, -0.1)
       } else {
         item.position.set(0.75, 0, 0.25)
         scene.add(item)

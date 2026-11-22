@@ -1,4 +1,6 @@
 // Закладка «Почему так» после фильма: название, три причины, действия.
+// На телефоне (узкий вертикальный экран) — шторка снизу: фильм остаётся виден сверху; ручка сворачивает её до названия.
+import { useState } from 'react'
 import type { DayScript } from '../types/script'
 import { spineColor } from './checks'
 import { CardButton, Clip, FlagButton, Icon, PinNote, Sheet, Sprig, Squiggle, Tassel, TagButton } from './paper'
@@ -21,9 +23,13 @@ interface Props {
 }
 
 export function Bookmark(p: Props) {
+  const [folded, setFolded] = useState(false)
   return (
-    <aside className="bookmark" style={{ ['--ribbon' as string]: spineColor(p.script.mood) }} aria-label="Почему так">
+    <aside className={`bookmark${folded ? ' folded' : ''}`} style={{ ['--ribbon' as string]: spineColor(p.script.mood) }} aria-label="Почему так">
       <div className="bm-paper">
+        <button className="bm-handle" onClick={() => setFolded((f) => !f)} aria-expanded={!folded} aria-label={folded ? 'Открыть «Почему так»' : 'Свернуть, чтобы видеть кадр'}>
+          <span className="bm-grip" aria-hidden />
+        </button>
         <Sheet shape="bookmark" edge="soft" w={300} h={640} seed="bookmark" />
         <span className="bm-dash" aria-hidden />
         <Clip className="bm-clip" />

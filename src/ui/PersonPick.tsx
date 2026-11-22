@@ -71,22 +71,24 @@ interface Props {
 export function PersonPick({ value, onChange }: Props) {
   return (
     <div className="person-pick" role="radiogroup" aria-label="кто пишет">
-      <Sheet edge="torn" w={196} h={78} seed="person-pick" />
-      <span className="pp-label">кто пишет: он / она</span>
+      <Sheet edge="torn" w={236} h={84} seed="person-pick" />
+      <span className="pp-label">кто ведёт дневник</span>
       <span className="pp-track">
-        <button role="radio" aria-checked={value === 'boy'} aria-label="он" title="он" className={value === 'boy' ? 'on' : ''} onClick={() => onChange('boy')}>
+        <button role="radio" aria-checked={value === 'boy'} aria-label="мальчик" title="мальчик" className={value === 'boy' ? 'on' : ''} onClick={() => onChange('boy')}>
           <Boy />
+          мальчик
         </button>
         <button
           role="radio"
           aria-checked={value === 'girl'}
-          aria-label="она"
-          title={HAS_GIRL ? 'она' : 'она — скоро'}
+          aria-label="девочка"
+          title={HAS_GIRL ? 'девочка' : 'девочка — скоро'}
           className={value === 'girl' ? 'on' : ''}
           disabled={!HAS_GIRL}
           onClick={() => onChange('girl')}
         >
           <Girl />
+          девочка
         </button>
       </span>
     </div>

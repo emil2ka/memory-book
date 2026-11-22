@@ -15,6 +15,12 @@ export interface StoredSong {
   energy?: number
   /** измеренный темп файла */
   bpm?: number
+  /** песню предложил ИИ по записи и фото (/api/song), человек выбрал её из записки на кассете */
+  suggested?: boolean
+  /** почему эта песня — одна строка от ИИ (для «Почему так») */
+  why?: string
+  /** id ролика YouTube: играет встроенный плеер (план 15 § 1.6); из ссылки человека или из предложения ИИ */
+  yt?: string
 }
 
 export interface StoredDay {

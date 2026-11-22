@@ -5,7 +5,8 @@ import type { CameraId } from '../types/script'
 import { Book, PAGE_H, PAGE_W, SS, TEX_H, TEX_W } from './Book'
 import { PALETTE } from './palette'
 import { HD, HERO3D, PixelStage, pixelTexture } from './PixelStage'
-import { Hero3D, SECOND_COLORS, type HeroAction } from '../actors/Hero3D'
+import { GIRL_ACCESSORY, GIRL_COLORS, Hero3D, SECOND_COLORS, type HeroAccessory, type HeroAction, type HeroColors } from '../actors/Hero3D'
+import companionsData from '../../assets/kit/companions.json'
 import { buildKit, kitBounds } from '../kit/build'
 import { KIT_UNIT, type KitModel } from '../kit/format'
 import { findByWord, kitById } from '../kit/library'
@@ -21,7 +22,7 @@ import { PenWriter } from '../write/pen'
 import { glyphStrokes } from '../write/strokes'
 import { coverColorFor, type ShelfDay } from '../world/Shelf3D'
 import type { KitScene, SceneObject, SceneRequest } from '../kit/scene'
-import { forgetScenes, makeScene, sceneFor } from '../kit/sceneClient'
+import { forgetScenes, makeScene, sceneFor, sceneRequests } from '../kit/sceneClient'
 import { sceneRef } from '../kit/sceneCheck'
 import { Sticker, prepareSticker, stickerCanvas } from './Sticker'
 import { makeKit, pictureFor } from '../kit/make'
@@ -31,6 +32,9 @@ import type { BeatResult, DayScript } from '../types/script'
 import type { PaletteName } from './palette'
 import { Room } from './Room'
 import { loadModels } from './models'
+import { QuoteCaption, StoryCaption, makeBaseDisc, makeFootprint, makeStampPaper } from './BeatShow'
+import { HERO_ACTIONS, isHeroAction } from '../actors/heroActions'
+import { colorsFromPhoto, type PhotoCard } from './PhotoDiorama'
 import { SpriteActor, WORLD_PER_PX, placeholderHero, placeholderItem } from '../actors/SpriteActor'
 import { EFFECT_COLS, HERO_COLS, type HeroRow, type SpriteBank } from '../actors/sprites'
 import type { ActionId } from '../types/script'
@@ -73,8 +77,12 @@ const DAY_COLORS: Record<string, number> = {
 }
 
 /** Ряд анимации: ряды листа спрайтов + позы, которые есть только у объёмного человечка. */
-type AnimRow = HeroRow | 'climb' | 'wave' | 'dangle'
-const spriteRow = (r: AnimRow): HeroRow => (r === 'climb' || r === 'wave' || r === 'dangle' ? 'idle' : r)
+type AnimRow = HeroRow | 'climb' | 'wave' | 'dangle' | HeroAction
+/** Финал «Фотоальбом дня» выключен (Эмиль выбрал «Поклон», 22.11): снимков сценок нет. */
+const ALBUM = false
+
+const SPRITE_ROWS = new Set<string>(['idle', 'walk', 'pull', 'sit', 'shake', 'carry', 'drink', 'shiver', 'cheer'])
+const spriteRow = (r: AnimRow): HeroRow => (SPRITE_ROWS.has(r) ? (r as HeroRow) : 'idle')
 
 /** Какой ряд листа человечка показывать для действия. */
 const ACTION_ROW: Record<ActionId, HeroRow> = {
@@ -100,6 +108,110 @@ const ease = (k: number) => {
   return x * x * (3 - 2 * x)
 }
 const clamp01 = (k: number) => Math.min(1, Math.max(0, k))
+
+/** Предмет в руке и место — в росте человечка (34 ед.): игрушечный масштаб, чтобы читалось (план 13, § 2 ④). */
+const SCENE_ROLE_H: Record<SceneObject['role'], [number, number]> = { hand: [16, 20], stand: [30, 44], detail: [7, 12] }
+/** Вариант второго человечка (assets/kit/companions.json, mb-assets). */
+export interface CompanionVariant {
+  id: string
+  ru: string
+  match: string[]
+  colors: HeroColors
+  accessory: HeroAccessory
+  scale: number
+}
+const COMPANIONS = (companionsData as unknown as { variants: CompanionVariant[] }).variants
+
+/** Вариант по роли и имени из режиссёра: первый совпавший по основам; последний — запасной («друг»). */
+export function pickCompanion(c: { name?: string; role?: string } | null | undefined): CompanionVariant {
+  const text = `${c?.role ?? ''} ${c?.name ?? ''}`.toLowerCase().replace(/ё/g, 'е')
+  const words = text.split(/[^\p{L}]+/u).filter(Boolean)
+  for (const v of COMPANIONS) {
+    for (const stem of v.match) {
+      const end = stem.endsWith('$')
+      const s = stem.replace(/\$$/, '')
+      if (words.some((w) => (end ? w === s : w.startsWith(s)))) return v
+    }
+  }
+  return COMPANIONS[COMPANIONS.length - 1]
+}
+
+/** Человек со снимка как вариант второго человечка: цвета его одежды, вещь на голове, ребёнок поменьше. */
+export function photoVariant(p: PhotoCard['people'][number], beat: number): CompanionVariant {
+  const kid = /ребён|ребен|малыш|младш|сын|доч|бала|кид|дети/i.test(p.role)
+  return {
+    id: `photo${beat}:${p.role}:${p.jacket}:${p.scarf}:${p.hair}:${p.accessory}`,
+    ru: p.role,
+    match: [],
+    colors: colorsFromPhoto(p),
+    accessory: p.accessory,
+    scale: kid ? 0.78 : 1,
+  }
+}
+
+/** Погода и небо: над головой, а не в руках (в руках их не узнают — ревизия библиотеки 22.11). */
+// нота и термометр — символы, в руке их не узнают (ревизия mb-assets): тоже над головой
+const SKY_IDS = new Set(['sun', 'moon', 'cloud', 'rain_cloud', 'lightning', 'rainbow', 'wind', 'snowflake', 'icicle', 'drop', 'note', 'thermometer'])
+/** Поза под небом вместо «держит»: солнцу и радуге радуются, под тучей и ветром мёрзнут. */
+const SKY_ACT: Record<string, HeroAction> = { sun: 'cheer', rainbow: 'cheer', moon: 'idle', cloud: 'shiver', rain_cloud: 'shiver', lightning: 'shiver', wind: 'shiver', snowflake: 'cheer', icicle: 'shiver', drop: 'idle', note: 'cheer', thermometer: 'shiver' }
+/**
+ * Круг ночного неба за луной с тремя звёздами — без него жёлтый серп читают как банан.
+ * r — радиус в единицах кита; c — центр луны в тех же единицах (координаты группы предмета).
+ */
+function nightPatch(r: number, c: THREE.Vector3) {
+  const g = new THREE.Group()
+  const u = KIT_UNIT
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(r * u, 28), toonFor('navy', false))
+  disc.position.set(c.x * u, c.y * u, c.z * u - 0.08)
+  g.add(disc)
+  for (const [x, y] of [
+    [-0.55, 0.5],
+    [0.6, 0.35],
+    [0.35, -0.6],
+  ]) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(1.6 * u, 1.6 * u, 0.4 * u), toonFor('yellow', true))
+    s.position.set((c.x + x * r) * u, (c.y + y * r) * u, c.z * u - 0.06)
+    s.rotation.z = Math.PI / 4
+    g.add(s)
+  }
+  toPixelLayer(g)
+  return g
+}
+
+/** Высота предмета в небе в единицах кита (человечек — 34). */
+const SKY_SCALE = 30
+/** Строк пиксельного слоя на крупном кадре бита (обычно 130): человечек ~110 px вместо ~55. */
+const BEAT_ROWS = 250
+/** Марки дня — вдоль дальнего края разворота. */
+const STAMP_Z = -PAGE_H / 2 + 0.46
+const STAMP_SIZE = 0.86
+
+/**
+ * Окна битов: от превращения слова до момента, когда сценка уходит в марку.
+ * Крупный кадр держится до следующего слова (минус проход), но не меньше 2.2 с и не дольше 4 с;
+ * полароид и финал бит не перекрывает.
+ */
+export function beatWindows(timeline: Timeline) {
+  const out = new Map<number, { t0: number; hold0: number; t1: number; quote: string }>()
+  // хореограф уже дал окна (контракт плана 13) — берём их
+  if (timeline.beats?.length) {
+    for (const b of timeline.beats) out.set(b.beat, { t0: b.transform, hold0: b.hold[0], t1: b.end, quote: b.quote })
+    return out
+  }
+  const ev = timeline.events
+  const tr = ev.filter((e): e is Extract<TimelineEvent, { type: 'word_transform' }> => e.type === 'word_transform').sort((a, b) => a.t - b.t)
+  const stops = ev.filter((e) => e.type === 'photo_reveal' || e.type === 'staging' || e.type === 'book_close').map((e) => e.t)
+  tr.forEach((e, i) => {
+    const hold0 = e.t + e.dur
+    const next = tr[i + 1]
+    const lift = next ? ev.find((x) => x.type === 'word_lift' && x.beat === next.beat)?.t ?? next.t - 0.6 : Infinity
+    let t1 = Math.min(lift - 1.1, hold0 + 4)
+    for (const s of stops) if (s > hold0 - 0.2 && s < t1 + 0.3) t1 = Math.min(t1, s - 0.3)
+    t1 = Math.max(t1, hold0 + 2.2)
+    out.set(e.beat, { t0: e.t, hold0, t1, quote: e.quote })
+  })
+  return out
+}
 
 /** Общий план: стол и книга целиком. */
 /** Экран полки: полка с днями, окно и стол с закрытой книгой. */
@@ -216,6 +328,98 @@ export class FilmStage implements Stage {
   private tucked: Polaroid[] = []
   /** Дорисованные Claude картинки по id результата («make:…»). */
   private made = new Map<string, KitPicture>()
+  /**
+   * Окна битов из таймлайна (план 13, § 1): t0 — слово превращается, hold0 — крупный кадр с цитатой,
+   * t1 — сценка сворачивается в марку. Считаются в preload, переживают reset.
+   */
+  private beatWin = new Map<number, { t0: number; hold0: number; t1: number; quote: string }>()
+  /** Крупный кадр бита: рамка сценки (человечек + предметы) и сторона, с которой смотрит камера. */
+  private beatCam: { t0: number; t1: number; center: THREE.Vector3; size: THREE.Vector3; side: number } | null = null
+  private caption: QuoteCaption | null = null
+  /** Сколько марок уже на полях разворота. */
+  private stamps = 0
+  /** Биты, где второй человечек приходит через companion_enter (план 13). */
+  private companionBeats = new Set<number>()
+  /** Таймлайн с окнами битов (план 13): сценки запрошены для всех битов. */
+  private hasContract = false
+  /** Фразы со снимком (план 14, роль фото): номер снимка дня и карточка Haiku, что на нём. */
+  private photoBeats = new Map<number, { photo: number; card: PhotoCard | null }>()
+  /**
+   * Путь дня (план 15, § 1.3): у каждого бита своя точка на развороте, человечек идёт от сценки к сценке
+   * по «карте дня», за ним остаются следы, прожитая сценка остаётся маркой на своём месте пути.
+   */
+  private route = new Map<number, THREE.Vector3>()
+  /** Сторона места относительно человечка в бите: −1 слева, 1 справа (в сторону пути). */
+  private standDir = new Map<number, number>()
+  /** Дороги между битами: из события travel или из промежутка между окнами битов. */
+  private travels: { t: number; dur: number; from: number; to: number; mode: 'walk' | 'run' }[] = []
+  private travelInto = new Set<number>()
+  private hasTravelEvents = false
+  private travelCam: { t0: number; t1: number; dir: number } | null = null
+  /** Рассказ слева сверху: строка каждого бита и когда она начинает писаться. */
+  private storyLines: { beat: number; text: string; t0: number; t1: number }[] = []
+  /** Снимки сценок для фотоальбома дня: кадр в середине окна бита. */
+  private shots = new Map<number, HTMLCanvasElement>()
+  /** 1 — в этом кадре подписи спрятаны, 2 — следующий кадр снимаем. */
+  private shotStage = 0
+  private shotBeat = -1
+  private albumDone = new Set<number>()
+  /** «Поклон»: предметы всех сценок дня (в их размере) и люди дня — выходят в ряд в финале. */
+  private curtain: { o: THREE.Object3D; s: number; sky: boolean }[] = []
+  private cast = new Map<string, CompanionVariant>()
+  private bowFigs: Hero3D[] = []
+  /** Где лежат снимки альбома — финальная камера берёт их в кадр. */
+  private album: THREE.Vector3[] = []
+  private story: StoryCaption | null = null
+
+  /** Люди со снимка бита, кроме «меня» (подпись от первого лица и людей двое+ — первый из них я). */
+  private photoPeople(beat: number): PhotoCard['people'] {
+    const card = this.photoBeats.get(beat)?.card
+    const ppl = card?.people ?? []
+    const me = /(^|[^\p{L}])(мы|я|меня|нас|біз|мен)([^\p{L}]|$)/iu.test(card?.caption ?? '')
+    return me && ppl.length >= 2 ? ppl.slice(1) : ppl
+  }
+
+  /**
+   * Снимок первой фразы проявляется прямо во вступлении (там нет 3 с на вытягивание):
+   * пока человечек вылезает из щели, полароид сам выезжает из книги, встаёт у дальнего края над первой фразой
+   * и проявляется — к превращению первого слова из него уже можно «оживать».
+   */
+  private introPhoto(t0: number) {
+    if (!this.figures.length) return
+    const first = [...this.beatWin.entries()].sort((a, b) => a[1].t0 - b[1].t0)[0]
+    const pb = first ? this.photoBeats.get(first[0]) : undefined
+    const pol = pb ? this.tucked[pb.photo] : undefined
+    if (!first || !pol) return
+    const o = pol.object
+    const at = this.quotePos(first[1].quote)
+    const x = Math.max(-PAGE_W + pol.width / 2, Math.min(PAGE_W - pol.width / 2, at?.x ?? -PAGE_W / 2))
+    const zFar = -PAGE_H / 2
+    const p0 = (o.userData.tuckPos as THREE.Vector3 | undefined)?.clone() ?? o.position.clone()
+    const q0 = (o.userData.tuckQ as THREE.Quaternion | undefined)?.clone() ?? o.quaternion.clone()
+    const p1 = new THREE.Vector3(x, pol.height / 2 - this.book.group.position.y, zFar - 0.16)
+    const q1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.08, 0, 0))
+    const dur = Math.max(1.2, first[1].t0 - t0 - 0.4)
+    this.tween({ t: t0, dur: dur * 0.45 }, (k) => {
+      const a = ease(k)
+      o.position.lerpVectors(p0, p1, a)
+      o.position.y += Math.sin(a * Math.PI) * 0.4
+      o.quaternion.slerpQuaternions(q0, q1, a)
+    })
+    this.tween({ t: t0 + dur * 0.35, dur: dur * 0.65 }, (k) => pol.setDevelop(ease(k)))
+    this.soundAt(t0, () => sfx.slide(0.4))
+    this.soundAt(t0 + dur * 0.9, () => sfx.chime())
+  }
+
+  /** Точки на самом снимке полароида — оттуда вылетают кубики, когда фото оживает. */
+  private photoPoints(i: number, n: number, rand: () => number): THREE.Vector3[] {
+    const pol = this.tucked[i]
+    const photo = pol?.object.children[1] as THREE.Mesh | undefined
+    if (!photo) return []
+    photo.updateMatrixWorld(true)
+    const side = (photo.geometry as THREE.PlaneGeometry).parameters.width
+    return Array.from({ length: n }, () => new THREE.Vector3((rand() - 0.5) * side, (rand() - 0.5) * side, 0.02).applyMatrix4(photo.matrixWorld))
+  }
   private heights = new Map<string, number>()
   /** Наклейки на странице — всегда повёрнуты к камере. */
   private facing: THREE.Object3D[] = []
@@ -326,8 +530,16 @@ export class FilmStage implements Stage {
   }
 
   handle(e: TimelineEvent) {
+    // дорога между битами (план 15, § 1.3); тип приходит из таймлайна mb-logic
+    const ev = e as unknown as { type: string; t: number; dur: number; from?: number; to?: number; mode?: string }
+    if (ev.type === 'travel') {
+      if (this.figures.length && typeof ev.from === 'number' && typeof ev.to === 'number')
+        this.travel3D({ t: ev.t, dur: ev.dur, from: ev.from, to: ev.to, mode: ev.mode === 'run' ? 'run' : 'walk' })
+      return
+    }
     switch (e.type) {
       case 'book_open':
+        this.introPhoto(e.t + e.dur)
         return this.tween(e, (k) => this.book.setOpen(ease(k)))
       case 'book_close':
         if (this.figures.length) return this.closeBook3D(e)
@@ -341,6 +553,8 @@ export class FilmStage implements Stage {
         this.soundAt(e.t, () => sfx.flip())
         return this.tween(e, (k) => (this.shake = Math.sin(k * Math.PI) * 0.02))
       case 'actor_enter': {
+        // второй появляется через companion_enter своего бита
+        if (e.actor === 'second' && this.companionBeats.has(e.beat)) return
         if (this.figures.length) return this.enter3D(e)
         const a = this.actor(e.actor)
         a.object.visible = true
@@ -350,14 +564,19 @@ export class FilmStage implements Stage {
         return this.tween(e, (k) => a.object.position.lerpVectors(from, to, ease(k)))
       }
       case 'actor_walk': {
+        // второй человечек стоит рядом с главным, пока идёт его бит (companion_enter), — старые проходы не уводят его
+        if (e.actor === 'second' && this.companionBeats.has(e.beat)) return
         const a = this.actor(e.actor)
-        const target = this.quotePos(e.toQuote)
+        // путь дня: главный идёт к точке своего бита на карте; если к ней ведёт дорога — он уже там
+        const spot = e.actor === 'hero' && this.figures.length ? this.route.get(e.beat) : undefined
+        if (spot && this.travelInto.has(e.beat)) return
+        const target = spot ?? this.quotePos(e.toQuote)
         if (!target) return
         if (e.actor === 'hero') this.dropHeld(e)
         this.goal[e.actor] = target.clone()
         const from = a.object.position.clone()
         // встать чуть ниже слова, чтобы не закрывать его
-        const to = target.clone().add(new THREE.Vector3(e.actor === 'hero' ? -0.35 : 0.45, 0, 0.32))
+        const to = spot ? spot.clone() : target.clone().add(new THREE.Vector3(e.actor === 'hero' ? -0.35 : 0.45, 0, 0.32))
         this.bob[e.actor] = this.bank ? 0 : 1
         const walking = this.play(e.actor, 'walk', e.t, true)
         a.mesh.scale.x = to.x < from.x ? -1 : 1
@@ -370,12 +589,35 @@ export class FilmStage implements Stage {
       case 'actor_action': {
         const a = this.actor(e.actor)
         const sceneAct = e.actor === 'hero' ? this.sceneActs.get(e.beat) : undefined
-        if (e.actor === 'hero' && !sceneAct && (e.action === 'cheer' || e.action === 'sit' || e.action === 'shiver')) this.dropHeld(e)
+        // эмоция бита (план 15): человечек сам играет «скучно», «грустно», «танцевали» — важнее позы сценки
+        // действие бита (act: телефон, гуляет) важнее эмоции, эмоция — важнее позы каталога
+        const ev = e as { emotion?: string; act?: string }
+        const pick = [ev.act, ev.emotion].find((x): x is string => !!x && isHeroAction(x))
+        const emotion = e.actor === 'hero' && this.figures.length && pick ? HERO_ACTIONS.find((h) => h.id === pick)! : null
+        if (emotion) {
+          this.dropHeld(e)
+          // бит-чувство без сценки: крупный кадр на самого человечка на всё окно бита
+          const fw = this.beatWin.get(e.beat)
+          if (!this.sceneActs.has(e.beat) && fw) {
+            this.beatCamOnly({ t: e.t, dur: e.dur, beat: e.beat })
+            // и у чувства в альбоме свой снимок — сам человечек в этой эмоции
+            const beat = e.beat
+            this.tween({ t: fw.t1, dur: 0.001 }, () => {
+              const shot = this.shots.get(beat)
+              const st = this.route.get(beat)
+              if (ALBUM && shot && st && !this.albumDone.has(beat)) {
+                this.albumDone.add(beat)
+                this.albumPhoto(beat, shot, new THREE.Vector3(st.x, this.book.pageY, st.z - 0.1), this.stamps++, fw.quote)
+              }
+            })
+          }
+        }
+        if (e.actor === 'hero' && !sceneAct && !emotion && (e.action === 'cheer' || e.action === 'sit' || e.action === 'shiver')) this.dropHeld(e)
         if (this.figures.length && e.actor === 'hero' && e.beat === -1 && e.action === 'sit') return this.finale3D(e)
         if (this.bank) {
           // после превращения слова поза — из сценки (ест мороженое, держит шарики, сидит за ноутбуком)
-          const row: HeroRow = (sceneAct as HeroRow | undefined) ?? ACTION_ROW[e.action]
-          const acting = this.play(e.actor, row, e.t, row !== 'sit', e.dur)
+          const row: AnimRow = emotion?.id ?? (sceneAct as HeroRow | undefined) ?? ACTION_ROW[e.action]
+          const acting = this.play(e.actor, row, e.t, emotion ? emotion.loop : row !== 'sit', emotion ? Math.max(e.dur, emotion.dur) : e.dur)
           // прыжок радости нарисован в самих кадрах, двигать спрайт не нужно
           const hop = 0
           const wobble = 0
@@ -478,6 +720,18 @@ export class FilmStage implements Stage {
           this.room.lamp.intensity = lamp0 * (1 + a * 0.6)
         })
       }
+      case 'companion_enter':
+        return this.companionEnter(e)
+      case 'quote_caption':
+        // цитату и марку сцена ведёт сама по окнам битов (beatWindows): так они верны и при перемотке
+        return
+      case 'stamp': {
+        // своей дороги в таймлайне нет — человечек идёт к следующей сценке в промежутке между битами
+        if (this.hasTravelEvents || !this.figures.length) return
+        const tr = this.travels.find((x) => x.from === e.beat)
+        if (tr) this.travel3D(tr)
+        return
+      }
       case 'photo_reveal':
         return this.photoReveal(e)
       case 'photo_fan':
@@ -496,6 +750,7 @@ export class FilmStage implements Stage {
   update(time: number, _dt: number) {
     this.live = _dt > 0 && _dt < 0.25 && time - this.time < 0.3
     this.time = time
+    this.updateShots(time)
     for (const tw of this.tweens) {
       if (tw.finished || time < tw.t0) continue
       const k = tw.dur <= 0 ? 1 : clamp01((time - tw.t0) / tw.dur)
@@ -546,11 +801,49 @@ export class FilmStage implements Stage {
     }
     // закрытая книга лежит по центру стола, раскрытая — корешком по центру
     if (!this.shelving) this.book.group.position.x = (-PAGE_W / 2) * (1 - this.book.openK)
+    if (this.figures.length && !this.writeMode && !this.shelfMode) {
+      this.applyBeatCamera(time)
+      this.applyTravelCamera(time)
+    }
     this.applyCamera()
+    this.placeCaption(time)
+    this.placeStory(time)
+    this.updateWaiting()
     this.hero.faceCamera(this.px.camera)
     this.second.faceCamera(this.px.camera)
     this.updateFigures(time, _dt)
     for (const b of this.billboards) b.faceCamera(this.px.camera)
+  }
+
+  /** Режиссёр думает: живое ожидание в виде записи (см. World.setWaiting). */
+  setWaiting(on: boolean) {
+    this.waiting = on && this.writeMode
+    const h = this.hero.object
+    if (!this.figures.length) return
+    if (!this.waiting) {
+      if (this.writeMode) h.visible = false
+      this.faceYaw.hero = null
+      return
+    }
+    // человечек выглядывает из щели между страницами и смотрит на того, кто пишет
+    h.visible = true
+    this.faceYaw.hero = 0
+    this.play('hero', 'wave', this.time, true, 1.2)
+  }
+
+  private waiting = false
+
+  /** Выглядывание из щели: вверх-вниз, иногда машет. Только пока ждём режиссёра. */
+  private updateWaiting() {
+    if (!this.waiting || !this.figures.length) return
+    // выглядывает только из раскрытой книги
+    this.hero.object.visible = this.book.openK > 0.9
+    const s = performance.now() / 1000
+    const peek = 0.5 + 0.5 * Math.sin(s * 1.4)
+    // дальний край щели: рука с ручкой его не закрывает
+    this.hero.object.position.set(0.02, this.book.pageY - 1.05 + 0.62 * ease(peek), -1.25)
+    const row = peek > 0.85 && Math.sin(s * 0.7) > 0 ? 'wave' : 'climb'
+    if (this.anim.hero.row !== row) this.play('hero', row, this.time, true, row === 'wave' ? 1.2 : 0.8)
   }
 
   setAudioLevel(level: number, _beat: boolean) {
@@ -781,8 +1074,25 @@ export class FilmStage implements Stage {
 
   /** Кто пишет: мальчик или девочка. Меняет человека за столом (скелет и движения у них общие). */
   setPersonKind(kind: 'boy' | 'girl') {
+    this.dressHero(kind)
     if (this.person?.kind === kind) return
     this.usePerson(kind)
+  }
+
+  /** Герой фильма — тот же, кто пишет: девочке свои волосы и цвета (план 15, выбор «мальчик / девочка»). */
+  private heroKind: 'boy' | 'girl' = 'boy'
+  private dressHero(kind: 'boy' | 'girl') {
+    const f = this.figures.find((x) => x.id === 'hero')
+    if (!f || this.heroKind === kind) return
+    this.heroKind = kind
+    const old = f.fig
+    const fig = kind === 'girl' ? new Hero3D(GIRL_COLORS, toonFor, GIRL_ACCESSORY) : new Hero3D()
+    fig.object.position.copy(old.object.position)
+    fig.object.rotation.copy(old.object.rotation)
+    fig.object.visible = old.object.visible
+    this.px.scene.remove(old.object)
+    this.px.scene.add(fig.object)
+    f.fig = fig
   }
 
   private usePerson(kind: 'boy' | 'girl') {
@@ -918,7 +1228,8 @@ export class FilmStage implements Stage {
       goal = caret
         ? this.book.group.localToWorld(caret)
         : this.book.group.localToWorld(this.book.texToLocal(0, TEX_W * 0.8, Math.min(TEX_H - 14, (this.book.placeholderEnd() ?? TEX_H * 0.5) + 46)))
-      goal.y += typing ? PEN_LIFT : 0.12
+      // ждём режиссёра: ручка постукивает по бумаге, как когда думаешь
+      goal.y += typing ? PEN_LIFT : this.waiting ? 0.03 + 0.11 * Math.abs(Math.sin(performance.now() / 260)) : 0.12
     }
     if (down && !this.penWasDown) sfx.scratch(0.09)
     this.penWasDown = down
@@ -1065,6 +1376,7 @@ export class FilmStage implements Stage {
 
   private reset() {
     this.tweens = []
+    this.travelCam = null
     for (const o of this.spawned) this.px.scene.remove(o)
     this.spawned = []
     this.billboards = []
@@ -1096,6 +1408,11 @@ export class FilmStage implements Stage {
     this.inkWords.clear()
     this.held = null
     this.sceneActs.clear()
+    this.beatCam = null
+    this.stamps = 0
+    this.waiting = false
+    if (this.px.pixel) this.px.pixel.minRows = 130
+    this.caption?.place(this.px.camera, 0)
     this.footprints = []
     this.stands.clear()
     this.smalls = []
@@ -1210,6 +1527,7 @@ export class FilmStage implements Stage {
    * шаг — из скорости и пройденного пути, поворот — по ходу, к слову или к камере.
    */
   private updateFigures(time: number, dt: number) {
+    for (const f of this.bowFigs) f.update(time, dt)
     const cam = this.px.camera.position
     for (const f of this.figures) {
       const a = this.actor(f.id)
@@ -1265,10 +1583,13 @@ export class FilmStage implements Stage {
     o.visible = fig.object.visible && o.visible
     const row = this.anim.hero.row
     const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0))
-    if (row === 'carry') {
+    // зонт всегда над головой куполом вверх: перед собой он висит вниз, как юбка
+    if (row === 'carry' && !h.raise) {
       // двумя руками перед собой
       fig.chest.getWorldPosition(o.position)
-      o.position.y -= h.height * 0.5
+      // ниже груди: крупный предмет не закрывает лицо
+      o.position.y -= h.height * 0.78
+      o.position.add(new THREE.Vector3(0, 0, 0.12).applyQuaternion(q))
     } else {
       // в правой руке: ладонь — в точке хвата предмета (по умолчанию треть высоты от низа)
       fig.hand.R.getWorldPosition(o.position)
@@ -1341,6 +1662,7 @@ export class FilmStage implements Stage {
 
   /** Финал: человечек садится на край правой страницы лицом к камере и болтает ногами. */
   private finale3D(e: Extract<TimelineEvent, { type: 'actor_action' }>) {
+    if (!ALBUM && (this.curtain.length || this.cast.size)) return this.curtainCall(e)
     const a = this.hero.object
     const from = a.position.clone()
     const x = Math.min(PAGE_W - 0.45, Math.max(0.7, from.x))
@@ -1356,8 +1678,24 @@ export class FilmStage implements Stage {
     // камера: спереди на край страницы, где он сидит (на этом отрезке хореограф камеру не ставит)
     const cam0 = this.camPos.clone()
     const look0 = this.camLook.clone()
-    const camTo = to.clone().add(new THREE.Vector3(0.2, 0.9, 2.5))
-    const lookTo = to.clone().add(new THREE.Vector3(0, 0.3, -0.25))
+    // есть марки дня — камера выше и шире: весь разворот, марки в ряд на дальнем краю — карта дня (план 13, § 1.5)
+    const map = this.stamps > 0
+    // фотоальбом дня: камера почти сверху и ровно на снимки, человечек сидит у ближнего края
+    let camTo = map ? new THREE.Vector3(0.2, this.book.pageY + 5.4, 3.9) : to.clone().add(new THREE.Vector3(0.2, 0.9, 2.5))
+    let lookTo = map ? new THREE.Vector3(0, this.book.pageY, 0.25) : to.clone().add(new THREE.Vector3(0, 0.3, -0.25))
+    if (this.album.length) {
+      const box = new THREE.Box3()
+      for (const p of this.album) box.expandByPoint(p)
+      box.expandByPoint(to)
+      box.expandByScalar(0.55)
+      const c = box.getCenter(new THREE.Vector3())
+      const sz = box.getSize(new THREE.Vector3())
+      const cam = this.px.camera
+      const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+      const h = Math.max(sz.x / (2 * tan * Math.max(0.5, cam.aspect)), sz.z / (2 * tan)) * 1.05
+      lookTo = new THREE.Vector3(c.x, this.book.pageY, c.z)
+      camTo = lookTo.clone().add(new THREE.Vector3(0, h * 0.93, h * 0.38))
+    }
     this.tween({ t: e.t, dur: e.dur }, (k) => {
       const a = ease(k / Math.min(1, (walk + 0.4) / e.dur))
       this.camPos.lerpVectors(cam0, camTo, a)
@@ -1466,8 +1804,9 @@ export class FilmStage implements Stage {
 
     if (e.staging === 'crowd_edges_alone_center') {
       // шумно, но одиноко: толпа силуэтов по краям, человечек сидит один в пустом круге света
+      // толпа силуэтов читалась как рой непонятных столбиков (отзыв Эмиля 22.11) — остаётся один человечек в круге света
       const crowd = new Crowd(new THREE.Vector3(hero.x, this.book.pageY, hero.z), { x0: -PAGE_W * 0.97, x1: PAGE_W * 0.97, z0: -PAGE_H * 0.48, z1: PAGE_H * 0.48 }, rand)
-      add(crowd.mesh)
+      crowd.mesh.visible = false
       const pool = add(warmPool(0.85, 'rgba(236, 240, 255,')) as THREE.Mesh
       pool.position.set(hero.x, y + 0.001, hero.z)
       this.play('hero', 'sit', e.t + 0.3, false, 1.5)
@@ -1476,6 +1815,7 @@ export class FilmStage implements Stage {
         crowd.update(Math.min(1, u / 1.0) * (1 - ease((u - e.dur) / 1.0)), e.t + u)
         ;(pool.material as THREE.MeshBasicMaterial).opacity = fade(k)
         this.room.lamp.intensity = lamp0 * (1 - 0.45 * fade(k))
+        crowd.mesh.visible = false
       }, () => (crowd.mesh.visible = false))
       return
     }
@@ -1549,12 +1889,27 @@ export class FilmStage implements Stage {
     void prepareSticker('crystal')
     // сценки прошлого дня с той же цитатой не должны попасть в этот (кэш на диске их вернёт, если день тот же)
     if (this.sceneProvider) forgetScenes()
+    this.beatWin = beatWindows(timeline)
+    this.hasContract = !!timeline.beats?.length
+    this.beatTod = new Map((timeline.beats ?? []).filter((b) => b.time_of_day).map((b) => [b.beat, b.time_of_day]))
+    this.photoBeats = new Map()
+    for (const b of timeline.beats ?? []) {
+      const x = b as typeof b & { photo?: number | null; photo_card?: PhotoCard | null }
+      if (typeof x.photo === 'number') this.photoBeats.set(b.beat, { photo: x.photo, card: x.photo_card ?? null })
+    }
+    this.companionBeats = new Set(timeline.events.filter((e) => e.type === 'companion_enter').map((e) => e.beat))
+    this.planRoute(timeline, dayText ?? this.bookText)
+    // текст ЭТОГО дня (bookText ещё прошлый: prepare идёт после preload)
+    const day = (dayText ?? this.bookText).trim().slice(0, 600)
+    if (this.sceneProvider && timeline.beats?.length) {
+      // контракт плана 13: главный предмет, место и человек бита идут сценографу; первый бит — быстрый путь
+      for (const r of sceneRequests(timeline, day)) this.sceneProvider.request(r)
+    }
     for (const e of timeline.events) {
       if (e.type !== 'word_transform') continue
-      if (this.sceneProvider && e.result.kind !== 'effect' && e.result.kind !== 'person') {
+      if (this.sceneProvider && !timeline.beats?.length && e.result.kind !== 'effect' && e.result.kind !== 'person') {
         const r = e.result as { id?: string; name?: string }
-        // текст ЭТОГО дня (bookText ещё прошлый: prepare идёт после preload)
-        this.sceneProvider.request({ quote: e.quote, day: (dayText ?? this.bookText).trim().slice(0, 600), hint: r.name ?? r.id })
+        this.sceneProvider.request({ quote: e.quote, day, hint: r.name ?? r.id })
       }
       const r = e.result as { kind: string; id?: string; name?: string; hint?: string; tags?: string[] }
       if (r.kind === 'make' && r.id && !this.made.has(r.id)) {
@@ -1628,6 +1983,8 @@ export class FilmStage implements Stage {
   private photoReveal(e: Extract<TimelineEvent, { type: 'photo_reveal' }>) {
     const pol = this.tucked[e.photo]
     if (!pol || !this.figures.length) return
+    const spot = this.route.get(e.beat)
+    if (spot) return this.photoRevealAtSpot(e, pol, spot)
     const o = pol.object
     const D = e.dur
     const zFar = -PAGE_H / 2
@@ -1706,11 +2063,84 @@ export class FilmStage implements Stage {
     })
   }
 
+  /**
+   * Снимок на пути дня (план 15): человечек пришёл на место бита, снимок вылетает из книги и ложится за ним,
+   * человечек тянет его — снимок встаёт задником рывками, его трясут, он проявляется, из него оживёт сценка.
+   */
+  private photoRevealAtSpot(e: Extract<TimelineEvent, { type: 'photo_reveal' }>, pol: Polaroid, spot: THREE.Vector3) {
+    const o = pol.object
+    const D = e.dur
+    const y = this.book.pageY
+    const at = (a: number) => e.t + a * D
+    const gy = this.book.group.position.y
+    const tuckedPos = o.position.clone()
+    const tuckedQ = o.quaternion.clone()
+    // локальные координаты группы книги (раскрытая книга стоит в начале координат по x и z)
+    const flatPos = new THREE.Vector3(spot.x, this.book.surfaceY + 0.02 - gy, spot.z - 0.62)
+    const flatQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, Math.PI))
+    const standPos = new THREE.Vector3(spot.x, pol.height / 2 - gy + 0.02, spot.z - 0.62)
+    const standQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.08, 0, 0))
+    const heroObj = this.hero.object
+    this.dropHeld(e)
+    this.goal.hero = null
+    // снимок вылетает из книги и ложится за человечком
+    this.tween({ t: at(0), dur: 0.16 * D }, (k) => {
+      const a = ease(k)
+      o.position.lerpVectors(tuckedPos, flatPos, a)
+      o.position.y += Math.sin(a * Math.PI) * 0.7
+      o.quaternion.slerpQuaternions(tuckedQ, flatQ, a)
+    })
+    this.soundAt(at(0), () => sfx.slide(0.4))
+    // человечек поворачивается и тянет: снимок встаёт тремя рывками
+    this.tween({ t: at(0.12), dur: 0.001 }, () => {
+      heroObj.position.copy(spot)
+      this.faceYaw.hero = Math.PI
+      this.play('hero', 'pull', at(0.12), true, 0.4 * D)
+    })
+    this.tween({ t: at(0.18), dur: 0.36 * D }, (u) => {
+      const v = clamp01((u - 0.1) / 0.8) * 3
+      const step = Math.min(3, Math.floor(v) + ease(Math.min(1, (v % 1) * 2)))
+      const a = step / 3
+      o.quaternion.slerpQuaternions(flatQ, standQ, a)
+      o.position.lerpVectors(flatPos, standPos, a)
+    })
+    for (const v of [0.2, 0.47, 0.73]) this.soundAt(at(0.18) + v * 0.36 * D, () => sfx.slide(0.3))
+    this.tween({ t: at(0.58), dur: 0.14 * D }, (k) => {
+      const w = Math.sin(k * Math.PI * 9) * (1 - k)
+      o.quaternion.copy(standQ).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(w * 0.05, 0, w * 0.07)))
+    })
+    this.tween({ t: at(0.58), dur: 0.001 }, () => this.play('hero', 'shake', at(0.58), true, 0.14 * D))
+    this.tween({ t: at(0.58), dur: 0.32 * D }, (k) => pol.setDevelop(ease(k)))
+    this.soundAt(at(0.58), () => sfx.shake(7, 0.13))
+    // проявился — человечек оборачивается к зрителю и радуется
+    this.tween({ t: at(0.78), dur: 0.001 }, () => {
+      this.faceYaw.hero = null
+      this.play('hero', 'cheer', at(0.78), true, 0.2 * D)
+    })
+    this.soundAt(at(0.9), () => sfx.chime())
+    // камера спереди: человечек и снимок за ним в одном кадре
+    const cam0 = this.camPos.clone()
+    const look0 = this.camLook.clone()
+    const sd = this.standDir.get(e.beat) ?? 1
+    const look = new THREE.Vector3(spot.x, y + 0.62, spot.z - 0.3)
+    const pos = look.clone().add(new THREE.Vector3(-sd * 0.9, 1.25, 3.3))
+    this.tween(e, (k) => {
+      const a = ease(clamp01(k / 0.25))
+      this.camPos.lerpVectors(cam0, pos, a)
+      this.camLook.lerpVectors(look0, look, a)
+      // медленный наезд на проявляющийся снимок
+      if (k > 0.25) this.camPos.lerp(look, 0.12 * ease((k - 0.25) / 0.75))
+    })
+  }
+
   /** Остальные снимки выезжают из книги веером, встают задником и проявляются быстрее. */
   private photoFan(e: Extract<TimelineEvent, { type: 'photo_fan' }>) {
     const xs = [-0.85, 3.15, -2.45, 4.45]
     const zFar = -PAGE_H / 2
-    this.tucked.slice(e.from).forEach((pol, j) => {
+    // снимки без своей фразы (контракт плана 14: photos); у старых таймлайнов — все начиная с from
+    const list = (e as { photos?: number[] }).photos
+    const fan = list ? list.map((i) => this.tucked[i]).filter((p): p is Polaroid => !!p) : this.tucked.slice(e.from)
+    fan.forEach((pol, j) => {
       const o = pol.object
       const t0 = e.t + j * 0.35
       const p0 = o.position.clone()
@@ -1779,8 +2209,16 @@ export class FilmStage implements Stage {
   /** Буквы рассыпаются на пиксельные кубики, кубики собираются в предмет. */
   private wordTransform3D(e: Extract<TimelineEvent, { type: 'word_transform' }>): void {
     const kind = e.result.kind
-    const scene = kind !== 'effect' && kind !== 'person' && kind !== 'crystal' ? this.sceneProvider?.get(e.quote) ?? null : null
-    if (scene && scene.objects.length) return this.sceneTransform(e, scene)
+    this.beatLight(e.beat, e.t)
+    // по контракту плана 13 сценка есть у каждого бита (у дождя — зонт); раньше — только у предметов
+    const scene = this.hasContract || (kind !== 'effect' && kind !== 'person' && kind !== 'crystal') ? this.sceneProvider?.get(e.quote) ?? null : null
+    if (scene && scene.objects.length) {
+      // погода бита идёт поверх сценки: дождь над зонтом, снег над санками
+      if (kind === 'effect') this.spawnEffect((e.result as { id: string }).id, this.hero.object.position.clone(), e.t + e.dur / 2)
+      return this.sceneTransform(e, scene)
+    }
+    // без сценки (человек, эффект, кристалл) бит всё равно получает крупный кадр с цитатой
+    this.beatCamOnly(e)
     const word = this.inkWords.get(e.quote) ?? null
     const rand = rngFrom(`${e.quote}:${e.t}`)
     const model = this.kitFor(e.result, e.quote)
@@ -1904,7 +2342,8 @@ export class FilmStage implements Stage {
     const word = this.inkWords.get(e.quote) ?? null
     const rand = rngFrom(`${e.quote}:${e.t}:scene`)
     const fig = this.figure('hero').fig
-    const H = this.hero.object.position.clone()
+    // на пути дня сценка строится в точке бита, даже если человечек ещё подходит к ней
+    const H = this.route.get(e.beat)?.clone() ?? this.hero.object.position.clone()
     const y = this.book.pageY
     // откуда летят кубики
     let from: THREE.Vector3[] = []
@@ -1913,48 +2352,114 @@ export class FilmStage implements Stage {
       const g = word.geometry as THREE.PlaneGeometry
       from = letterPoints(word.userData.canvas, g.parameters.width, g.parameters.height).map((v) => new THREE.Vector3(v.x, v.y, 0).applyMatrix4(word.matrixWorld))
     }
+    // фраза со снимком: фото оживает — кубики вылетают из самого полароида (план 14, вариант А)
+    const pb = this.photoBeats.get(e.beat)
+    if (pb) {
+      const pts = this.photoPoints(pb.photo, 110, rand)
+      if (pts.length) from = pts
+      // снимок «вздыхает»: проявляется до конца и чуть подаётся вперёд, когда из него выходит сценка
+      const pol = this.tucked[pb.photo]
+      if (pol) {
+        const s0 = pol.object.scale.x
+        this.tween({ t: e.t - 0.15, dur: 0.7 }, (k) => {
+          pol.setDevelop(1)
+          pol.object.scale.setScalar(s0 * (1 + 0.07 * Math.sin(clamp01(k) * Math.PI)))
+        })
+        this.soundAt(e.t, () => sfx.sparkle())
+      }
+    }
     if (from.length < 20) {
       const c = fig.chest.getWorldPosition(new THREE.Vector3())
       from = from.concat(Array.from({ length: 60 }, () => c.clone().add(new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(0.3))))
     }
-    // место должно читаться как место: декорация не ниже человечка; вещь в руке — заметная, но не больше головы
-    const ROLE_H: Record<SceneObject['role'], [number, number]> = { hand: [9, 14], stand: [34, 60], detail: [7, 18] }
+    // каждый бит — на чистой странице: прошлые сценки уже ушли в марки
+    const ROLE_H = SCENE_ROLE_H
+    this.footprints = []
+    this.stands.clear()
     const placed: { obj: THREE.Object3D; role: SceneObject['role']; appear: number }[] = []
     let hasHand = false
-    for (const so of scene.objects.slice(0, 3)) {
+    // главный предмет есть в руках — детали не нужны; нет — первая деталь и есть главный предмет (кучка листьев)
+    const handGiven = scene.objects.some((o) => o.role === 'hand' && (o.ref || o.model))
+    let promoted = false
+    let skyAct: HeroAction | null = null
+    let groundAct: HeroAction | null = null
+    // главный предмет идёт раньше места: так место-двойник отсеется
+    const usedIds = new Set<string>()
+    const objects = [...scene.objects].sort((a, b) => (a.role === 'stand' ? 1 : 0) - (b.role === 'stand' ? 1 : 0))
+    for (const so0 of objects.slice(0, 3)) {
+      // мелкие детали мельчат кадр — в сценке только главный предмет и место (план 13, § 2 ②)
+      if (so0.role === 'detail' && (handGiven || promoted)) continue
+      let hero = so0.role === 'detail'
+      if (hero) promoted = true
+      // главная деталь стоит перед человечком на бумаге, крупно, со стороны камеры
+      let so: SceneObject = hero ? { ...so0, side: e.beat % 2 ? 'right' : 'left' } : so0
       // только объёмные предметы: у некоторых id есть двойник-картинка без фигур
       const lib = so.ref ? sceneRef(so.ref) ?? kitById(so.ref) : undefined
       const model = lib && lib.parts.length ? lib : so.model
       if (!model || !model.parts?.length) continue
+      // большая вещь, которая стоит на земле (фонарь, ёлка), в руках выходит крошечной — ставим её рядом местом
+      if (so.role === 'hand' && model.hold === 'ground' && !SKY_IDS.has(model.id)) {
+        if (kitBounds(model).getSize(new THREE.Vector3()).y > 24) so = { ...so, role: 'stand' }
+        else {
+          // небольшая вещь «на земле» (сугроб, поезд, рюкзак) в руках — непонятный ком: ставим её на бумагу перед человечком
+          so = { ...so, role: 'detail', side: e.beat % 2 ? 'right' : 'left' }
+          hero = true
+          promoted = true
+        }
+        groundAct = 'wave'
+      }
       if (so.role === 'hand' && hasHand) continue
       // то же место дня уже стоит (весь день за рабочим столом) — второй стол не строим
       const standKey = so.ref ?? so.ru
       if (so.role === 'stand' && this.stands.has(standKey)) continue
+      // место — тот же предмет, что и главный (снеговик и в руках, и сзади) — второй раз не ставим
+      if (so.role === 'stand' && usedIds.has(model.id)) continue
+      usedIds.add(model.id)
       const obj = buildKit(model, toonFor)
       toPixelLayer(obj)
       // размер по роли: предмет в руке не больше головы, декорация не меньше человечка наполовину
       const box = kitBounds(model)
       const size = box.getSize(new THREE.Vector3())
-      const [lo, hi] = ROLE_H[so.role]
-      const k = size.y > hi ? hi / size.y : size.y < lo ? lo / size.y : 1
+      // у рта кружка поменьше, иначе закрывает лицо; в руках перед собой — крупно
+      const [lo, hi] = hero ? [14, 18] : so.role === 'hand' && scene.action === 'drink' ? [12, 15] : ROLE_H[so.role]
+      // плоское место (озеро, бассейн, ковёр) меряем шириной, а не высотой — иначе его раздует во всю страницу
+      const flat = size.y < 0.45 * Math.max(size.x, size.z)
+      const span = flat ? Math.max(size.x, size.z) : size.y
+      // высокое и тонкое место (фонарь, дерево) выше человечка, иначе тонкий столбик не читается
+      const thin = so.role === 'stand' && size.y > 2.2 * Math.max(size.x, size.z)
+      // плоское место (озеро, сугроб) — не шире полутора человечков, иначе за спиной встаёт белый ком на всю страницу
+      const [flo, fhi] = flat ? (so.role === 'stand' ? [32, 44] : [18, 26]) : thin ? [46, 58] : [lo, hi]
+      const k = span > fhi ? fhi / span : span < flo ? flo / span : 1
       obj.scale.setScalar(k)
       const hgt = size.y * k * KIT_UNIT
       const wid = Math.max(size.x, size.z) * k * KIT_UNIT
-      if (so.role === 'hand') {
+      // погоду в руках не узнают (ревизия mb-assets): туча, луна, солнце висят над человечком
+      const sky = so.role === 'hand' && SKY_IDS.has(model.id)
+      if (sky) {
+        hasHand = true
+        const s = SKY_SCALE / Math.max(size.y, size.x) / k
+        obj.scale.multiplyScalar(Math.max(1, s))
+        obj.position.set(H.x + (e.beat % 2 ? -0.32 : 0.32), y + 1.3, H.z - 0.05)
+        skyAct = SKY_ACT[model.id] ?? 'idle'
+        // луна без неба — «жёлтый банан»: за ней круг ночного неба с парой звёзд
+        if (model.id === 'moon') obj.add(nightPatch(Math.max(size.x, size.y) * 0.78, box.getCenter(new THREE.Vector3())))
+      } else if (so.role === 'hand') {
         hasHand = true
         const grip = (model as { grip?: [number, number, number] }).grip
         // зонт держат над головой
         this.held = { obj, height: hgt, width: wid, grip: grip ? new THREE.Vector3(...grip).multiplyScalar(k) : null, raise: model.id === 'umbrella' }
         fig.chest.getWorldPosition(obj.position)
       } else {
-        // высокие и узкие декорации (дерево, фонарь) — сбоку, иначе крона торчит над головой, как шапка
-        const tall = so.role === 'stand' && size.y > Math.max(size.x, size.z) * 1.5
-        const side = tall && (so.side ?? 'back') === 'back' ? (rand() < 0.5 ? 'left' : 'right') : so.side ?? (so.role === 'stand' ? 'back' : rand() < 0.5 ? 'right' : 'left')
+        // место — всегда сбоку от человечка, со стороны, противоположной камере бита:
+        // за спиной оно сливается с ним в одно пятно (план 13, § 4.1)
+        const sd = this.standDir.get(e.beat)
+        const side = so.role === 'stand' ? (sd ? (sd < 0 ? 'left' : 'right') : e.beat % 2 ? 'left' : 'right') : so.side ?? (rand() < 0.5 ? 'right' : 'left')
         const dx = side === 'left' ? -1 : side === 'right' ? 1 : 0
         const dz = side === 'back' ? -1 : side === 'front' ? 1 : 0
         const gap = so.role === 'stand' ? 0.42 : 0.3
         const at = new THREE.Vector3(H.x + dx * (gap + wid / 2), y, H.z + dz * (gap + (size.z * k * KIT_UNIT) / 2))
-        if (so.role === 'stand' && side === 'back') at.x += (rand() - 0.5) * 0.3
+        if (so.role === 'stand') at.z -= 0.2
+        if (hero) at.z += 0.22
         this.placeFree(at, wid, size.z * k * KIT_UNIT)
         obj.position.copy(at)
         // декорация повёрнута к камере лицом, деталь — чуть наискосок
@@ -1965,8 +2470,8 @@ export class FilmStage implements Stage {
       this.px.scene.add(obj)
       this.spawned.push(obj)
       if (so.role === 'stand') this.stands.set(standKey, obj)
-      if (so.role === 'detail') this.addSmall(obj, e.t + e.dur)
-      placed.push({ obj, role: so.role, appear: so.role === 'stand' ? 0.5 : so.role === 'detail' ? 0.62 : 0.74 })
+      // сначала главный предмет в руках (самый громкий «чпок»), потом место: взгляд идёт за порядком
+      placed.push({ obj, role: so.role, appear: so.role === 'hand' || hero ? 0.45 : 0.62 })
       // живые подсказки предмета
       for (const fx of model.fx ?? []) {
         const kind = fx.kind === 'steam' || fx.kind === 'smoke' ? 'steam' : fx.kind === 'sparkle' || fx.kind === 'glow' ? 'sparkles' : null
@@ -1981,7 +2486,21 @@ export class FilmStage implements Stage {
       // сценка пустая (предметы не собрались) — обычный путь: один предмет
       return this.wordTransform3D({ ...e, result: { kind: 'crystal', id: 'crystal' } })
     }
-    this.sceneActs.set(e.beat, scene.action as HeroAction)
+    // предмет-погода ушёл в небо — поза с пустыми руками (радуется солнцу, мёрзнет под тучей)
+    const emptyAct = skyAct ?? (this.held ? null : groundAct)
+    let act: HeroAction = emptyAct && ['drink', 'carry', 'shake'].includes(scene.action) ? emptyAct : (scene.action as HeroAction)
+    // с предметом в руках просто стоять нельзя — его не видно у бедра: лёгкое машут над головой, крупное держат перед собой
+    const held = this.held
+    if (act === 'idle' && held && placed.some((p) => p.obj === held.obj)) act = held.height < 0.6 ? 'shake' : 'carry'
+    this.sceneActs.set(e.beat, act as HeroAction)
+    // в бите со снимком хореограф позу не шлёт (человечек уже у снимка) — встаёт и делает позу сценки сам
+    if (pb) {
+      const t1 = e.t + e.dur * 0.75
+      this.tween({ t: t1, dur: 0.001 }, () => {
+        this.faceYaw.hero = null
+        this.play('hero', act as HeroRow, t1, act !== 'sit', 2.5)
+      })
+    }
     // кубики делятся между предметами по их величине
     placed.forEach((p) => p.obj.updateMatrixWorld(true))
     const to: { p: THREE.Vector3; c: PaletteName | THREE.Color }[] = []
@@ -1998,7 +2517,7 @@ export class FilmStage implements Stage {
     this.soundAt(e.t, () => sfx.cubes(e.dur * 0.7))
     placed.forEach((p) => this.soundAt(e.t + e.dur * p.appear, () => sfx.pop()))
     const base = placed.map((p) => p.obj.scale.x)
-    return this.tween(
+    this.tween(
       e,
       (k) => {
         if (word) {
@@ -2014,6 +2533,634 @@ export class FilmStage implements Stage {
       },
       () => (swarm.mesh.visible = false),
     )
+    // после появления: при перемотке твины идут в порядке добавления, марка должна быть последней
+    const pol = pb ? this.tucked[pb.photo]?.object : undefined
+    this.showBeat(e, placed.map((p) => p.obj), H, pol ? [pol] : [])
+    // снимок своё отыграл — вместе с маркой ложится обратно в книгу, следующему снимку сцена свободна
+    if (pol) {
+      const win = this.beatWin.get(e.beat)
+      const p1 = pol.userData.tuckPos as THREE.Vector3 | undefined
+      const q1 = pol.userData.tuckQ as THREE.Quaternion | undefined
+      if (win && p1 && q1) {
+        let from: { p: THREE.Vector3; q: THREE.Quaternion } | null = null
+        this.tween({ t: win.t1, dur: 0.7 }, (k) => {
+          from ??= { p: pol.position.clone(), q: pol.quaternion.clone() }
+          const a = ease(k)
+          pol.position.lerpVectors(from.p, p1, a)
+          pol.position.y += Math.sin(a * Math.PI) * 0.3
+          pol.quaternion.slerpQuaternions(from.q, q1, a)
+        })
+        this.soundAt(win.t1, () => sfx.slide(0.3))
+      }
+    }
+    // люди со снимка: второй человечек в их одежде; если хореограф не дал companion_enter — зовём сами
+    const people = this.photoPeople(e.beat)
+    if (people.length && !this.companionBeats.has(e.beat)) {
+      const p = people[0]
+      // старые проходы второго в этом бите больше не уводят его от главного
+      this.companionBeats.add(e.beat)
+      this.companionEnter({ type: 'companion_enter', t: e.t + Math.min(0.9, e.dur * 0.7), dur: 0.6, beat: e.beat, companion: { name: '', role: p.role } })
+    }
+  }
+
+  /**
+   * Показ бита (план 13, § 1): крупный кадр по рамке сценки, подложка под ней,
+   * а в конце окна бита сценка уменьшается и улетает маркой на дальний край разворота.
+   */
+  private showBeat(e: { t: number; dur: number; beat: number }, objs: THREE.Object3D[], H: THREE.Vector3, frameAlso: THREE.Object3D[] = []) {
+    const y = this.book.pageY
+    const box = new THREE.Box3(new THREE.Vector3(H.x - 0.32, y, H.z - 0.3), new THREE.Vector3(H.x + 0.32, y + 1.25, H.z + 0.3))
+    // в кадр ещё и то, что не уходит в марку (снимок, из которого ожила сценка)
+    for (const o of [...objs, ...frameAlso]) {
+      o.updateMatrixWorld(true)
+      box.union(new THREE.Box3().setFromObject(o))
+    }
+    // зонт поднимется над головой уже после постройки — рамка кадра сразу с запасом сверху
+    // (купол может чуть уйти за край — лучше, чем мелкий человечек)
+    if (this.held?.raise && objs.includes(this.held.obj)) box.max.y = Math.max(box.max.y, y + 1.1 + this.held.height * 0.7)
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+    const win = this.beatWin.get(e.beat) ?? { t0: e.t, hold0: e.t + e.dur, t1: e.t + e.dur + 2.8, quote: '' }
+    const sd = this.standDir.get(e.beat)
+    this.beatCam = { t0: win.t0 - 0.25, t1: win.t1, center, size, side: sd ? -sd : e.beat % 2 ? 1 : -1 }
+
+    // подложка: строки текста под сценкой гаснут, силуэты читаются на ровной бумаге
+    const disc = makeBaseDisc()
+    const r = Math.max(size.x, size.z) + 0.8
+    disc.scale.set(r, r * 0.8, 1)
+    disc.position.set(center.x, y + 0.02, center.z + 0.05)
+    this.px.scene.add(disc)
+    this.spawned.push(disc)
+    const dm = disc.material as THREE.MeshBasicMaterial
+    this.tween({ t: win.t0, dur: 0.5 }, (k) => (dm.opacity = ease(k)))
+    this.tween({ t: win.t1, dur: 0.6 }, (k) => (dm.opacity = 1 - ease(k)), () => (disc.visible = false))
+
+    // марка: сценка уменьшается и улетает на поле, бумага марки появляется под ней
+    const slot = this.stamps++
+    const sx = -PAGE_W + 0.6 + (slot % 6) * ((2 * PAGE_W - 1.2) / 5)
+    // на пути дня марка остаётся там, где сценка была прожита: разворот становится картой дня
+    const station = this.route.get(e.beat)
+    const to = station ? new THREE.Vector3(station.x, y + 0.022, station.z - 0.1) : new THREE.Vector3(sx, y + 0.022, STAMP_Z + (slot >= 6 ? 0.75 : 0))
+    const fit = (STAMP_SIZE * 0.62) / Math.max(size.x, size.z, size.y * 0.75, 0.2)
+    // рамки марок по кругу: красная, синяя, зелёная, горчичная
+    const paper = makeStampPaper(['#c4553f', '#3f6aa8', '#4f8a5b', '#d39a2c'][slot % 4])
+    paper.position.copy(to)
+    paper.rotation.z = (slot % 2 ? 1 : -1) * 0.06
+    paper.scale.setScalar(0.001)
+    paper.visible = false
+    this.px.scene.add(paper)
+    this.spawned.push(paper)
+    let start: { p: THREE.Vector3; s: number }[] | null = null
+    // фотоальбом дня (план 15, вариант А): сценка уходит в снимок своего же кадра, снимок ложится на её место пути
+    let pol: Polaroid | null = null
+    this.soundAt(win.t1 + 0.55, () => sfx.pop())
+    this.tween(
+      { t: win.t1, dur: 0.8 },
+      (k) => {
+        if (!start) {
+          // из рук предмет тоже уходит в марку
+          if (this.held && objs.includes(this.held.obj)) this.held = null
+          start = objs.map((o) => ({ p: o.position.clone(), s: o.scale.x }))
+          const shot = this.shots.get(e.beat)
+          if (ALBUM && shot && station) pol = this.albumPhoto(e.beat, shot, to, slot, win.quote)
+          // «Поклон»: предметы сценки уходят в страницу, а в финале выходят все вместе (Эмиль, вариант C)
+          if (!ALBUM) this.curtain.push(...objs.map((o, i) => ({ o, s: start![i].s, sky: start![i].p.y > y + 0.8 })))
+        }
+        const a = ease(k)
+        objs.forEach((o, i) => {
+          const s0 = start![i]
+          if (!ALBUM) {
+            // сценка тонет в странице: уменьшается и опускается на своём месте
+            o.position.copy(s0.p)
+            o.position.y -= 0.25 * a
+            o.scale.setScalar(Math.max(0.001, s0.s * (1 - a)))
+            o.visible = a < 0.98
+            return
+          }
+          if (pol) {
+            // предметы ныряют в снимок и исчезают
+            o.position.lerpVectors(s0.p, to, a)
+            o.position.y += Math.sin(a * Math.PI) * 0.35
+            o.scale.setScalar(Math.max(0.001, s0.s * (1 - a)))
+            o.visible = a < 0.98
+            return
+          }
+          // относительное место предмета в сценке сохраняется, только в масштабе марки
+          const rel = s0.p.clone().sub(center).multiplyScalar(fit)
+          rel.y = s0.p.y - y
+          const dest = to.clone().add(new THREE.Vector3(rel.x, rel.y * fit + 0.004, rel.z))
+          o.position.lerpVectors(s0.p, dest, a)
+          o.position.y += Math.sin(a * Math.PI) * 0.6
+          o.scale.setScalar(s0.s * (1 + (fit - 1) * a))
+          o.visible = true
+        })
+        if (pol || !ALBUM) return
+        paper.visible = k > 0.55
+        paper.scale.setScalar(STAMP_SIZE * ease(clamp01((k - 0.55) / 0.45)) || 0.001)
+      },
+    )
+  }
+
+  /**
+   * Финал «Поклон» (вариант C, Эмиль 22.11): все вещи и люди дня выходят на разворот в ряд в своём размере,
+   * человечек проходит вдоль ряда и машет, каждый кланяется, когда он рядом. Потом книга закрывается и всё складывается.
+   */
+  private curtainCall(e: Extract<TimelineEvent, { type: 'actor_action' }>) {
+    const y = this.book.pageY
+    const D = e.dur
+    type Entry = { o: THREE.Object3D; s: number; w: number; sky: boolean; fig?: Hero3D }
+    const size = (o: THREE.Object3D, sc: number) => {
+      const prev = o.scale.x
+      o.scale.setScalar(sc)
+      o.updateMatrixWorld(true)
+      const b = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3())
+      o.scale.setScalar(prev)
+      return Math.min(1.5, Math.max(0.3, b.x))
+    }
+    const ground: Entry[] = []
+    const sky: Entry[] = []
+    for (const it of this.curtain) (it.sky ? sky : ground).push({ o: it.o, s: it.s, w: size(it.o, it.s), sky: it.sky })
+    // люди дня — между вещами, равномерно
+    const people = [...this.cast.values()].map((v): Entry => {
+      const fig = new Hero3D(v.colors, toonFor, v.accessory)
+      fig.object.scale.setScalar(v.scale)
+      fig.object.visible = false
+      this.px.scene.add(fig.object)
+      this.spawned.push(fig.object)
+      this.bowFigs.push(fig)
+      return { o: fig.object, s: v.scale, w: 0.5, sky: false, fig }
+    })
+    people.forEach((p, j) => ground.splice(Math.round(((j + 1) * ground.length) / (people.length + 1)) + j, 0, p))
+    const gap = 0.16
+    const total = ground.reduce((a, g) => a + g.w, 0) + gap * Math.max(0, ground.length - 1)
+    const k = Math.min(1, (PAGE_W * 2 - 0.9) / Math.max(0.1, total))
+    const z = 0.45
+    let x = (-total * k) / 2
+    const appear0 = e.t + 0.2
+    const step = Math.min(0.14, 1.2 / Math.max(1, ground.length + sky.length))
+    const xs: number[] = []
+    ground.forEach((g, i) => {
+      const cx = x + (g.w * k) / 2
+      x += g.w * k + gap * k
+      xs.push(cx)
+      const sc = g.s * k
+      const ti = appear0 + i * step
+      g.o.position.set(cx, y, z)
+      g.o.rotation.set(0, (g.fig ? 0 : -0.15 * Math.sign(cx)) , 0)
+      g.o.scale.setScalar(0.001)
+      this.tween({ t: ti, dur: 0.5 }, (u) => {
+        g.o.visible = true
+        g.o.position.set(cx, y - 0.25 * (1 - ease(u)), z)
+        g.o.scale.setScalar(Math.max(0.001, sc * (ease(u) + 0.15 * Math.sin(u * Math.PI))))
+      })
+      this.soundAt(ti + 0.1, () => sfx.pop())
+      if (g.fig) g.fig.play('idle', ti, 1)
+    })
+    sky.forEach((g, i) => {
+      const cx = (i - (sky.length - 1) / 2) * 1.3
+      const sc = g.s * Math.min(1, k * 1.2)
+      const ti = appear0 + (ground.length + i) * step
+      this.tween({ t: ti, dur: 0.5 }, (u) => {
+        g.o.visible = true
+        g.o.position.set(cx, y + 1.35 + 0.1 * Math.sin(u * Math.PI), z - 0.5)
+        g.o.scale.setScalar(Math.max(0.001, sc * ease(u)))
+      })
+    })
+    // человечек выходит к левому краю ряда и идёт вдоль него, машет; каждый кланяется, когда он рядом
+    const a = this.hero.object
+    const from = a.position.clone()
+    const x0 = (xs[0] ?? -1) - 0.35
+    // в конце прохода человечек остаётся в кадре, перед последним в ряду
+    const x1 = (xs[xs.length - 1] ?? 1) - 0.1
+    const front = z + 0.75
+    const walkStart = appear0 + ground.length * step + 0.2
+    const walkDur = Math.max(1.6, Math.min(3.6, D - (walkStart - e.t) - 1.0))
+    this.goal.hero = null
+    this.play('hero', 'walk', e.t, true, walkStart - e.t)
+    this.tween({ t: e.t, dur: Math.max(0.3, walkStart - e.t) }, (u) => a.position.lerpVectors(from, new THREE.Vector3(x0, y, front), ease(u)))
+    this.tween({ t: walkStart, dur: 0.001 }, () => this.play('hero', 'wave', walkStart, true, walkDur))
+    this.tween({ t: walkStart, dur: walkDur }, (u) => {
+      a.position.set(x0 + (x1 - x0) * u, y, front)
+    })
+    ground.forEach((g, i) => {
+      const pass = walkStart + walkDur * ((xs[i] - x0) / Math.max(0.1, x1 - x0))
+      if (g.fig) {
+        g.fig.play('wave', pass - 0.2, 1.6)
+        this.tween({ t: pass + 1.4, dur: 0.001 }, () => g.fig!.play('joy', pass + 1.4, 2))
+        return
+      }
+      // поклон вещи: приседает и выпрямляется
+      const sc = g.s * k
+      this.tween({ t: pass - 0.1, dur: 0.6 }, (u) => {
+        const b = Math.sin(u * Math.PI)
+        g.o.scale.set(sc * (1 + 0.08 * b), sc * (1 - 0.18 * b), sc * (1 + 0.08 * b))
+        g.o.rotation.x = 0.25 * b
+      })
+    })
+    this.tween({ t: walkStart + walkDur, dur: 0.001 }, () => {
+      this.faceYaw.hero = 0
+      this.play('hero', 'cheer', walkStart + walkDur, true, 2)
+    })
+    this.soundAt(walkStart + walkDur, () => sfx.chime())
+    // камера спереди на весь ряд
+    const cam0 = this.camPos.clone()
+    const look0 = this.camLook.clone()
+    const cam = this.px.camera
+    const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+    const width = Math.max(2.5, x1 - x0 + 1.0)
+    const dist = Math.max(width / (2 * tan * Math.max(0.5, cam.aspect)), 1.8 / (2 * tan)) * 0.92
+    // ряд — в середине кадра, взгляд чуть сверху
+    const lookTo = new THREE.Vector3((x0 + x1) / 2, y + 0.5, z + 0.2)
+    const camTo = lookTo.clone().add(new THREE.Vector3(0, dist * 0.3, dist * 0.95))
+    this.tween({ t: e.t, dur: D }, (u) => {
+      const q = ease(u / Math.min(1, 0.9 / Math.max(0.5, D)))
+      this.camPos.lerpVectors(cam0, camTo, q)
+      this.camLook.lerpVectors(look0, lookTo, q)
+    })
+  }
+
+  /** Снимок сценки для альбома: падает на место бита лицом вверх и проявляется, под ним строка рассказа. */
+  private albumPhoto(beat: number, shot: HTMLCanvasElement, at: THREE.Vector3, slot: number, quote: string): Polaroid {
+    const text = this.storyLines.find((l) => l.beat === beat)?.text ?? quote
+    const pol = new Polaroid(shot, 0.82, text)
+    pol.setDevelop(0)
+    const o = pol.object
+    const tilt = (slot % 2 ? 1 : -1) * (0.05 + (slot % 3) * 0.03)
+    const flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, tilt))
+    const up = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.5, 0, tilt * 2))
+    const y = this.book.pageY
+    const p1 = new THREE.Vector3(at.x, y + 0.016, at.z)
+    const p0 = p1.clone().add(new THREE.Vector3(0, 0.9, 0.2))
+    o.position.copy(p0)
+    o.quaternion.copy(up)
+    o.scale.setScalar(0.7)
+    this.px.scene.add(o)
+    this.spawned.push(o)
+    this.album.push(p1.clone())
+    this.tween({ t: this.time, dur: 0.7 }, (k) => {
+      const a = ease(k)
+      o.position.lerpVectors(p0, p1, a)
+      o.position.y += Math.sin(a * Math.PI) * 0.15
+      o.quaternion.slerpQuaternions(up, flat, a)
+      o.scale.setScalar(0.7 + 0.3 * a)
+    })
+    this.tween({ t: this.time + 0.3, dur: 1.6 }, (k) => pol.setDevelop(ease(k)))
+    this.soundAt(this.time + 0.6, () => sfx.slide(0.25))
+    return pol
+  }
+
+  /** Кадр сценки для её снимка: квадрат из середины последнего кадра (подписи на этот кадр спрятаны). */
+  private captureShot(beat: number) {
+    const src = this.px.renderer.domElement
+    const W = src.width
+    const H = src.height
+    if (!W || !H) return
+    const side = Math.round(Math.min(W, H) * 0.7)
+    const c = document.createElement('canvas')
+    c.width = c.height = 512
+    c.getContext('2d')!.drawImage(src, Math.round(W / 2 - side / 2), Math.round(H * 0.46 - side / 2), side, side, 0, 0, 512, 512)
+    this.shots.set(beat, c)
+  }
+
+  /**
+   * Человек из фразы (план 13, § 2 ②): второй человечек подбегает и встаёт рядом, со стороны, где нет места,
+   * делает ту же позу; в конце бита ныряет обратно в страницу вместе с маркой.
+   */
+  private companionEnter(e: Extract<TimelineEvent, { type: 'companion_enter' }>) {
+    if (!this.figures.length) return
+    const a = this.second.object
+    const H = this.route.get(e.beat)?.clone() ?? this.hero.object.position.clone()
+    const sdc = this.standDir.get(e.beat)
+    const side = sdc ? -sdc : e.beat % 2 ? 1 : -1
+    // человек со снимка — в своей одежде с фото; иначе бабушка в платке, подруга с пучком — по роли из режиссёра
+    const fromPhoto = this.photoPeople(e.beat)[0]
+    const variant = fromPhoto ? photoVariant(fromPhoto, e.beat) : pickCompanion(e.companion)
+    this.dressSecond(variant)
+    this.cast.set(variant.id, variant)
+    const to = new THREE.Vector3(H.x + side * 0.72, this.book.pageY, H.z - 0.08)
+    const from = to.clone().add(new THREE.Vector3(side * 0.6, 0, -0.35))
+    const win = this.beatWin.get(e.beat)
+    this.tween({ t: e.t, dur: 0.001 }, () => {
+      a.visible = true
+      this.faceYaw.second = null
+      this.play('second', 'walk', e.t, true, 0.55)
+    })
+    this.tween(
+      { t: e.t, dur: 0.55 },
+      (k) => {
+        a.position.lerpVectors(from, to, ease(k))
+        a.position.y += Math.sin(k * Math.PI) * 0.08
+      },
+      () => {
+        this.faceYaw.second = 0
+        // та же поза, что у главного: пьют какао вместе, радуются вместе
+        const row = this.anim.hero.row
+        this.play('second', row === 'walk' ? 'idle' : row, e.t + 0.55, true, e.dur)
+      },
+    )
+    this.soundAt(e.t + 0.4, () => sfx.pop())
+    if (win) {
+      // ныряет в страницу, как человечек в финале
+      let y0 = 0
+      this.tween(
+        { t: win.t1, dur: 0.45 },
+        (k) => {
+          if (k > 0 && !y0) y0 = a.position.y || this.book.pageY
+          a.position.y = y0 - 1.2 * ease(k)
+        },
+        () => {
+          a.visible = false
+          a.position.y = this.book.pageY
+          this.faceYaw.second = null
+        },
+      )
+    }
+  }
+
+  /** Переодеть второго человечка: та же фигура Hero3D, цвета, вещь на голове и рост из companions.json. */
+  private dressSecond(v: CompanionVariant) {
+    const f = this.figures.find((x) => x.id === 'second')
+    if (!f || this.secondLook === v.id) return
+    this.secondLook = v.id
+    const old = f.fig
+    const fig = new Hero3D(v.colors, toonFor, v.accessory)
+    fig.object.scale.setScalar(v.scale)
+    fig.object.position.copy(old.object.position)
+    fig.object.rotation.copy(old.object.rotation)
+    this.px.scene.remove(old.object)
+    this.px.scene.add(fig.object)
+    f.fig = fig
+  }
+
+  /** Какой вариант второго человечка сейчас надет. */
+  private secondLook = ''
+
+  /** Крупный кадр бита без сценки: рамка — человечек (второй добавится сам, если подойдёт). */
+  /**
+   * Карта дня (план 15, § 1.3): точки битов змейкой по развороту — дальний ряд слева направо,
+   * ближний справа налево; дороги между ними и строки рассказа слева сверху.
+   */
+  private planRoute(timeline: Timeline, dayText: string) {
+    this.route.clear()
+    this.standDir.clear()
+    this.travels = []
+    this.travelInto.clear()
+    this.storyLines = []
+    this.shots.clear()
+    this.albumDone.clear()
+    this.album = []
+    this.curtain = []
+    this.cast.clear()
+    this.bowFigs = []
+    this.shotStage = 0
+    this.travelCam = null
+    const beats = [...(timeline.beats ?? [])].sort((a, b) => a.start - b.start)
+    this.hasTravelEvents = timeline.events.some((e) => (e as { type: string }).type === 'travel')
+    if (!beats.length) return
+    const y = this.book.pageY
+    const n = beats.length
+    // точки битов — ровная сетка 1.3 × 1.3, чтобы снимки альбома не наползали друг на друга:
+    // от места, где человечек спрыгнул на страницу, вправо по ближнему ряду, потом по дальнему влево
+    const SPOTS: [number, number][] = [[-0.55, 0.55], [0.75, 0.55], [2.05, 0.55], [2.05, -0.75], [0.75, -0.75], [-0.55, -0.75], [-1.85, -0.75], [-1.85, 0.55]]
+    beats.forEach((b, i) => {
+      const [x, z] = SPOTS[Math.min(i, SPOTS.length - 1)]
+      this.route.set(b.beat, new THREE.Vector3(x, y, z))
+    })
+    // место ставится в сторону пути: так оно не наезжает на марку прошлой сценки
+    beats.forEach((b, i) => {
+      const cur = this.route.get(b.beat)!
+      const prev = i > 0 ? this.route.get(beats[i - 1].beat)! : null
+      const next = i < n - 1 ? this.route.get(beats[i + 1].beat)! : null
+      const dx = prev && Math.abs(cur.x - prev.x) > 0.2 ? cur.x - prev.x : next && Math.abs(next.x - cur.x) > 0.2 ? next.x - cur.x : cur.x < 0 ? 1 : -1
+      this.standDir.set(b.beat, Math.sign(dx) || 1)
+    })
+    if (this.hasTravelEvents) {
+      for (const e of timeline.events) {
+        const x = e as unknown as { type: string; t: number; dur: number; from: number; to: number; mode?: string }
+        if (x.type !== 'travel') continue
+        this.travels.push({ t: x.t, dur: x.dur, from: x.from, to: x.to, mode: x.mode === 'run' ? 'run' : 'walk' })
+        this.travelInto.add(x.to)
+      }
+    } else {
+      for (let i = 1; i < n; i++) {
+        const a = this.beatWin.get(beats[i - 1].beat)
+        const b = this.beatWin.get(beats[i].beat)
+        if (!a || !b) continue
+        const t = a.t1 + 0.15
+        const dur = Math.max(0.7, b.t0 - 0.2 - t)
+        this.travels.push({ t, dur, from: beats[i - 1].beat, to: beats[i].beat, mode: dur < 1.1 ? 'run' : 'walk' })
+        this.travelInto.add(beats[i].beat)
+      }
+    }
+    // рассказ: строка режиссёра (story) или полное предложение из записи, где стоит цитата бита
+    const sentences = dayText.split(/(?<=[.!?…])\s+/).map((x) => x.trim()).filter(Boolean)
+    for (const b of beats) {
+      const w = this.beatWin.get(b.beat)
+      if (!w) continue
+      const own = ((b as { story?: string }).story ?? '').trim()
+      const q = b.quote.toLowerCase()
+      const text = own || sentences.find((x) => x.toLowerCase().includes(q)) || b.quote
+      const last = this.storyLines[this.storyLines.length - 1]
+      // та же фраза у двух битов — строка не повторяется, а остаётся дольше
+      if (last && last.text === text) {
+        last.t1 = w.t1 + 0.8
+        continue
+      }
+      const tin = this.travels.find((t) => t.to === b.beat)
+      this.storyLines.push({ beat: b.beat, text, t0: tin ? tin.t + 0.1 : w.t0 - 0.6, t1: w.t1 + 0.8 })
+    }
+  }
+
+  /** Дорога: человечек уходит из прожитой сценки к следующей, за ним остаются следы, свет меняется на ходу. */
+  private travel3D(tr: { t: number; dur: number; from: number; to: number; mode: 'walk' | 'run' }) {
+    const to = this.route.get(tr.to)
+    if (!to) return
+    const a = this.hero.object
+    const y = this.book.pageY
+    this.beatLight(tr.to, tr.t)
+    this.goal.hero = null
+    this.faceYaw.hero = null
+    this.play('hero', 'walk', tr.t, true, tr.dur)
+    const start = this.route.get(tr.from) ?? a.position.clone()
+    const d = to.clone().sub(start)
+    d.y = 0
+    const len = d.length()
+    if (len < 0.05) return
+    const dirN = d.clone().normalize()
+    const side = new THREE.Vector3(-dirN.z, 0, dirN.x)
+    const bend = (u: number) => Math.sin(u * Math.PI) * Math.min(0.12, len * 0.08)
+    // следы по той же дуге, что и шаги
+    const prints = Math.max(3, Math.floor(len / 0.15))
+    for (let i = 1; i < prints; i++) {
+      const k = i / prints
+      const fp = makeFootprint()
+      fp.position.copy(start).addScaledVector(dirN, len * k).addScaledVector(side, bend(k) + (i % 2 ? 0.04 : -0.04))
+      fp.position.y = y + 0.006
+      fp.rotation.y = Math.atan2(dirN.x, dirN.z)
+      fp.visible = false
+      this.px.scene.add(fp)
+      this.spawned.push(fp)
+      this.tween({ t: tr.t + tr.dur * Math.min(1, k * 1.05), dur: 0.001 }, () => (fp.visible = true))
+    }
+    const win = this.beatWin.get(tr.to)
+    const hold = this.photoBeats.has(tr.to) || !win ? tr.t + tr.dur : Math.max(tr.t + tr.dur, win.t0 + 0.3)
+    this.travelCam = { t0: tr.t, t1: hold, dir: Math.sign(d.x) || 1 }
+    let from: THREE.Vector3 | null = null
+    this.tween(
+      { t: tr.t, dur: tr.dur },
+      (k) => {
+        from ??= a.position.clone()
+        // короткий разгон и торможение, в середине ровный шаг
+        const u = k < 0.2 ? (k * k) / 0.4 : k > 0.8 ? 1 - ((1 - k) * (1 - k)) / 0.4 : (k - 0.1) / 0.8
+        a.position.lerpVectors(from, to, u)
+        a.position.addScaledVector(side, bend(u))
+      },
+      () => this.play('hero', 'idle', tr.t + tr.dur, true),
+    )
+  }
+
+  /** Камера в дороге ведёт человечка сбоку-спереди, с запасом кадра туда, куда он идёт. */
+  private applyTravelCamera(time: number) {
+    const tc = this.travelCam
+    if (!tc) return
+    if (time > tc.t1 + 0.7) {
+      this.travelCam = null
+      return
+    }
+    let w = time < tc.t0 ? 0 : time < tc.t0 + 0.45 ? ease((time - tc.t0) / 0.45) : time < tc.t1 ? 1 : 1 - ease((time - tc.t1) / 0.7)
+    // крупный кадр новой сценки уже пошёл — дорожная камера уступает ему
+    const b = this.beatCam
+    if (b && b.t0 > tc.t0 && time > b.t0) w *= 1 - ease(clamp01((time - b.t0) / 0.7))
+    if (w <= 0) return
+    const H = this.hero.object.position
+    const y = this.book.pageY
+    const cam = this.px.camera
+    const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+    const size = new THREE.Vector3(2.1, 1.45, 0.9)
+    const distH = (size.y * 1.12) / 0.62 / (2 * tan)
+    const distW = size.x / (0.85 * Math.max(0.3, cam.aspect)) / (2 * tan)
+    const dist = Math.max(distH, distW)
+    const yaw = tc.dir * 0.24
+    const pitch = 0.42
+    const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch))
+    const look = new THREE.Vector3(H.x + tc.dir * 0.32, y + 0.5, H.z)
+    const pos = look.clone().addScaledVector(dir, dist)
+    pos.y = Math.max(pos.y, y + 0.55)
+    this.camPos.lerp(pos, w)
+    this.camLook.lerp(look, w)
+    this.focus.copy(H)
+    const pixel = this.px.pixel
+    if (pixel) pixel.minRows = Math.max(pixel.minRows, 130 + (BEAT_ROWS - 130) * w)
+  }
+
+  /** Снять кадр каждой сценки в середине её крупного плана: кадр без подписей, потом снимок. */
+  private updateShots(time: number) {
+    if (!ALBUM || !this.figures.length || this.writeMode || this.shelfMode) return
+    if (this.shotStage === 1) {
+      // прошлый кадр отрисован без подписей — снимаем
+      this.captureShot(this.shotBeat)
+      this.shotStage = 0
+      return
+    }
+    for (const [beat, w] of this.beatWin) {
+      if (this.shots.has(beat)) continue
+      const at = w.hold0 + 0.6 * (w.t1 - w.hold0)
+      if (time >= at && time < w.t1) {
+        this.shotBeat = beat
+        this.shotStage = 1
+        return
+      }
+    }
+  }
+
+  /** Рассказ слева сверху: строка бита пишется словами, прошлая бледнеет над ней. */
+  private placeStory(time: number) {
+    if (!this.figures.length) return
+    if (!this.story) {
+      this.story = new StoryCaption()
+      this.px.scene.add(this.story.mesh)
+    }
+    const lines = this.storyLines
+    if (!lines.length || this.writeMode || this.shelfMode || this.shotStage === 1) return this.story.place(this.px.camera, 0)
+    let idx = -1
+    for (let i = 0; i < lines.length; i++) if (time >= lines[i].t0) idx = i
+    if (idx < 0) return this.story.place(this.px.camera, 0)
+    const cur = lines[idx]
+    const end = lines[lines.length - 1].t1 + 0.6
+    const k = Math.min(clamp01((time - lines[0].t0) / 0.4), 1 - clamp01((time - end) / 0.5))
+    const typeDur = Math.min(1.8, 0.35 + cur.text.length * 0.035)
+    this.story.set(idx > 0 ? lines[idx - 1].text : '', cur.text, cur.text.length * clamp01((time - cur.t0) / typeDur))
+    this.story.place(this.px.camera, ease(k))
+  }
+
+  private beatCamOnly(e: { t: number; dur: number; beat: number }) {
+    const H = this.route.get(e.beat) ?? this.hero.object.position
+    const y = this.book.pageY
+    const win = this.beatWin.get(e.beat) ?? { t0: e.t, hold0: e.t + e.dur, t1: e.t + e.dur + 2.8, quote: '' }
+    const center = new THREE.Vector3(H.x, y + 0.7, H.z)
+    this.beatCam = { t0: win.t0 - 0.25, t1: win.t1, center, size: new THREE.Vector3(1.3, 1.4, 0.8), side: e.beat % 2 ? 1 : -1 }
+  }
+
+  /**
+   * Крупный кадр бита поверх камеры хореографа: рамка сценки занимает ~62 % высоты кадра,
+   * вид три четверти спереди-сверху, никогда не ниже страницы. Плюс плотнее пиксельный слой.
+   */
+  private applyBeatCamera(time: number) {
+    const b = this.beatCam
+    const pixel = this.px.pixel
+    if (!b || time > b.t1 + 0.7) {
+      if (b) this.beatCam = null
+      if (pixel) pixel.minRows = 130
+      return
+    }
+    const w = time < b.t0 ? 0 : time < b.t0 + 0.7 ? ease((time - b.t0) / 0.7) : time < b.t1 ? 1 : 1 - ease((time - b.t1) / 0.7)
+    if (pixel) pixel.minRows = 130 + (BEAT_ROWS - 130) * w
+    if (w <= 0) return
+    const cam = this.px.camera
+    const tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2))
+    // второй человечек рядом (фраза про человека) — тоже в рамке, а не обрезан краем кадра
+    const two = this.second.object
+    if (two.visible && two.position.distanceTo(b.center) < 3.2) {
+      const box = new THREE.Box3().setFromCenterAndSize(b.center, b.size)
+      box.union(new THREE.Box3(two.position.clone().add(new THREE.Vector3(-0.32, 0, -0.3)), two.position.clone().add(new THREE.Vector3(0.32, 1.25, 0.3))))
+      box.getCenter(b.center)
+      box.getSize(b.size)
+    }
+    // место под цитатой внизу: сценка чуть выше центра кадра. По высоте — 62 % кадра,
+    // по ширине — до 85 % (на телефоне упираемся в ширину, иначе сценка мелкая)
+    const distH = (b.size.y * 1.12) / 0.62 / (2 * tan)
+    const distW = b.size.x / (0.85 * Math.max(0.3, cam.aspect)) / (2 * tan)
+    const dist = Math.max(distH, distW) + b.size.z * 0.5
+    const yaw = b.side * 0.3
+    const pitch = 0.4
+    const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch))
+    const look = b.center.clone().add(new THREE.Vector3(0, -b.size.y * 0.12, 0))
+    const pos = look.clone().addScaledVector(dir, dist)
+    pos.y = Math.max(pos.y, this.book.pageY + 0.55)
+    this.camPos.lerp(pos, w)
+    this.camLook.lerp(look, w)
+    this.focus.copy(b.center)
+  }
+
+  /** Цитата бита внизу кадра: от крупного кадра до ухода сценки в марку. */
+  private placeCaption(time: number) {
+    if (!this.figures.length) return
+    let win: { hold0: number; t1: number; quote: string } | null = null
+    for (const [beat, w] of this.beatWin) {
+      if (!(time > w.hold0 - 0.4 && time < w.t1 + 0.5)) continue
+      // рассказ сверху уже говорит эти слова — цитата внизу была бы повтором (план 15: без повторов)
+      const story = this.storyLines.find((s) => s.beat === beat)?.text.toLowerCase() ?? ''
+      win = story && w.quote && story.includes(w.quote.toLowerCase()) ? null : w
+    }
+    if (!win && !this.caption) return
+    if (!this.caption) {
+      this.caption = new QuoteCaption()
+      this.px.scene.add(this.caption.mesh)
+    }
+    if (!win || this.writeMode || this.shelfMode || this.shotStage === 1) return this.caption.place(this.px.camera, 0)
+    this.caption.setText(win.quote)
+    const k = Math.min(clamp01((time - (win.hold0 - 0.4)) / 0.35), 1 - clamp01((time - win.t1) / 0.5))
+    this.caption.place(this.px.camera, ease(k))
   }
 
   /** Добавить мелочь на разворот; если её больше пяти — самая старая тает. */
@@ -2057,6 +3204,37 @@ export class FilmStage implements Stage {
     this.room.rim.intensity = 0.7
     this.room.lamp.intensity = 60
     this.applyDay()
+    const r = this.room
+    this.baseLight = { lamp: r.lamp.intensity, amb: r.ambient.intensity, rim: r.rim.intensity, tod: this.day?.time_of_day ?? 'evening' }
+  }
+
+  /** Свет дня после applyDay: от него свет бита считается по времени суток фразы. */
+  private baseLight: { lamp: number; amb: number; rim: number; tod: string } | null = null
+  /** Время суток каждой фразы (timeline.beats): утро → вечер по ходу дня. */
+  private beatTod = new Map<number, string>()
+
+  /**
+   * Свет бита (план 13, § 4.5): фраза про утро светлее и холоднее, про ночь — темнее, лампа ярче.
+   * Плавно за 1.2 с с начала превращения; если время суток как у дня — ничего не меняется.
+   */
+  private beatLight(beat: number, t: number) {
+    const b = this.baseLight
+    const tod = this.beatTod.get(beat)
+    if (!b || !tod) return
+    const F: Record<string, [number, number, number]> = { morning: [1.15, 0.75, 1.5], day: [1.3, 0.65, 1.6], evening: [0.9, 1.1, 1], night: [0.55, 1.2, 0.7] }
+    const f = F[tod]
+    const f0 = F[b.tod] ?? [1, 1, 1]
+    if (!f) return
+    const r = this.room
+    let from: [number, number, number] | null = null
+    const to: [number, number, number] = [(b.amb * f[0]) / f0[0], (b.lamp * f[1]) / f0[1], (b.rim * f[2]) / f0[2]]
+    this.tween({ t, dur: 1.2 }, (k) => {
+      from ??= [r.ambient.intensity, r.lamp.intensity, r.rim.intensity]
+      const a = ease(k)
+      r.ambient.intensity = from[0] + (to[0] - from[0]) * a
+      r.lamp.intensity = from[1] + (to[1] - from[1]) * a
+      r.rim.intensity = from[2] + (to[2] - from[2]) * a
+    })
   }
 
   /** Запомнить палитру, время суток и погоду дня; применяются при подготовке фильма. */
@@ -2234,6 +3412,10 @@ export class FilmStage implements Stage {
   }
 
   private applyCamera() {
+    // в фильме камера не уходит ниже раскрытой страницы: торец книги и пол в кадре — шум (план 13, § 4.1)
+    if (this.figures.length && !this.writeMode && !this.shelfMode && !this.shelving && this.book.openK > 0.5) {
+      this.camPos.y = Math.max(this.camPos.y, this.book.pageY + 0.45)
+    }
     this.px.camera.position.copy(this.camPos)
     this.px.camera.lookAt(this.camLook)
   }

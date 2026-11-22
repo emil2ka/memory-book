@@ -6,15 +6,18 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { KitModel } from '../src/kit/format'
 import { categoryOf, findInText, kitById, similar } from '../src/kit/library'
-import { SCENE_ACTIONS, type KitScene, type SceneRequest } from '../src/kit/scene'
+import { SCENE_ACTIONS, SCENE_DAY_MAX, type KitScene, type SceneRequest } from '../src/kit/scene'
 import { checkScene, ROLE_HEIGHT, SCENE_LIBRARY, SCENE_REF_IDS, SCENE_SIDES, sceneRef } from '../src/kit/sceneCheck'
-import { COLOR_NAMES, FX_KINDS, SHAPES, kitSize } from '../src/kit/validate'
+import { kitSize } from '../src/kit/validate'
+import { runModel, type ModelRun } from './_model'
+import { photoCardText, sanitizePhotoCard } from '../src/kit/scenePhoto'
+import { findByName } from '../src/kit/library'
 
-export const config = { maxDuration: 15 }
+export const config = { maxDuration: 20 }
 
 export const SCENE_MODEL = 'claude-haiku-5-5'
 /** Весь бюджет на сценку, включая повтор: сценка нужна к своему биту, запрос уходит сразу после режиссёра. */
-export const SCENE_TIMEOUT_MS = 12000
+export const SCENE_TIMEOUT_MS = 14000
 
 export class SceneError extends Error {
   constructor(public code: 'bad_input' | 'refusal' | 'max_tokens' | 'bad_json' | 'invalid' | 'api' | 'no_key' | 'rate_limited' | 'timeout', message: string, public status = 500, public errors: string[] = []) {
@@ -29,6 +32,9 @@ export interface SceneRun {
   latencyMs: number
   refs: number
   models: number
+  /** Сколько предметов заказано мастеру и сколько из них прошли проверку глазами. */
+  ordered?: number
+  accepted?: number
   usage: { input: number; output: number; cacheRead: number; cacheWrite: number }
 }
 
@@ -48,67 +54,42 @@ export function parseSceneInput(body: unknown): SceneRequest {
   const b = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
   const quote = typeof b.quote === 'string' ? b.quote.trim().slice(0, 200) : ''
   if (!quote) throw new SceneError('bad_input', 'Пустая цитата', 400)
-  const day = typeof b.day === 'string' ? b.day.trim().slice(0, 600) : ''
+  const day = typeof b.day === 'string' ? b.day.trim().slice(0, SCENE_DAY_MAX + 2) : ''
   const hint = typeof b.hint === 'string' ? b.hint.trim().slice(0, 120) : ''
-  return { quote, day, ...(hint ? { hint } : {}) }
+  const str = (v: unknown, n = 40) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : '')
+  const hero_prop = str(b.hero_prop)
+  const place = str(b.place)
+  const c = (typeof b.companion === 'object' && b.companion !== null ? b.companion : {}) as Record<string, unknown>
+  const companion = str(c.name) || str(c.role) ? { name: str(c.name) || str(c.role), role: str(c.role) || 'друг' } : null
+  const photo_card = b.photo_card ? sanitizePhotoCard(b.photo_card) : null
+  return { quote, day, ...(hint ? { hint } : {}), ...(hero_prop ? { hero_prop } : {}), ...(place ? { place } : {}), ...(companion ? { companion } : {}), ...(photo_card ? { photo_card } : {}) }
 }
 
 // ---------- промпт ----------
 
 const libraryList = SCENE_LIBRARY.map((m) => `${m.id} — ${m.ru} (${m.scene ? `роль ${m.scene}, ` : ''}${m.hold}, высота ${Math.round(kitSize(m)[1])})`).join('\n')
 
-export const SCENE_SYSTEM = `Ты — режиссёр крошечных объёмных сценок для дневника-фильма. На странице книги стоит пиксельный человечек ростом 34 единицы (большая голова, шарф). Каждая фраза дня превращается в маленький стенд вокруг него: человечек в подходящей позе, предмет в руках, декорация, которая задаёт МЕСТО, и, если нужно, деталь рядом.
+export const SCENE_SYSTEM = `Ты — художник-постановщик крошечных объёмных сценок для дневника-фильма. На странице книги стоит пиксельный человечек ростом 34 единицы (большая голова, шарф). Каждая фраза дня становится ОДНОЙ понятной картинкой, которую зритель узнаёт с первого взгляда: крупный главный предмет у человечка в руках и, если важно, место сбоку.
 
-## Стенд: почти всегда три предмета
-Сценка — это СТЕНД: человечек держит предмет, за ним или сбоку — место, рядом на земле — деталь. Почти всегда ровно три предмета: stand + hand + detail. Меньше — только если фраза совсем абстрактная («очень тихо», «стало легче»), и даже тогда хотя бы stand + hand.
-- stand — самый узнаваемый признак МЕСТА: скамейка, киоск, рабочий стол, окно, юрта, автобус, дерево, фонарь. Высота ${ROLE_HEIGHT.stand.join('–')}, ширина до 50. Деревья, фонари и всё высокое и узкое — СБОКУ (side left или right), иначе крона торчит у человечка над головой, как шапка. Широкое и низкое (скамейка, стол, окно, автобус) — сзади (back).
-- hand — то, что человечек держит или с чем взаимодействует. Высота ${ROLE_HEIGHT.hand.join('–')}. Обязателен, если во фразе есть еда, напиток, вещь, инструмент, животное на руках. Если во фразе такого нет — придумай уместное: «по парку» → кленовый лист, «фонари» → фонарик или горячий напиток вечером, «засмеялся» → телефон, «дедлайн» → будильник. Не больше одного hand.
-- detail — маленькое, на земле и уместное: урна, лужа, кучка листьев, кот, рюкзак, мяч, снежок. Высота ${ROLE_HEIGHT.detail.join('–')}. side — left, right или front.
-Сценка — про ЭТУ фразу, а не про весь день. Запись дня дана только чтобы понять место, время и погоду; не переноси в сценку предметы из других фраз дня (если во фразе нет какао — какао в руках не нужно).
+## Сценка: главный предмет + место
+- hand — ГЛАВНЫЙ ПРЕДМЕТ фразы. Режиссёр уже назвал его («Главный предмет фразы») — бери именно его. Из библиотеки (ref), если там есть он или очень близкий по смыслу («кружка с паром» → какао, «капучино» → кофе, «пирожки» → самса); иначе дорисуй. Высота ${ROLE_HEIGHT.hand.join('–')}. Ровно один hand, всегда. Если режиссёр предмет не назвал — возьми вещь из самой фразы.
+- stand — МЕСТО, только если режиссёр назвал место («Место»). Самый узнаваемый признак места: кофейня → кассовая стойка кафе или столик кафе, остановка → остановка, пара → парта или школьная доска, кухня → кухонный стол, парк → скамейка в парке или дерево, юрта → юрта, двор → скамейка. Высота ${ROLE_HEIGHT.stand.join('–')}, ширина до 50. Ставь СБОКУ: side left или right, никогда не back. Место не названо — stand нет.
+- Больше ничего: никаких деталей, мелочи и людей. Второго человечка (если во фразе человек) сцена ставит сама.
+Сценка — про ЭТУ фразу. Запись дня дана только чтобы понять место, время и погоду.
 
 ## Позы (action)
 Есть hand — поза НЕ idle: drink — ест или пьёт то, что в руке; carry — держит или несёт перед собой двумя руками; shake — машет предметом над головой (лист, флажок, шарик, телефон от радости). Можно и sit (сидит на скамейке с кружкой), cheer (прыгает от радости), shiver (мёрзнет).
 idle — только когда hand нет.
 
 ## Сначала библиотека
-Если подходящий предмет есть в библиотеке ниже — укажи его id в ref и оставь parts пустым. Библиотечные предметы нарисованы заранее и выглядят лучше. Дорисовывай (ref пустой, parts заполнены) только то, чего в библиотеке нет.
+Если подходящий предмет есть в библиотеке ниже (тот же или очень близкий по смыслу) — укажи его id в ref. Библиотечные предметы нарисованы заранее и выглядят лучше. Если подходящего нет — ref "", а в look — замысел для мастера: 1–2 главные черты силуэта и 3–4 цвета, контрастные к бежевой бумаге («самокат: длинная дека, высокий руль, два чёрных колеса; красный, чёрный, серый»). Нарисует мастер и проверит глазами.
 
 ## Библиотека (id — название (роль по умолчанию, как держат, высота))
 ${libraryList}
 
-## Как дорисовать предмет (model)
-Сначала поле look: главная черта силуэта и 3–5 цветов, до 12 слов. Потом parts.
-Движок рисует всё крупными пикселями со ступенчатым светом и тёмным контуром, поэтому:
-- только крупные простые формы, главная черта преувеличена, игрушечные пухлые пропорции;
-- 3–5 цветов на предмет, детали — тёмным или светлым оттенком той же семьи;
-- ничего тоньше 1 единицы; stand и hand — 8–24 фигуры, маленькая detail — от 4, максимум 40. Меньше 8 — предмет не узнать: у самоката нужны дека, руль, стойка и два колеса, у шариков — 3–4 шара разных цветов с нитками.
-- Не рисуй людей: второго человека сцена добавит сама. Человечек и так в центре — предметы только вокруг него.
-Фигура:
-- s: ${SHAPES.join(' | ')} (cyl — цилиндр по Y; sph — шар/эллипсоид; cone — конус вершиной вверх, k:4 — пирамида; cap — капсула по Y; torus — кольцо в плоскости XY, как ручка кружки; wedge — клин; prism — призма-крыша, конёк вдоль Z);
-- p: [x, y, z] центр, Y вверх, y = 0 — бумага, предмет смотрит на +Z (в камеру);
-- d: [ширина, высота, глубина];
-- r: [x, y, z] поворот в градусах (только если нужен);
-- c: цвет — имя из палитры: ${COLOR_NAMES.join(', ')};
-- k: число граней 3–24 (только если нужно, например 6 — карандаш); glow: true — светится (экран, огонь, лампа).
-fx (необязательно, до 2): ${FX_KINDS.join(', ')}.
-
 ## Ответ
-look — план сценки до 20 слов. action. objects: для каждого role, ru (название по-русски), en (1–2 слова по-английски), side (${SCENE_SIDES.join(' | ')}), ref (id библиотеки или ""), look (для дорисовки — главная черта, для ref — ""), parts (для ref — пустой массив), fx.`
+look — план сценки до 20 слов. action. objects (hand и, если названо место, stand): для каждого role, ru (название по-русски, именительный падеж), en (1–2 слова по-английски), side (${SCENE_SIDES.join(' | ')}), ref (id библиотеки или ""), look (для ref — "", без ref — замысел для мастера).`
 
-const PART_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['s', 'p', 'd', 'c'],
-  properties: {
-    s: { type: 'string', enum: [...SHAPES] },
-    p: { type: 'array', items: { type: 'number' } },
-    d: { type: 'array', items: { type: 'number' } },
-    r: { type: 'array', items: { type: 'number' } },
-    c: { type: 'string', enum: [...COLOR_NAMES] },
-    k: { type: 'integer' },
-    glow: { type: 'boolean' },
-  },
-} as const
 
 export const SCENE_SCHEMA = {
   type: 'object',
@@ -122,16 +103,14 @@ export const SCENE_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['role', 'ru', 'en', 'side', 'ref', 'look', 'parts', 'fx'],
+        required: ['role', 'ru', 'en', 'side', 'ref', 'look'],
         properties: {
-          role: { type: 'string', enum: ['hand', 'stand', 'detail'] },
+          role: { type: 'string', enum: ['hand', 'stand'] },
           ru: { type: 'string' },
           en: { type: 'string' },
           side: { type: 'string', enum: [...SCENE_SIDES] },
           ref: { type: 'string', enum: ['', ...SCENE_REF_IDS] },
           look: { type: 'string' },
-          parts: { type: 'array', items: PART_SCHEMA },
-          fx: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['kind'], properties: { kind: { type: 'string', enum: [...FX_KINDS] } } } },
         },
       },
     },
@@ -166,17 +145,61 @@ export function buildSceneUser(req: SceneRequest, exemplars: KitModel[]): string
     .map((h) => sceneRef(h.id))
     .filter((m): m is KitModel => !!m)
   return [
-    'Образцы дорисованных предметов в формате кита:',
-    ...exemplars.map((m) => JSON.stringify({ id: m.id, ru: m.ru, hold: m.hold, parts: m.parts })),
-    '',
+    // образцы фигур не нужны: сценограф выбирает из библиотеки, рисует мастер (api/_model.ts)
+    exemplars.length ? '' : '',
     req.day ? `Запись дня (для контекста): «${req.day}»` : '',
     `Фраза бита: «${req.quote}»`,
     req.hint ? `Подсказка режиссёра: ${req.hint}` : '',
+    req.hero_prop ? `Главный предмет фразы (режиссёр): ${req.hero_prop} — он в руках (hand) или прямо перед человечком` : '',
+    req.place ? `Место (режиссёр): ${req.place} — это stand` : '',
+    req.companion ? `Человек из фразы: ${req.companion.name} (${req.companion.role}) — его играет второй человечек сцены, людей не рисуй` : '',
+    req.photo_card ? `К этой фразе есть фото — сценка должна совпасть с ним (место и вещи с фото): ${photoCardText(req.photo_card, 0)}` : '',
     hits.length ? `В библиотеке по словам фразы нашлось: ${hits.map((m) => `${m.id} (${m.ru})`).join(', ')}` : '',
     'Собери сценку.',
   ]
     .filter(Boolean)
     .join('\n')
+}
+
+/**
+ * Предметы сценки без библиотечного ref — заказ мастеру моделей (api/_model.ts): рисует, проверяет глазами,
+ * не вышло — ближайший предмет библиотеки или кристалл. Мутирует raw.objects: ставит parts или ref.
+ */
+async function orderModels(raw: unknown, req: SceneRequest, deadline: number, signal: AbortSignal, early: Promise<ModelRun> | null): Promise<{ ordered: number; accepted: number; noStand: boolean }> {
+  const objs = (raw && typeof raw === 'object' && Array.isArray((raw as { objects?: unknown }).objects) ? (raw as { objects: Record<string, unknown>[] }).objects : []).slice(0, 3)
+  let ordered = 0
+  let accepted = 0
+  let noStand = false
+  await Promise.all(
+    objs.map(async (o) => {
+      if (!o || typeof o !== 'object') return
+      const role = o.role === 'stand' ? 'stand' : o.role === 'hand' ? 'hand' : null
+      if (!role) return
+      const ref = typeof o.ref === 'string' ? o.ref.trim() : ''
+      if (ref && sceneRef(ref)?.parts.length) return
+      // места на лету не рисуем (дорого, а кристалл вместо места бессмысленен): нет в библиотеке — сценка без места
+      if (role === 'stand') {
+        o.role = 'detail'
+        noStand = true
+        return
+      }
+      const name = (typeof o.ru === 'string' && o.ru.trim()) || (role === 'hand' ? req.hero_prop : req.place) || ''
+      if (!name) return
+      ordered++
+      // главный предмет уже рисуется с начала запроса (параллельно сценографу) — ждём его, а не начинаем заново
+      const r = early && role === 'hand' ? await early : await runModel({ name, hint: typeof o.look === 'string' ? o.look : undefined, role }, { deadlineMs: Math.max(3000, deadline - Date.now()), signal })
+      if (r.accepted) accepted++
+      if (r.source === 'library' || r.source === 'crystal') {
+        o.ref = r.model.id
+        o.parts = []
+      } else {
+        o.ref = ''
+        o.parts = r.model.parts
+        if (r.model.fx) o.fx = r.model.fx
+      }
+    }),
+  )
+  return { ordered, accepted, noStand }
 }
 
 /** Собрать сценку. Один повтор с ошибками проверки, всё в пределах timeoutMs. */
@@ -192,6 +215,15 @@ export async function runScene(req: SceneRequest, opts: { model?: string; effort
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: buildSceneUser(req, pickSceneExemplars(req)) }]
   let firstErrors: string[] = []
   let best: SceneRun | null = null
+  let models = 0
+  let accepted = 0
+  // главного предмета нет в библиотеке — мастер начинает рисовать сразу, параллельно сценографу
+  // (сценограф может найти синоним в библиотеке — тогда рисунок не нужен и отменяется)
+  const libHand = req.hero_prop ? sceneRef(findByName(req.hero_prop)?.id ?? req.hero_prop) : undefined
+  const earlyAc = new AbortController()
+  ac.signal.addEventListener('abort', () => earlyAc.abort())
+  const early = req.hero_prop && !libHand ? runModel({ name: req.hero_prop, role: 'hand' }, { deadlineMs: timeoutMs - 800, signal: earlyAc.signal }) : null
+  let earlyUsed = false
   try {
     for (let attempt = 1; attempt <= 2; attempt++) {
       let response: Anthropic.Message
@@ -230,9 +262,15 @@ export async function runScene(req: SceneRequest, opts: { model?: string; effort
       } catch {
         throw new SceneError('bad_json', 'Ответ не JSON', 502)
       }
-      const check = checkScene(raw, req.quote)
+      // чего нет в библиотеке — рисует мастер с проверкой глазами (параллельно, в пределах бюджета)
+      const ordered = await orderModels(raw, req, t0 + timeoutMs - 600, ac.signal, earlyUsed ? null : early)
+      if (ordered.ordered) earlyUsed = true
+      models += ordered.ordered
+      accepted += ordered.accepted
+      // место не нашлось в библиотеке и убрано — не требуем его (иначе лишний повтор)
+      const check = checkScene(raw, req.quote, ordered.noStand ? { ...req, place: null } : req)
       if (check.scene) {
-        const run: SceneRun = { scene: check.scene, attempts: attempt, firstErrors: attempt === 1 ? check.errors : firstErrors, latencyMs: Date.now() - t0, refs: check.refs, models: check.models, usage }
+        const run: SceneRun = { scene: check.scene, attempts: attempt, firstErrors: attempt === 1 ? check.errors : firstErrors, latencyMs: Date.now() - t0, refs: check.refs, models: check.models, ordered: models, accepted, usage }
         // годная сценка, но часть предметов выброшена — повтор, только если есть время; иначе отдаём что есть
         if (!check.errors.length || attempt === 2) return run
         best = run
@@ -248,6 +286,7 @@ export async function runScene(req: SceneRequest, opts: { model?: string; effort
     throw new SceneError('invalid', 'Сценка не прошла проверку', 422, firstErrors)
   } finally {
     clearTimeout(timer)
+    if (!earlyUsed) earlyAc.abort()
   }
 }
 
@@ -259,7 +298,7 @@ function rateLimited(ip: string): boolean {
   list.push(now)
   hits.set(ip, list)
   if (hits.size > 5000) hits.clear()
-  return list.length > 60
+  return list.length > (Number(process.env.SCENE_RATE_LIMIT) || 60)
 }
 
 export async function handleScene(body: unknown, ip: string): Promise<{ status: number; json: unknown; headers: Record<string, string> }> {

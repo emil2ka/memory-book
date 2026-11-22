@@ -309,7 +309,7 @@ export function Spinner({ size = 26 }: { size?: number }) {
   )
 }
 
-// ---------- иконки (тёмно-синие чернила) ----------
+// ---------- иконки (тёмно-синие чернила): нарисованные, где есть, иначе SVG ----------
 
 export type IconName =
   | 'replay' | 'download' | 'trash' | 'pencil' | 'plus' | 'minus' | 'photo' | 'note' | 'heart' | 'check'
@@ -336,7 +336,12 @@ const ICONS: Record<IconName, ReactNode> = {
   book: <><path d="M12 6.5 C 9.5 4.8, 6 4.5, 3 5.5 V18.5 C 6 17.5, 9.5 17.8, 12 19.5 C 14.5 17.8, 18 17.5, 21 18.5 V5.5 C 18 4.5, 14.5 4.8, 12 6.5 Z" /><path d="M12 6.5 V19.5" /></>,
 }
 
+// нарисованные иконки (ChatGPT, тот же чат, что фактуры; лист assets/_raw/ui/tex/j_icons_raw.png, нарезка tools/icon_cut.py)
+const DRAWN = import.meta.glob('../../assets/ui/icons/*.webp', { query: '?url', import: 'default', eager: true }) as Record<string, string>
+
 export function Icon({ name, size = 22, className }: { name: IconName; size?: number; className?: string }) {
+  const drawn = DRAWN[`../../assets/ui/icons/${name}.webp`]
+  if (drawn) return <img className={`icon drawn${className ? ' ' + className : ''}`} src={drawn} width={size} height={size} alt="" aria-hidden draggable={false} />
   return (
     <svg className={`icon${className ? ' ' + className : ''}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       {ICONS[name]}

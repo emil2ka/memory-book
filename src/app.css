@@ -533,3 +533,185 @@ img.art { display: block; pointer-events: none; user-select: none; filter: drop-
 .cassette.chip .chip-act { color: var(--inkBlue); text-shadow: none; font: 600 4.6cqw / 1.2 var(--sans); padding: 0.6cqw 3.5cqw; }
 .cassette.chip:hover:not(:disabled) .cass-shell { transform: translateY(-3px) rotate(-1deg); }
 .cassette.chip:active:not(:disabled) .cass-shell { transform: translateY(1px) scale(0.98); }
+
+/* ==========================================================================
+   «Почему так» на телефоне: шторка снизу (план 13 § 5). Кадр фильма виден сверху,
+   ручка сворачивает шторку до названия. Только узкий вертикальный экран.
+   ========================================================================== */
+.bm-handle { display: none; }
+@media (max-width: 600px) and (min-height: 561px) {
+  .bookmark {
+    top: auto; right: 0; bottom: 0; left: 0; width: 100%; z-index: 6;
+    animation: sheet-up 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.05) both;
+    transition: transform 0.35s cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+  @keyframes sheet-up { from { transform: translateY(100%); } }
+  .bm-paper {
+    margin: 0; padding: 4px 18px calc(14px + env(safe-area-inset-bottom)) 18px;
+    max-height: 60vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+    border-radius: 16px 16px 0 0;
+    background: radial-gradient(120% 90% at 50% 0%, transparent 60%, rgba(150, 100, 45, 0.22) 100%), url('../assets/ui/paper.webp') 0 0 / 256px 256px, var(--cream);
+    background-blend-mode: normal, multiply, normal;
+    box-shadow: 0 -10px 24px rgba(27, 14, 6, 0.45);
+    border-top: 4px solid var(--ribbon, var(--brick));
+  }
+  .bookmark .bm-paper > .sheet, .bookmark .bm-dash, .bookmark .bm-clip, .bookmark .bm-tassel, .bookmark .bm-sprig { display: none; }
+  .bm-handle {
+    display: flex; justify-content: center; align-items: center; width: 100%; height: 26px; margin: 0 0 2px;
+    padding: 0; border: 0; background: none; cursor: grab; position: sticky; top: 0; z-index: 2;
+  }
+  .bm-grip { width: 46px; height: 5px; border-radius: 3px; background: rgba(44, 59, 88, 0.35); }
+  .bm-title { font-size: 27px; margin-bottom: 6px; padding-right: 4px; }
+  .bm-head { font-size: 22px; }
+  .bm-why li { font-size: 19px; padding: 3px 0; }
+  .bm-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 8px; margin: 12px 0 14px; }
+  .bm-nav { flex-direction: row; justify-content: center; gap: 14px; }
+  .bm-nav .tag-btn { margin-left: 0; }
+  /* свёрнуто: остаются ручка и название — весь кадр открыт */
+  .bookmark.folded .bm-paper { overflow: hidden; }
+  .bookmark.folded .bm-content > :not(.bm-title) { display: none; }
+  .bookmark.folded .bm-title { font-size: 22px; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bookmark.folded .bm-title::after { content: ' · почему так ▴'; font: 600 15px var(--hand); color: var(--brickDark); }
+  .bm-status { left: 12px; right: auto; top: auto; bottom: calc(100% + 8px); }
+}
+
+/* листок под карточкой фото: HEIC не открылся, лишние фото */
+.photo-note { display: block; flex-basis: 100%; max-width: 34em; margin-bottom: 4px; padding: 4px 8px; font: 600 14px / 1.2 var(--hand); color: var(--brickDark); background: var(--grain, none), var(--cream); box-shadow: 0 2px 5px rgba(27, 14, 6, 0.35); transform: rotate(-0.6deg); }
+.hint.right { flex-wrap: wrap; }
+/* что ИИ увидел на снимке: маленькая записка под полароидом */
+.photo-seen { display: block; flex-basis: 100%; margin-bottom: 4px; font: 600 15px / 1.15 var(--hand); color: var(--cream); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85); }
+@media (max-aspect-ratio: 1/1) { .photo-seen { display: none; } } /* в портрете под страницей кассета: записка уходит, приложение и так просит повернуть телефон */
+
+/* записка «ты не поставил песню — этот день звучит так» (src/ui/SongAdvice.tsx, план 14 § 2) */
+.pin-note.song-advice { position: relative; width: 100%; max-width: none; transform: rotate(-0.8deg); }
+.song-advice .pin-note-text { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.sa-head, .sa-wait { font: 700 calc(15px * var(--s)) / 1.1 var(--hand); color: var(--brickDark); }
+.sa-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.sa-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
+.sa-song { all: unset; cursor: pointer; font: 600 calc(14px * var(--s)) / 1.15 var(--hand); color: var(--inkBlue); }
+.sa-song:hover, .sa-song:focus-visible { color: var(--brickDark); text-decoration: underline; text-decoration-style: wavy; }
+.sa-song:disabled { cursor: default; opacity: 0.6; }
+.sa-feel { color: var(--brown); font-weight: 500; }
+.sa-listen { font: 500 calc(11px * var(--s)) var(--sans); color: var(--teal); }
+.sa-why { flex-basis: 100%; font: 400 calc(10.5px * var(--s)) / 1.25 var(--sans); color: rgba(44, 59, 88, 0.55); }
+.sa-picked { font: 400 calc(11px * var(--s)) / 1.25 var(--sans); color: rgba(44, 59, 88, 0.65); }
+/* на закрытой кассете готовы песни от ИИ: бирка тёплая и чуть покачивается, чтобы её открыли */
+.cassette.chip.has-advice .cass-tempo { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 0; }
+.cassette.chip.has-advice .cass-tempo span { color: var(--brickDark); font-weight: 700; }
+/* раскрытая кассета на тесном экране — правее карточки фото (WriteLayer задаёт --pop-w) */
+.cassette.popped { width: var(--pop-w, auto) !important; }
+/* «почему» под песней — одна строка, полностью в подсказке */
+.sa-why { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* текст записки не шире самой записки: длинное «почему» не распирает её, а обрезается многоточием */
+.song-advice .pin-note-text { align-items: stretch; width: 100%; min-width: 0; }
+.sa-list, .sa-list li { min-width: 0; width: 100%; }
+.sa-why { width: 100%; min-width: 0; }
+
+/* маленький плеер YouTube в углу (src/ui/youtube.ts): виден, пока играет песня дня */
+.yt-mini { position: fixed; right: 12px; bottom: 12px; z-index: 8; width: 192px; height: 108px; padding: 4px; background: var(--cream); box-shadow: 0 6px 14px rgba(27, 14, 6, 0.5); transform: rotate(1.2deg); opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+.yt-mini.on { opacity: 0.92; }
+.yt-mini iframe { display: block; width: 100%; height: 100%; border: 0; }
+@media (max-width: 600px), (max-height: 560px) { .yt-mini { width: 128px; height: 72px; right: 6px; bottom: 6px; } }
+
+/* ==========================================================================
+   Аккаунт и облако в 2D (src/ui/Account.tsx, план 15 § 2): бумага и чернила
+   ========================================================================== */
+.acc-veil { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: radial-gradient(120% 90% at 50% 40%, rgba(40, 24, 12, 0.35), rgba(20, 10, 4, 0.72)); animation: fade-in 0.5s ease both; }
+.acc-card { position: relative; width: min(420px, 100%); padding: 44px 34px 34px; color: var(--inkBlue); transform: rotate(-0.6deg); }
+.acc-card > .sheet { position: absolute; inset: 0; width: 100%; height: 100%; }
+.acc-tape { position: absolute; top: -12px; left: 44px; z-index: 2; }
+.acc-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 14px; }
+.acc-title { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 38px / 1 var(--hand); color: var(--inkBlue); }
+.acc-sub { margin: 0; font: 600 19px / 1.2 var(--hand); color: var(--brown); }
+.acc-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 6px; }
+.acc-actions.row { flex-direction: row; align-items: center; gap: 16px; }
+.acc-link { all: unset; cursor: pointer; font: 500 13px / 1.3 var(--sans); color: var(--teal); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.acc-link:hover, .acc-link:focus-visible { color: var(--brickDark); }
+.acc-form { display: flex; flex-direction: column; gap: 10px; }
+.acc-field { display: flex; flex-direction: column; gap: 3px; font: 600 16px var(--hand); color: var(--inkBlue); }
+.acc-field em { font: 400 11px var(--sans); color: var(--brown); font-style: normal; }
+.acc-field .field { font: 500 15px var(--sans); }
+.acc-error { font: 600 15px / 1.2 var(--hand); color: var(--brickDark); }
+
+.cloud-badge { position: fixed; top: 10px; left: 50%; transform: translateX(-50%) rotate(-0.8deg); z-index: 9; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 5px; border: 0; cursor: pointer; font: 600 15px / 1 var(--hand); color: var(--inkBlue); background: var(--grain, none), var(--cream); box-shadow: 0 3px 8px rgba(27, 14, 6, 0.4); }
+.cloud-badge.cloud { color: var(--greenDark); }
+.cloud-badge.failed { color: var(--brickDark); }
+.cloud-badge.local { color: var(--brown); }
+
+.acc-pop { position: fixed; top: 44px; left: 50%; transform: translateX(-50%) rotate(0.8deg); z-index: 10; width: 240px; padding: 22px 20px 18px; }
+.acc-pop > .sheet { position: absolute; inset: 0; width: 100%; height: 100%; }
+.acc-pop-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; }
+.acc-mail { font: 700 17px var(--hand); color: var(--inkBlue); word-break: break-all; }
+.acc-x { all: unset; cursor: pointer; position: absolute; top: -10px; right: -6px; font: 700 20px var(--sans); color: var(--brown); padding: 2px 6px; }
+
+.my-days { position: fixed; top: 56px; left: 12px; bottom: 12px; z-index: 9; width: min(300px, calc(100vw - 24px)); display: flex; flex-direction: column; padding: 14px 12px; background: var(--grain, none), var(--cream); box-shadow: 0 8px 20px rgba(27, 14, 6, 0.5); transform: rotate(-0.4deg); animation: fade-in 0.35s ease both; }
+.md-head { position: relative; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font: 700 20px var(--hand); color: var(--inkBlue); }
+.md-head .acc-x { position: static; }
+.md-empty { font: 600 16px var(--hand); color: var(--brown); }
+.my-days ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.md-day { all: unset; cursor: pointer; display: flex; gap: 10px; align-items: center; width: 100%; padding: 4px; border-radius: 3px; }
+.md-day:hover, .md-day:focus-visible { background: rgba(255, 255, 255, 0.45); }
+.md-cover { flex: none; width: 46px; height: 58px; background-size: cover; background-position: center; box-shadow: 0 2px 4px rgba(27, 14, 6, 0.4), inset 3px 0 0 rgba(0, 0, 0, 0.18); }
+.md-text { display: flex; flex-direction: column; min-width: 0; }
+.md-text b { font: 700 17px / 1.1 var(--hand); color: var(--inkBlue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-text small { font: 500 11px var(--sans); color: var(--brown); }
+
+.pin-note.move-prompt { position: fixed; top: 52px; left: 50%; transform: translateX(-50%) rotate(-0.6deg); z-index: 10; max-width: 320px; }
+.move-prompt .pin-note-text { gap: 10px; font: 600 16px / 1.2 var(--hand); }
+.mp-actions { display: flex; gap: 10px; }
+@media (max-width: 600px) {
+  .acc-card { padding: 36px 22px 26px; }
+  .acc-title { font-size: 32px; }
+  .cloud-badge { font-size: 13px; }
+}
+.my-days-btn { position: fixed; top: 10px; left: 12px; z-index: 8; padding: 4px 12px 5px; border: 0; cursor: pointer; font: 700 16px / 1 var(--hand); color: var(--inkBlue); background: var(--grain, none), var(--cream); box-shadow: 0 3px 8px rgba(27, 14, 6, 0.4); transform: rotate(-1deg); }
+.my-days-btn:hover, .my-days-btn:focus-visible { color: var(--brickDark); }
+.my-days { bottom: auto; max-height: calc(100vh - 68px); }
+.acc-actions > .acc-link { margin: 8px 0 0 10px; }
+
+/* песня обязательна (план 15): без песни сургуч «запечатан» — бледнее, без лучиков; подсказка под страницей */
+.seal-btn.locked { filter: grayscale(0.55) drop-shadow(0 3px 4px rgba(20, 8, 4, 0.45)); opacity: 0.78; }
+.seal-btn.locked:hover:not(:disabled) { transform: rotate(-1deg) scale(1.01); filter: grayscale(0.4) drop-shadow(0 4px 6px rgba(20, 8, 4, 0.5)); }
+.seal-btn.locked:hover:not(:disabled) .seal-rays { opacity: 0; }
+.song-hint { display: inline-block; padding: 3px 10px; font: 700 calc(17px * var(--s)) / 1.1 var(--hand); color: var(--inkBlue); background: var(--grain, none), var(--cream); box-shadow: 0 2px 5px rgba(27, 14, 6, 0.35); transform: rotate(-1deg); text-shadow: none; }
+.song-hint.warn { color: var(--brickDark); animation: need 0.45s ease 3; }
+
+/* «Кто ведёт дневник?» (src/ui/HeroPick.tsx): лист бумаги с двумя полароидами героя */
+.hero-veil { position: fixed; inset: 0; z-index: 19; display: grid; place-items: center; padding: 16px; overflow: auto; background: radial-gradient(120% 90% at 50% 45%, rgba(40, 24, 12, 0.25), rgba(20, 10, 4, 0.66)); animation: fade-in 0.5s ease both; }
+.hero-sheet { position: relative; width: min(560px, 100%); padding: 34px 30px 30px; color: var(--inkBlue); text-align: center; transform: rotate(-0.5deg); }
+.hero-sheet > .sheet { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-sheet > :not(.sheet) { position: relative; z-index: 1; }
+.hero-title { margin: 0; font: 700 44px / 1 var(--hand); color: var(--inkBlue); }
+.hero-sub { margin: 6px auto 18px; max-width: 30em; font: 600 18px / 1.15 var(--hand); color: var(--brown); }
+.hero-cards { display: flex; justify-content: center; gap: 26px; flex-wrap: wrap; }
+.hero-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 190px; padding: 18px 14px 12px; border: 0; background: none; color: var(--inkBlue); transform: rotate(var(--tilt, 0deg)); transition: transform 0.2s cubic-bezier(0.3, 0.7, 0.4, 1.4); }
+.hero-card > :not(.sheet) { position: relative; z-index: 1; }
+.hero-card > .hero-tape { position: absolute; z-index: 2; top: -9px; left: 50%; margin-left: -29px; }
+.hero-img { display: block; width: 160px; height: 180px; object-fit: cover; box-shadow: inset 0 0 0 1px rgba(44, 59, 88, 0.12), 0 1px 2px rgba(27, 14, 6, 0.25); image-rendering: auto; pointer-events: none; }
+.hero-label { font: 700 32px / 1 var(--hand); }
+.hero-card:hover:not(:disabled) { transform: rotate(0deg) translateY(-6px) scale(1.03); }
+.hero-card:hover:not(:disabled) .sheet { filter: drop-shadow(0 2px 2px rgba(27, 14, 6, 0.45)) drop-shadow(0 14px 16px rgba(27, 14, 6, 0.4)); }
+.hero-card:active:not(:disabled) { transform: rotate(0deg) translateY(1px) scale(0.98); transition-duration: 0.06s; }
+.hero-card.on .hero-label { text-decoration: underline wavy var(--brick) 2px; text-underline-offset: 6px; }
+.hero-card:disabled { opacity: 0.55; cursor: default; }
+@media (max-width: 600px), (max-height: 560px) {
+  .hero-sheet { padding: 24px 14px 18px; }
+  .hero-title { font-size: 34px; }
+  .hero-sub { font-size: 15px; margin-bottom: 12px; }
+  .hero-cards { gap: 12px; flex-wrap: nowrap; }
+  .hero-card { width: 150px; padding: 14px 10px 8px; }
+  .hero-img { width: 124px; height: 140px; }
+  .hero-label { font-size: 26px; }
+}
+@media (max-height: 560px) { .hero-img { width: 100px; height: 112px; } .hero-sub { display: none; } }
+
+/* выбор героя в углу полки — заметнее: подписи «мальчик / девочка» */
+.person-pick { width: calc(236px * var(--s)); opacity: 0.95; }
+.pp-track button { display: flex; align-items: center; justify-content: center; gap: 6px; font: 700 calc(18px * var(--s)) / 1 var(--hand); color: var(--inkBlue); }
+.pp-track button svg { width: calc(24px * var(--s)); height: calc(24px * var(--s)); }
+.acc-person { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font: 600 15px var(--hand); color: var(--inkBlue); }
+.acc-pop { width: 270px; }
+
+/* нарисованные иконки (assets/ui/icons, ChatGPT): чуть крупнее линий SVG — у рисунка есть поля и брызги-акценты */
+.icon.drawn { display: inline-block; flex: none; object-fit: contain; transform: scale(1.18); pointer-events: none; user-select: none; }
+.card-btn:disabled .icon.drawn, .slip-btn:disabled .icon.drawn { filter: grayscale(0.6); }

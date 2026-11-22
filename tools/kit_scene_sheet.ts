@@ -2,6 +2,7 @@
 //   npx tsx tools/kit_scene_sheet.ts pack5            → assets/_raw/kit_sheets/scene_pack5.png
 //   npx tsx tools/kit_scene_sheet.ts ice_cream,cocoa hand_check
 // Нужен dev-сервер (по умолчанию http://localhost:5191, другой — KIT_SHEET_HOST).
+// Крупный план и игрушечный масштаб: KIT_SHEET_QUERY='&hero=120&toy=1'.
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -20,6 +21,6 @@ const out = join(root, 'assets/_raw/kit_sheets', `${name ?? `scene_${which}`}.pn
 execFileSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
   '--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars',
   '--force-device-scale-factor=1', `--window-size=${width},${height}`, '--virtual-time-budget=15000',
-  `--screenshot=${out}`, `${host}/?lab=world&kitscene=${encodeURIComponent(which)}&sheet=1`,
+  `--screenshot=${out}`, `${host}/?lab=world&kitscene=${encodeURIComponent(which)}&sheet=1${process.env.KIT_SHEET_QUERY ?? ''}`,
 ], { stdio: 'ignore' })
 console.log(`${out} (${count} предметов, ${width}×${height})`)

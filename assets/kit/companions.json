@@ -1,0 +1,54 @@
+{
+ "_about": "Второй человечек (13-plan-mechanics § 3.5): та же фигура Hero3D в другой одежде. colors — поля HeroColors (src/actors/Hero3D.ts), значения — имена PALETTE. accessory — одна вещь из закрытого списка, рисует src/actors. scale — рост относительно главного (1 = такой же). match — основы слов, как формы словаря: по ним роль из companion.role режиссёра («Айгерим, подруга») или из цитаты выбирает вариант. Порядок важен: первый совпавший; последний — запасной.",
+ "accessories": ["none", "cap", "bun", "headscarf", "kalpak", "glasses", "moustache", "long_hair"],
+ "variants": [
+  {
+   "id": "grandma", "ru": "бабушка",
+   "match": ["бабушк", "бабул", "әже", "әжем", "апа$", "апам"],
+   "colors": { "skin": "skin", "hair": "greyLight", "jacket": "plum", "jacketDark": "mauve", "scarf": "ochre", "scarfDark": "wood", "trousers": "brownDark", "boots": "brownDark" },
+   "accessory": "headscarf", "scale": 0.94
+  },
+  {
+   "id": "grandpa", "ru": "дедушка",
+   "match": ["дедушк", "дед$", "деда$", "ата$", "атам", "атама"],
+   "colors": { "skin": "skin", "hair": "greyLight", "jacket": "tealDark", "jacketDark": "navy", "scarf": "cream", "scarfDark": "paperShade", "trousers": "brownDark", "boots": "ink" },
+   "accessory": "kalpak", "scale": 1
+  },
+  {
+   "id": "mom", "ru": "мама",
+   "match": ["мам", "ана$", "анам", "анама", "мать", "тет$", "тетя", "тети", "тәте"],
+   "colors": { "skin": "skin", "hair": "brownDark", "jacket": "teal", "jacketDark": "tealDark", "scarf": "peach", "scarfDark": "coral", "trousers": "navy", "boots": "brown" },
+   "accessory": "long_hair", "scale": 1
+  },
+  {
+   "id": "dad", "ru": "папа",
+   "match": ["пап", "отец", "отца", "әке", "әкем", "дяд", "көке"],
+   "colors": { "skin": "skin", "hair": "ink", "jacket": "navy", "jacketDark": "ink", "scarf": "amber", "scarfDark": "ochre", "trousers": "brown", "boots": "ink" },
+   "accessory": "moustache", "scale": 1.04
+  },
+  {
+   "id": "teacher", "ru": "преподаватель",
+   "match": ["препод", "учител", "куратор", "тренер", "начальн", "шеф", "босс", "ұстаз", "мұғалім", "бастық", "коллег"],
+   "colors": { "skin": "skin", "hair": "grey", "jacket": "greyBlue", "jacketDark": "slateDark", "scarf": "mauve", "scarfDark": "plum", "trousers": "brownDark", "boots": "ink" },
+   "accessory": "glasses", "scale": 1.04
+  },
+  {
+   "id": "girlfriend", "ru": "подруга",
+   "match": ["подруг", "девушк", "сестр", "сестрен", "одногруппниц", "соседк", "құрбы", "әпке", "сіңлі", "қыз$"],
+   "colors": { "skin": "skin", "hair": "brownDark", "jacket": "coral", "jacketDark": "brick", "scarf": "mint", "scarfDark": "teal", "trousers": "navy", "boots": "brownDark" },
+   "accessory": "bun", "scale": 0.98
+  },
+  {
+   "id": "kid", "ru": "малыш",
+   "match": ["малыш", "ребен", "реб$", "дет$", "дети", "детьми", "младш", "племян", "бала$", "балалар", "інім"],
+   "colors": { "skin": "skin", "hair": "brown", "jacket": "yellow", "jacketDark": "ochre", "scarf": "coral", "scarfDark": "brick", "trousers": "slate", "boots": "brickDark" },
+   "accessory": "none", "scale": 0.74
+  },
+  {
+   "id": "friend", "ru": "друг",
+   "match": ["друг", "друз", "дос$", "досым", "досыммен", "одногрупп", "однокурс", "сосед", "брат", "парн", "пацан", "коллег", "аға$", "бауыр", "көрші", "топтас"],
+   "colors": { "skin": "skin", "hair": "slateDark", "jacket": "ochre", "jacketDark": "wood", "scarf": "green", "scarfDark": "greenDark", "trousers": "brown", "boots": "brickDark" },
+   "accessory": "cap", "scale": 1
+  }
+ ]
+}

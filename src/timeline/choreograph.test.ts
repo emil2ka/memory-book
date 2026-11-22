@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Beat, DayScript } from '../types/script'
+import type { Beat, DayScript, PhotoCard } from '../types/script'
 import type { TimelineEvent } from '../types/timeline'
-import { choreograph, computePace, keptBeats } from './choreograph'
+import { choreograph, computePace, OUTRO_SIT, keptBeats, MAX_BEATS_WITH_PHOTOS, TRAVEL_MAX, TRAVEL_MIN } from './choreograph'
+import { exemplars } from '../director/exemplars'
 import day1 from './samples/day1.json'
 import day2 from './samples/day2.json'
 import day3 from './samples/day3.json'
@@ -51,11 +52,11 @@ describe('choreograph', () => {
   for (const s of samples) for (const n of [4, 7]) variants.push([`${s.title} × ${n}`, withBeats(s, n)])
   variants.push(['день 4 бита без противоречия, тихий', { ...withBeats(samples[1], 4), contradiction: null }])
 
-  it.each(variants)('%s: 30–60 с, отсортировано, ничего не вылезает за конец', (_name, s) => {
+  it.each(variants)('%s: 30–75 с, отсортировано, ничего не вылезает за конец', (_name, s) => {
     for (const seed of [1, 2, 3, 999]) {
       const tl = choreograph(s, { seed })
       expect(tl.duration).toBeGreaterThanOrEqual(30)
-      expect(tl.duration).toBeLessThanOrEqual(60)
+      expect(tl.duration).toBeLessThanOrEqual(75)
       for (let i = 1; i < tl.events.length; i++) expect(tl.events[i].t).toBeGreaterThanOrEqual(tl.events[i - 1].t)
       for (const e of tl.events) {
         expect(e.t).toBeGreaterThanOrEqual(0)
@@ -66,8 +67,9 @@ describe('choreograph', () => {
   })
 
   it('maxDuration ограничивает длину', () => {
-    const tl = choreograph(withBeats(samples[0], 7), { seed: 1, maxDuration: 45 })
-    expect(tl.duration).toBeLessThanOrEqual(45)
+    const tl = choreograph(withBeats(samples[0], 7), { seed: 1, maxDuration: 55 })
+    expect(tl.duration).toBeLessThanOrEqual(55)
+    expect(choreograph(withBeats(samples[0], 7), { seed: 1 }).duration).toBeGreaterThan(55)
   })
 
   it.each(variants)('%s: правила монтажа', (_name, s) => {
@@ -105,11 +107,14 @@ describe('choreograph', () => {
     const s = samples[0]
     const tl = choreograph(s, { seed: 3 })
     s.beats.forEach((b, i) => {
-      const ev = tl.events.filter((e) => e.beat === i && e.type !== 'camera' && e.type !== 'scene_effect' && e.type !== 'actor_enter' && e.type !== 'staging')
-      expect(ev.map((e) => e.type)).toEqual(['actor_walk', 'actor_action', 'word_lift', 'word_transform', 'actor_action'])
+      const ev = tl.events.filter((e) => e.beat === i && e.type !== 'camera' && e.type !== 'scene_effect' && e.type !== 'actor_enter' && e.type !== 'staging' && e.type !== 'companion_enter' && e.type !== 'travel')
+      // после превращения — крупный кадр: поза и цитата вместе, потом сценка сворачивается в марку;
+      // первый бит — короткий подход без действия (первое слово ≤ 5 с)
+      const firstBeat = i === tl.beats[0].beat
+      expect(ev.map((e) => e.type)).toEqual(firstBeat ? ['actor_walk', 'word_lift', 'word_transform', 'actor_action', 'quote_caption', 'stamp'] : ['actor_walk', 'actor_action', 'word_lift', 'word_transform', 'actor_action', 'quote_caption', 'stamp'])
       expect(ev[0]).toMatchObject({ toQuote: b.quote })
-      expect(ev[1]).toMatchObject({ action: b.action })
-      expect(ev[3]).toMatchObject({ quote: b.quote, result: b.result })
+      if (!firstBeat) expect(ev[1]).toMatchObject({ action: b.action })
+      expect(ev[firstBeat ? 2 : 3]).toMatchObject({ quote: b.quote, result: b.result })
       if (b.effect) expect(tl.events.some((e) => e.type === 'scene_effect' && e.beat === i && e.effect === b.effect)).toBe(true)
     })
   })
@@ -140,8 +145,10 @@ describe('choreograph', () => {
     const beatTimes = Array.from({ length: 200 }, (_, i) => 0.13 + (i * 60) / bpm)
     const tl = choreograph(s, { seed: 9, beatTimes })
     const plain = choreograph(s, { seed: 9 })
-    const starts = cameras(tl.events).filter((c) => c.beat >= 0).map((c) => c.t)
-    const plainStarts = cameras(plain.events).filter((c) => c.beat >= 0).map((c) => c.t)
+    // первый бит идёт сразу после входа без притяжения (первое слово ≤ 5 с)
+    const first = tl.beats[0].beat
+    const starts = cameras(tl.events).filter((c) => c.beat >= 0 && c.beat !== first).map((c) => c.t)
+    const plainStarts = cameras(plain.events).filter((c) => c.beat >= 0 && c.beat !== first).map((c) => c.t)
     expect(starts.length).toBe(plainStarts.length)
     for (const t of starts) {
       const d = Math.min(...beatTimes.map((b) => Math.abs(b - t)))
@@ -160,21 +167,21 @@ describe('choreograph', () => {
 })
 
 describe('финал и противоречие', () => {
-  it('финал: sit 3.2 с без camera внутри, затем book_close и pull_out, длина ≤ 60', () => {
+  it('финал: sit (поклон) без camera внутри, затем book_close и pull_out, длина ≤ 75', () => {
     for (const s of samples)
       for (const photoCount of [0, 3]) {
         const tl = choreograph(s, { seed: 2, photoCount })
-        expect(tl.duration).toBeLessThanOrEqual(60.5)
+        expect(tl.duration).toBeLessThanOrEqual(75)
         const sit = tl.events.filter((e) => e.type === 'actor_action' && e.beat === -1).pop()!
-        expect(sit.dur).toBeCloseTo(3.2, 5)
+        expect(sit.dur).toBeCloseTo(OUTRO_SIT, 5)
         const inside = tl.events.filter((e) => e.type === 'camera' && e.t > sit.t + 1e-6 && e.t < sit.t + sit.dur - 1e-6)
         expect(inside).toEqual([])
         const close = tl.events.find((e) => e.type === 'book_close')!
         const pull = tl.events.find((e) => e.type === 'camera' && e.shot === 'pull_out')!
-        expect(close.t).toBeCloseTo(sit.t + 3.2, 5)
-        expect(pull.t).toBeCloseTo(sit.t + 3.2, 5)
-        expect(tl.events.find((e) => e.type === 'title_reveal')!.t).toBeCloseTo(sit.t + 4.8, 5)
-        expect(tl.events.find((e) => e.type === 'to_shelf')!.t).toBeCloseTo(sit.t + 7.4, 5)
+        expect(close.t).toBeCloseTo(sit.t + OUTRO_SIT, 5)
+        expect(pull.t).toBeCloseTo(sit.t + OUTRO_SIT, 5)
+        expect(tl.events.find((e) => e.type === 'title_reveal')!.t).toBeCloseTo(sit.t + OUTRO_SIT + 1.4, 5)
+        expect(tl.events.find((e) => e.type === 'to_shelf')!.t).toBeCloseTo(sit.t + OUTRO_SIT + 3.2, 5)
       }
   })
 
@@ -197,37 +204,97 @@ describe('L7: полароид, облёт, камера', () => {
     }
   })
 
-  it('фото есть: photo_reveal 7–9 с после второго бита (после первого при 4 битах), без camera внутри, camera сразу после', () => {
+  it('старый день без карточек: снимок 0 оживает в начале первого бита с местом (не первого), 3 с; остальные — веер', () => {
     for (const s of days) {
       for (const photoCount of [1, 3]) {
         const tl = choreograph(s, { seed: 3, photoCount })
-        expect(tl.duration).toBeLessThanOrEqual(60.5)
-        const rev = tl.events.filter((e) => e.type === 'photo_reveal')
+        expect(tl.duration).toBeLessThanOrEqual(75)
+        const rev = tl.events.filter((e) => e.type === 'photo_reveal') as Extract<TimelineEvent, { type: 'photo_reveal' }>[]
         expect(rev).toHaveLength(1)
-        const r = rev[0] as Extract<TimelineEvent, { type: 'photo_reveal' }>
+        const r = rev[0]
         expect(r.photo).toBe(0)
-        expect(r.dur).toBeGreaterThanOrEqual(7)
-        expect(r.dur).toBeLessThanOrEqual(9)
-        const after = s.beats.length <= 4 ? 0 : 1
-        const lastOfBeat = Math.max(...tl.events.filter((e) => e.beat === after && e.type !== 'photo_reveal' && e.type !== 'photo_fan' && e.type !== 'camera').map((e) => e.t + e.dur))
-        expect(r.t).toBeGreaterThanOrEqual(lastOfBeat - 1e-6)
-        const firstNext = Math.min(...tl.events.filter((e) => e.beat === after + 1).map((e) => e.t))
-        expect(r.t + r.dur).toBeLessThanOrEqual(firstNext + 1e-6)
-        // внутри — никакой камеры и никаких действий
+        expect(r.dur).toBeCloseTo(3, 5)
+        const win = tl.beats.find((w) => w.beat === r.beat)!
+        expect(win.photo).toBe(0)
+        expect(win.photo_card).toBeNull()
+        expect(win).not.toBe(tl.beats[0])
+        // снимок — в начале бита, превращение сразу после него
+        expect(r.t).toBeCloseTo(win.start, 5)
+        expect(win.transform).toBeCloseTo(r.t + r.dur, 5)
+        const tr = tl.events.find((e) => e.type === 'word_transform' && e.beat === r.beat)!
+        expect(tr.t).toBeCloseTo(win.transform, 5)
+        // внутри снимка — ни камеры, ни шагов
         const inside = tl.events.filter((e) => e !== r && e.t > r.t + 1e-6 && e.t < r.t + r.dur - 1e-6)
-        expect(inside.filter((e) => e.type === 'camera')).toEqual([])
-        expect(inside.filter((e) => e.type === 'actor_walk' || e.type === 'word_lift')).toEqual([])
-        const cam = tl.events.find((e) => e.type === 'camera' && Math.abs(e.t - (r.t + r.dur)) < 1e-6) as Extract<TimelineEvent, { type: 'camera' }>
-        expect(cam && ['wide', 'push_in'].includes(cam.shot)).toBe(true)
+        expect(inside.filter((e) => e.type === 'camera' || e.type === 'actor_walk' || e.type === 'word_lift')).toEqual([])
+        expect(tl.beats.filter((w) => w.photo === null).every((w) => w.photo_card === null)).toBe(true)
         const fan = tl.events.filter((e) => e.type === 'photo_fan') as Extract<TimelineEvent, { type: 'photo_fan' }>[]
         if (photoCount > 1) {
+          const sit = tl.events.filter((e) => e.type === 'actor_action' && e.beat === -1).pop()!
           expect(fan).toHaveLength(1)
+          expect(fan[0].photos).toEqual([1, 2])
           expect(fan[0].from).toBe(1)
-          expect(fan[0].t).toBeCloseTo(r.t + r.dur, 5)
-          expect(fan[0].dur).toBeGreaterThanOrEqual(2)
-          expect(fan[0].dur).toBeLessThanOrEqual(3)
+          expect(fan[0].t).toBeCloseTo(sit.t, 5)
         } else expect(fan).toHaveLength(0)
       }
+    }
+  })
+
+  it('карточки снимков: пара по фразе — снимок оживает в её бите; без пары — свой бит kind photo; не больше 3; ≤ 50 с', () => {
+    const card = (over: Partial<PhotoCard>): PhotoCard => ({
+      caption: 'мы пьём какао в кофейне',
+      place: { ru: 'кофейня', ref: 'cafe_table' },
+      things: [{ ru: 'какао', ref: 'cocoa', where: 'table' }],
+      people: [{ role: 'подруга', jacket: 'brick', scarf: 'cream', hair: 'brown', accessory: 'long_hair', action: 'sit' }],
+      time_of_day: 'evening',
+      weather: 'clear',
+      palette: ['brown', 'amber'],
+      mood: 'уютно',
+      match: '',
+      ...over,
+    })
+    const base = samples[0] // «Гуляли по парку…какао…Фонари»
+    const cocoaIdx = base.beats.findIndex((b) => b.quote === 'какао')
+    const cards = [
+      card({ match: 'Было холодно, но мы пили какао и долго разговаривали.' }),
+      card({ caption: 'лужа у фонаря вечером', place: { ru: 'улица', ref: 'lamp_post' }, things: [{ ru: 'лужа', ref: 'puddle', where: 'ground' }], people: [], match: '' }),
+      card({ caption: 'кот на подоконнике', place: { ru: 'окно', ref: 'window_sill' }, things: [{ ru: 'кошка', ref: 'cat', where: 'ground' }], people: [], match: '' }),
+      card({ caption: 'ещё одно фото', match: '' }),
+    ]
+    const tl = choreograph({ ...base, photo_cards: cards }, { seed: 2, photoCount: 4 })
+    expect(tl.duration).toBeLessThanOrEqual(75)
+    expect(tl.beats[0].transform).toBeLessThanOrEqual(5)
+    expect(tl.beats[0].photo).toBeNull()
+    const withPhoto = tl.beats.filter((w) => w.photo !== null)
+    expect(withPhoto.length).toBeLessThanOrEqual(3)
+    // снимок 0 — к фразе «какао» из его предложения
+    const p0 = tl.beats.find((w) => w.photo === 0)!
+    expect(p0.beat).toBe(cocoaIdx)
+    expect(p0.photo_card?.match).toContain('какао')
+    // снимок без пары — свой бит: цитата — подпись, вид photo, номер бита за пределами сценария
+    const own = tl.beats.filter((w) => w.kind === 'photo')
+    expect(own.length).toBeGreaterThan(0)
+    for (const w of own) {
+      expect(w.beat).toBeGreaterThanOrEqual(base.beats.length)
+      expect(w.quote).toBe(w.photo_card!.caption)
+      const tr = tl.events.find((e) => e.type === 'word_transform' && e.beat === w.beat) as Extract<TimelineEvent, { type: 'word_transform' }>
+      expect(tr.quote).toBe(w.photo_card!.caption)
+    }
+    // лужа у фонаря встаёт после бита «Фонари» (ближайший по смыслу)
+    const puddle = tl.beats.find((w) => w.photo === 1)
+    if (puddle) {
+      const lamp = tl.beats.find((w) => w.quote === 'Фонари')!
+      expect(puddle.start).toBeGreaterThan(lamp.start)
+    }
+    // каждому снимку — один бит или веер, без повторов
+    const fan = (tl.events.find((e) => e.type === 'photo_fan') as Extract<TimelineEvent, { type: 'photo_fan' }> | undefined)?.photos ?? []
+    const all = [...withPhoto.map((w) => w.photo!), ...fan].sort()
+    expect(all).toEqual([0, 1, 2, 3])
+  })
+
+  it('с фото, противоречием и 6 битами фильм укладывается в 75 с', () => {
+    for (const e of exemplars) {
+      const tl = choreograph(e.script, { seed: 1, photoCount: 3 })
+      expect(tl.duration).toBeLessThanOrEqual(75)
     }
   })
 
@@ -261,16 +328,19 @@ describe('отсев битов при фото', () => {
     mk('чай', { kind: 'kit', id: 'tea' }),
     mk('снег', { kind: 'effect', id: 'snow' }),
     mk('фонари', { kind: 'kit', id: 'lamp_post' }),
+    mk('гитара', { kind: 'kit', id: 'guitar' }),
+    mk('автобус', { kind: 'kit', id: 'bus' }),
   ]
 
   it('без фото или при ≤ 5 битах — все', () => {
-    expect(keptBeats(beats, 0, [])).toHaveLength(7)
+    expect(MAX_BEATS_WITH_PHOTOS).toBe(7)
+    expect(keptBeats(beats, 0, [])).toHaveLength(beats.length)
     expect(keptBeats(beats.slice(0, 5), 3, [])).toHaveLength(5)
   })
 
-  it('с фото — 5: сначала эффекты, защищённые остаются', () => {
+  it('с фото — 7: сначала эффекты, защищённые остаются', () => {
     const k = keptBeats(beats, 2, [3])
-    expect(k).toHaveLength(5)
+    expect(k).toHaveLength(7)
     expect(k).not.toContain(1)
     expect(k).not.toContain(5)
     expect(k).toContain(2) // person
@@ -281,16 +351,55 @@ describe('отсев битов при фото', () => {
     const noFx = beats.filter((b) => b.result.kind !== 'effect').concat([mk('кофе', { kind: 'kit', id: 'coffee' }), mk('ноутбук горячий', { kind: 'kit', id: 'laptop' })])
     // напитки: cocoa, tea, coffee — один вид; уходит самый короткий из них
     const k = keptBeats(noFx, 1, [])
-    expect(k).toHaveLength(5)
+    expect(k).toHaveLength(7)
     expect(k.map((i) => noFx[i].quote)).not.toContain('чай')
   })
 
-  it('в таймлайне 5 битов, сценарий не трогается', () => {
+  it('в таймлайне не больше 7 битов, сценарий не трогается', () => {
     const day = { ...samples[0], beats: [...samples[0].beats] }
     const before = JSON.stringify(day.beats)
     const tl = choreograph(day, { seed: 1, photoCount: 3 })
     const used = new Set(tl.events.filter((e) => e.type === 'word_transform').map((e) => e.beat))
-    expect(used.size).toBe(Math.min(5, day.beats.length))
+    expect(used.size).toBe(Math.min(MAX_BEATS_WITH_PHOTOS, day.beats.length))
     expect(JSON.stringify(day.beats)).toBe(before)
+  })
+})
+
+describe('план 13: окна бита, вход, второй человечек', () => {
+  const days = [...exemplars.map((e) => e.script), ...samples]
+  it('вход 4 с без page_flip, наезд вместе с человечком; первое слово ≤ 5 с; окна по порядку', () => {
+    for (const s of days)
+      for (const photoCount of [0, 2]) {
+        const tl = choreograph(s, { seed: 4, photoCount })
+        expect(tl.events.some((e) => e.type === 'page_flip')).toBe(false)
+        const enter = tl.events.find((e) => e.type === 'actor_enter' && e.beat === -1)!
+        const push = tl.events.find((e) => e.type === 'camera' && e.beat === -1 && e.shot === 'push_in')!
+        expect(push.t).toBeCloseTo(enter.t, 5)
+        expect(enter.dur).toBeGreaterThanOrEqual(1.6)
+        expect(tl.events.find((e) => e.type === 'book_open')!.dur).toBeGreaterThanOrEqual(1.2)
+        expect(tl.beats[0].transform).toBeLessThanOrEqual(5)
+        for (const w of tl.beats) {
+          expect(w.start).toBeLessThan(w.transform)
+          // бит-чувство: слово не превращается — эмоция с начала крупного кадра
+          if (w.kind === 'feeling' && w.emotion) expect(w.transform).toBe(w.hold[0])
+          else expect(w.transform).toBeLessThan(w.hold[0])
+          expect(w.hold[1] - w.hold[0]).toBeGreaterThanOrEqual(2.2 - 1e-6)
+          expect(w.end).toBe(w.hold[1])
+        }
+      }
+  })
+
+  it('companion_enter — не раньше transform + 0.3 с и до крупного кадра; hold ≥ 2.2 с даже в перегруженном дне', () => {
+    const many = { ...samples[0], beats: [...samples[0].beats, ...samples[0].beats.map((b) => ({ ...b, quote: b.quote + ' ' }))].slice(0, 8) }
+    for (const s of [...days, many]) {
+      const tl = choreograph(s, { seed: 2, photoCount: 1, maxDuration: 45 })
+      for (const e of tl.events) {
+        if (e.type !== 'companion_enter') continue
+        const w = tl.beats.find((x) => x.beat === e.beat)!
+        expect(e.t).toBeGreaterThanOrEqual(w.transform + 0.3 - 1e-6)
+        expect(e.t).toBeLessThan(w.hold[0])
+      }
+      for (const w of tl.beats) expect(w.hold[1] - w.hold[0]).toBeGreaterThanOrEqual(2.2 - 1e-6)
+    }
   })
 })

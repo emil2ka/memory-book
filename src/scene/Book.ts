@@ -15,7 +15,8 @@ const PAGE_Y = 0.285
 export const SS = HD ? 4 : 1
 /** Рукописный шрифт уже и ниже моноширинного, поэтому кегли крупнее, а строки плотнее. */
 // крупнее 18 короткий текст выглядит плакатом и раньше времени уходит на правую страницу
-const FONT_SIZES = HD ? [18, 16, 14, 12, 10] : [16, 14, 12, 10, 8, 7]
+// длинный день (до 3000 знаков, план 15) — шрифт мельчает ступенями, пока всё не влезет
+const FONT_SIZES = HD ? [18, 16, 14, 12, 10, 9, 8, 7, 6, 5] : [16, 14, 12, 10, 8, 7, 6, 5]
 const LH = HD ? 1.12 : 1.35
 export const HAND_FONT = 'Caveat'
 const MARGIN = 12
@@ -69,6 +70,8 @@ export class Book {
   private placeholderEndY: number | null = null
   private caretOn = true
   private fontPx = 14
+  /** Кегль текста на странице в пикселях текстуры страницы (TEX_W шириной) — для поля ввода поверх книги. */
+  get pageFontPx() { return this.fontPx }
   fontFamily = 'monospace'
   /** false — правая страница занята фото, текст только на левой. */
   textOnRightPage = true

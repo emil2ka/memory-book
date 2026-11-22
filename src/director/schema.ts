@@ -3,6 +3,7 @@
 import { catalog } from '../types/script'
 import { CATEGORIES, CATEGORY_RU, KIT_LIBRARY, categoryOf } from '../kit/library'
 import { MAKE_TAGS } from './results'
+import { ACT_IDS, EMOTION_IDS, emotionsText } from './emotions'
 
 const keys = (o: Record<string, string>) => Object.keys(o)
 
@@ -59,9 +60,16 @@ export function buildScriptSchema(): Record<string, unknown> {
     song: obj({ tempo: en(ids.tempos), energy: num('0..1'), estimated: { type: 'boolean' } }),
     beats: {
       type: 'array',
-      description: 'от 4 до 7 битов',
+      description: 'от 2 до 8 битов, в порядке текста: по одной новой мысли дня на бит (короткая запись — 2–4, длинная — до 8)',
       items: obj({
-        quote: str('ТОЧНАЯ подстрока текста записи, 1–4 слова'),
+        quote: str('ТОЧНАЯ подстрока текста записи, 1–5 слов'),
+        story: str('строка рассказа: 6–14 слов, от первого лица, прошедшее время, со связкой («утром», «потом», «а вечером»); все строки подряд — связный пересказ всего дня, включая то, что между битами'),
+        hero_prop: str('ОДНА вещь, которую можно нарисовать и узнать с первого взгляда, именительный падеж, 1–2 слова; лучше из библиотеки; не чувство'),
+        kind: en(['place', 'thing', 'person', 'weather', 'feeling'], 'о чём фраза; feeling — чувство: предмета нет, человечек играет emotion'),
+        emotion: { anyOf: [en([...EMOTION_IDS], 'что чувствует человечек в этом бите (по полю when в списке эмоций)'), { type: 'null' }] },
+        act: { anyOf: [en([...ACT_IDS], 'что человечек делает сам в этом бите (по полю when в списке действий)'), { type: 'null' }] },
+        place: { anyOf: [str('где это происходит, 1–2 слова (кофейня, остановка, юрта, парк)'), { type: 'null' }] },
+        companion: { anyOf: [obj({ name: str('имя как в тексте или роль, если имени нет'), role: str('кто это: подруга, бабушка, мама, преподаватель…') }), { type: 'null' }] },
         action: en(ids.actions),
         result: {
           anyOf: [
@@ -81,6 +89,10 @@ export function buildScriptSchema(): Record<string, unknown> {
         },
         camera: en(ids.cameras),
         effect: { anyOf: [en(ids.sceneEffects), { type: 'null' }] },
+        weight: { type: 'integer', enum: [1, 2, 3], description: '3 — главная фраза дня, 1 — проходная' },
+        photo: { anyOf: [{ type: 'integer', description: 'номер фото дня, про которое эта фраза' }, { type: 'null' }] },
+        time_of_day: en(ids.timesOfDay, 'время суток в этой фразе'),
+        weather: en(ids.weathers, 'погода в этой фразе'),
       }),
     },
     why: { type: 'array', items: str(), description: 'ровно 3 строки: Текст / Фото / Песня' },
@@ -94,7 +106,8 @@ function section(title: string, o: Record<string, string>): string {
 /** Библиотека кита компактно: по строке на категорию, «id название». ground — встаёт на странице объёмом. */
 function kitText(): string {
   const lines = CATEGORIES.map((c) => {
-    const items = KIT_LIBRARY.filter((m) => categoryOf(m.id) === c)
+    // только объёмные предметы: сценки строятся из 3D-кита (картинки-наклейки в фильме больше не показываются)
+    const items = KIT_LIBRARY.filter((m) => categoryOf(m.id) === c && m.parts.length > 0)
     if (!items.length) return ''
     return `- ${CATEGORY_RU[c]}: ` + items.map((m) => `${m.id} ${m.ru}${m.hold === 'ground' ? '*' : ''}`).join('; ')
   }).filter(Boolean)
@@ -105,6 +118,7 @@ function kitText(): string {
 export function buildCatalogText(): string {
   return [
     section('Действия человечка (action)', catalog.actions),
+    emotionsText(),
     kitText(),
     'Результат kind="make" — слова нет в библиотеке: предмет дорисуют по твоему описанию. name — что это (именительный падеж), hint — как выглядит, tags — 2–4 тега из: ' + MAKE_TAGS.join(', ') + '.',
     section('Результат kind="effect" — слово рассыпается в эффект', catalog.effects),

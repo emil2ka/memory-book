@@ -1,5 +1,7 @@
+import { TEX_W } from './Book'
 import type { DayScript } from '../types/script'
 import { choreograph } from '../timeline/choreograph'
+import type { SongShape } from '../timeline/songShape'
 import { TimelinePlayer } from '../timeline/Player'
 import { FilmStage } from './FilmStage'
 import { PixelStage } from './PixelStage'
@@ -9,6 +11,8 @@ import type { SpriteBank } from '../actors/sprites'
 export class World {
   readonly px: PixelStage
   readonly film: FilmStage
+  /** Кто пишет (он / она): род глаголов в строках рассказа старых дней (план 15). */
+  private heroKind: 'boy' | 'girl' = 'boy'
   player: TimelinePlayer | null = null
 
   constructor(host: HTMLElement, bank: SpriteBank | null = null) {
@@ -28,9 +32,10 @@ export class World {
   playDay(
     text: string,
     script: DayScript,
-    opts: { seed?: number; beatTimes?: number[]; clock?: () => number; photoCount?: number; dayId?: string } = {},
+    opts: { seed?: number; beatTimes?: number[]; clock?: () => number; photoCount?: number; dayId?: string; song?: SongShape } = {},
   ) {
-    const timeline = choreograph(script, { seed: opts.seed ?? 1, beatTimes: opts.beatTimes, photoCount: opts.photoCount ?? 0 })
+    // song — форма песни дня (план 15): фильм 40–70 с, поворот на подъёме, конец на затухании или конце фразы
+    const timeline = choreograph(script, { seed: opts.seed ?? 1, beatTimes: opts.beatTimes, photoCount: opts.photoCount ?? 0, text, hero: this.heroKind, song: opts.song })
     this.film.preload(timeline, text)
     this.film.dress(script, opts.seed ?? 1, opts.dayId ?? null)
     const player = new TimelinePlayer(opts.clock ? { clock: opts.clock } : {})
@@ -48,6 +53,11 @@ export class World {
   }
 
   /** Черновик текста на страницах (в режиме записи). */
+  /** Кегль текста на странице, в долях ширины страницы (поле ввода мельчает вместе с книгой). */
+  pageFontFrac() {
+    return this.film.book.pageFontPx / TEX_W
+  }
+
   setDraftText(text: string) {
     this.film.setDraftText(text)
   }
@@ -62,6 +72,14 @@ export class World {
     this.film.setPhotos(images)
   }
 
+  /**
+   * Режиссёр думает (после «Собрать день», до фильма): рука постукивает ручкой над строкой,
+   * из щели между страницами выглядывает человечек. Снимается сам, когда начинается фильм.
+   */
+  setWaiting(on: boolean) {
+    this.film.setWaiting(on)
+  }
+
   /** Человек сел и не занят разовым движением — можно показывать подсказки поверх. */
   get personSettled() {
     return this.film.personSettled
@@ -69,6 +87,7 @@ export class World {
 
   /** Кто пишет за столом: мальчик или девочка. */
   setPerson(kind: 'boy' | 'girl') {
+    this.heroKind = kind
     this.film.setPersonKind(kind)
   }
 

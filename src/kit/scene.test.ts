@@ -4,6 +4,7 @@ import { buildSceneUser, parseSceneInput, pickSceneExemplars, SCENE_SCHEMA } fro
 import { checkScene, ROLE_HEIGHT, SCENE_LIBRARY, sceneRef } from './sceneCheck'
 import { closeSceneDb, dayHash, fallbackScene, forgetScenes, makeScene, normQuote, sanitizeScene, sceneFor } from './sceneClient'
 import { modelBounds } from './validate'
+import { dayAround, SCENE_DAY_MAX } from './scene'
 
 const box = (h: number) => [{ s: 'box', p: [0, h / 2, 0], d: [6, h, 6], c: 'brick', k: 0, r: [0, 0, 0], glow: false }]
 const height = (parts: { p: [number, number, number]; d: [number, number, number] }[]) => {
@@ -17,21 +18,26 @@ describe('проверка сценки', () => {
     expect(r.scene?.objects[0]).toMatchObject({ role: 'hand', ref: 'cocoa' })
     expect(r.scene?.action).toBe('drink')
     expect(r.refs).toBe(1)
-    // один предмет — не стенд: просим дополнить, но сценка годна
-    expect(r.errors.join(' ')).toMatch(/нет stand/)
+    // главный предмет без места — годная сценка; место названо, а stand нет — просим дополнить
+    expect(r.errors).toEqual([])
+    const want = checkScene({ action: 'drink', objects: [{ role: 'hand', ru: 'какао', ref: 'cocoa' }] }, 'какао в кофейне', { place: 'кофейня', hero_prop: 'какао' })
+    expect(want.errors.join(' ')).toMatch(/нет stand/)
   })
 
-  it('полный стенд без ошибок; дерево за спиной уходит вбок, поза с предметом в руке — не idle', () => {
+  it('план 13: главный предмет + место сбоку, деталь и место без запроса убираются, поза с предметом — не idle', () => {
     const r = checkScene(
       { action: 'idle', objects: [{ role: 'stand', ref: 'tree', side: 'back' }, { role: 'hand', ref: 'leaf' }, { role: 'detail', ref: 'cat', side: 'right' }] },
       'по парку',
+      { place: 'парк', hero_prop: 'лист' },
     )
     expect(r.errors).toEqual([])
+    expect(r.scene!.objects.map((o) => o.role)).toEqual(['stand', 'hand'])
     expect(r.scene!.objects[0].side).toBe('left')
     expect(r.scene!.action).toBe('carry')
-    const cocoa = checkScene({ action: 'idle', objects: [{ role: 'stand', ref: 'bench' }, { role: 'hand', ref: 'cocoa' }, { role: 'detail', ref: 'leaf' }] }, 'какао')
+    // место не названо — stand не нужен
+    const cocoa = checkScene({ action: 'idle', objects: [{ role: 'stand', ref: 'bench' }, { role: 'hand', ref: 'cocoa' }, { role: 'detail', ref: 'leaf' }] }, 'какао', { place: null, hero_prop: 'какао' })
     expect(cocoa.scene!.action).toBe('drink')
-    expect(cocoa.scene!.objects[0].side ?? 'back').toBe('back')
+    expect(cocoa.scene!.objects.map((o) => o.ref)).toEqual(['cocoa'])
   })
 
   it('несуществующий ref без фигур выбрасывается с понятной ошибкой', () => {
@@ -54,16 +60,16 @@ describe('проверка сценки', () => {
     expect(r.errors.join(' ')).toMatch(/всего 1 фигур/)
   })
 
-  it('плоский лист деталью не превращается в плиту: ширина ограничена', () => {
+  it('плоский лист в руке не превращается в плиту: ширина ограничена', () => {
     const leaf = [{ s: 'box', p: [0, 0.5, 0], d: [12, 1, 8], c: 'yellow' }]
-    const r = checkScene({ action: 'idle', objects: [{ role: 'detail', ru: 'лист', en: 'leaf', parts: leaf }] }, 'лист')
+    const r = checkScene({ action: 'idle', objects: [{ role: 'hand', ru: 'лист', en: 'leaf', parts: leaf }] }, 'лист')
     const b = modelBounds(r.scene!.objects[0].model!.parts)
-    expect(Math.max(b.size[0], b.size[2])).toBeLessThanOrEqual(24)
+    expect(Math.max(b.size[0], b.size[2])).toBeLessThanOrEqual(16)
   })
 
-  it('второй hand становится detail, поза «пьёт» без предмета в руке — idle', () => {
+  it('второй hand убирается (в руке один главный предмет), поза «пьёт» без предмета в руке — idle', () => {
     const two = checkScene({ action: 'drink', objects: [{ role: 'hand', ref: 'cocoa' }, { role: 'hand', ref: 'tea' }] }, 'чай')
-    expect(two.scene?.objects.map((o) => o.role)).toEqual(['hand', 'detail'])
+    expect(two.scene?.objects.map((o) => o.role)).toEqual(['hand'])
     const none = checkScene({ action: 'drink', objects: [{ role: 'stand', ref: 'bench' }] }, 'скамейка')
     expect(none.scene?.action).toBe('idle')
   })
@@ -81,11 +87,19 @@ describe('проверка сценки', () => {
 })
 
 describe('запрос на сервер', () => {
-  it('разбор тела: цитата обязательна, день обрезается до 600', () => {
+  it('разбор тела: цитата обязательна, день обрезается до окна сценографа', () => {
     expect(() => parseSceneInput({ quote: '  ' })).toThrow()
-    const r = parseSceneInput({ quote: 'какао', day: 'а'.repeat(900), hint: 'cocoa' })
-    expect(r.day.length).toBe(600)
+    const r = parseSceneInput({ quote: 'какао', day: 'а'.repeat(4000), hint: 'cocoa' })
+    expect(r.day.length).toBe(SCENE_DAY_MAX + 2)
     expect(r.hint).toBe('cocoa')
+  })
+
+  it('длинная запись: бит из конца получает окно текста вокруг своей цитаты', () => {
+    const long = 'Утром было обычное утро. '.repeat(80) + 'А вечером мы пили какао у окна.'
+    const w = dayAround(long, 'пили какао')
+    expect(w.length).toBeLessThanOrEqual(SCENE_DAY_MAX + 2)
+    expect(w).toContain('пили какао')
+    expect(dayAround('короткий день', 'день')).toBe('короткий день')
   })
 
   it('образцы — объёмные предметы, и в сообщении есть найденное по словам', () => {
@@ -142,5 +156,24 @@ describe('сценки на клиенте', () => {
     expect(c.scene.objects[0].ref).toBe('tea')
     const d = await makeScene({ quote: 'Пили чай', day: 'третий день' }, { fetchImpl: vi.fn(async () => new Response('{}', { status: 502 })) as unknown as typeof fetch })
     expect(d.source).toBe('fallback')
+  })
+
+  it('план 13: главный предмет и место из библиотеки — без сети; дорисованное мастером — второй раз мгновенно', async () => {
+    forgetScenes()
+    const never = vi.fn(async () => new Response('{}', { status: 500 }))
+    const lib = await makeScene({ quote: 'пили какао в кофейне', day: 'д1', hero_prop: 'какао', place: 'кофейня' }, { fetchImpl: never as unknown as typeof fetch })
+    expect(lib.source).toBe('library')
+    expect(lib.scene.objects.map((o) => `${o.role}:${o.ref}`)).toEqual(['hand:cocoa', 'stand:cafe_counter'])
+    expect(never).not.toHaveBeenCalled()
+    // дирижабля в библиотеке нет — сервер прислал дорисованный предмет
+    const scooter = { quote: 'видел дирижабль', action: 'carry', objects: [{ role: 'hand', ru: 'дирижабль', model: { id: 'mk_dirizhabl', ru: 'дирижабль', stems: [], tags: ['made'], hold: 'hand', parts: box(10).concat(box(4).map((p) => ({ ...p, p: [4, 2, 0] as [number, number, number] }))) } }] }
+    const drawn = vi.fn(async () => new Response(JSON.stringify(scooter), { status: 200 }))
+    const a = await makeScene({ quote: 'видел дирижабль', day: 'д2', hero_prop: 'дирижабль' }, { fetchImpl: drawn as unknown as typeof fetch })
+    expect(a.source).toBe('claude')
+    await new Promise((r) => setTimeout(r, 30))
+    const b = await makeScene({ quote: 'снова дирижабль', day: 'д3', hero_prop: 'дирижабль' }, { fetchImpl: never as unknown as typeof fetch })
+    expect(b.source).toBe('library')
+    expect(b.scene.objects[0].model?.parts.length).toBeGreaterThan(0)
+    expect(never).not.toHaveBeenCalled()
   })
 })

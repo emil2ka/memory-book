@@ -83,6 +83,23 @@ describe('библиотека кита', () => {
     }
   })
 
+  it('словарь дневника: формы слов → предмет, частые слова не ловятся', () => {
+    const cases: [string, string][] = [
+      ['маршрутке', 'bus'],
+      ['остановки', 'bus_stop'],
+      ['общаге', ''],
+      ['шаем', ''],
+      ['дастарханом', 'dastarkhan_feast'],
+      ['пиалу', 'kese'],
+    ]
+    for (const [w, id] of cases) if (id) expect(findByWord(w)?.id, w).toBe(id)
+    for (const w of ['ели', 'от', 'парень', 'партия', 'голубой', 'торговался', 'жареное', 'месяц', 'семь']) {
+      const got = findByWord(w)?.id
+      expect(got === undefined || !['fir', 'bonfire', 'campfire', 'school_desk', 'bird', 'shop', 'sun', 'moon', 'shanyrak'].includes(got), `${w} → ${got}`).toBe(true)
+    }
+    expect(findInText('Бүгін менің туған күнім, жаңбыр жауды').map((f) => f.id)).not.toContain('snowflake')
+  })
+
   it('поиск по тексту находит предметы по порядку', () => {
     const found = findInText('Утром пила какао, потом шла под зонтом к автобусу.')
     expect(found.map((f) => f.id)).toEqual(['cocoa', 'umbrella', 'bus'])

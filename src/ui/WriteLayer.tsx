@@ -1,8 +1,10 @@
 // Режим записи: DOM-слой, выровненный по страницам книги. Сам текст рисует сцена,
 // textarea прозрачная — виден только курсор.
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
-import type { Need } from './checks'
+import { MAX_TEXT, type Need } from './checks'
 import { Cassette, type SongDraft } from './Cassette'
+import type { SongPick } from './SongAdvice'
+import { isImageFile } from '../photos/files'
 import { CardButton, FlagButton, Icon, PinNote, SealButton, Sheet, Spinner, Tape } from './paper'
 
 export interface PageRect { x: number; y: number; w: number; h: number }
@@ -18,12 +20,22 @@ interface Props {
   onAddFiles: (files: File[]) => void
   onRemoveLastPhoto: () => void
   song: SongDraft
+  /** записка «ты не поставил песню» (песни от ИИ), null — нет */
+  songAdvice?: { state: 'loading' | 'ready'; songs: SongPick[] } | null
   onSong: (s: SongDraft) => void
   need: Need[]
   busy: boolean
   /** что сейчас делает режиссёр — вместо «собираю…» */
   busyText?: string
   photoBusy: boolean
+  /** что не так с фото (HEIC, не открылось, больше 5) — показываем под карточкой */
+  photoNote?: string
+  /** кегль книги в долях ширины страницы (World.pageFontFrac): поле совпадает с текстом на странице */
+  pageFont?: number
+  /** что увидел ИИ на последнем снимке: «на фото: кофейня, подруга, какао» (карточка снимка, /api/photo) */
+  photoSeen?: string
+  /** песня выбрана (файл, ссылка или песня из записки): без неё «Собрать день» заперта на вид, клик показывает, чего не хватает */
+  songReady?: boolean
   onCollect: () => void
   onBack: () => void
   /** спрятать (плавно) — идёт фильм */
@@ -51,7 +63,8 @@ export function WriteLayer(p: Props) {
   if (!p.rects) return null
   const { left, right, scale } = p.rects
   // Шрифт страницы: 14 px текстуры на 160 px ширины страницы (см. Book.ts), в CSS-пикселях.
-  const fontPx = Math.max(10, Math.round((14 / 160) * left.w))
+  // кегль как у книги (она мельчит ступенями, пока текст не влезет); не мельче 9 px на экране
+  const fontPx = Math.max(9, Math.round((p.pageFont ?? 14 / 160) * left.w))
   const needs = (n: Need) => (p.need.includes(n) ? ' need' : '')
   // Кассета справа от книги; не помещается — под правой страницей (узкий экран, телефон).
   const vw = typeof innerWidth === 'number' ? innerWidth : 1280
@@ -96,13 +109,15 @@ export function WriteLayer(p: Props) {
     const chipBottom = 8 + cassChipW * (439 / 720)
     const cardLeft = right.x + (right.w - cardW) / 2
     if (cardLeft + cardW > vw - 8 - cassChipW - 6 && right.y + cardTop < chipBottom + 10) cardTop = Math.round(chipBottom + 10 - right.y)
+    // раскрытая кассета (с запиской песен) не закрывает карточку фото: встаёт правее неё, но не уже 200 px
+    ;(cassStyle as Record<string, string | number>)['--pop-w'] = `${Math.round(Math.max(200, Math.min(cassChipW, vw - 8 - (cardLeft + cardW) - 10)))}px`
   }
   const leftX = Math.max(8, left.x)
   const padY = Math.round(left.h * 0.06)
   const padX = Math.round(left.w * 0.08)
 
   const take = (list: FileList | null) => {
-    const files = [...(list ?? [])].filter((f) => f.type.startsWith('image/'))
+    const files = [...(list ?? [])].filter(isImageFile)
     if (files.length) p.onAddFiles(files)
   }
   const onDrop = (e: DragEvent) => {
@@ -127,7 +142,7 @@ export function WriteLayer(p: Props) {
         placeholder=""
         spellCheck={false}
         autoFocus
-        maxLength={1600}
+        maxLength={MAX_TEXT}
         aria-label="Текст дня"
         disabled={p.busy}
       />
@@ -158,13 +173,17 @@ export function WriteLayer(p: Props) {
             {!p.photoBusy && !narrowCard && <span className="drop-sub">или нажми</span>}
           </span>
         )}
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { take(e.target.files); e.target.value = '' }} />
+        <input ref={fileRef} type="file" accept="image/*,.heic,.heif" multiple hidden onChange={(e) => { take(e.target.files); e.target.value = '' }} />
       </div>
       <div className="hint right" style={{ left: right.x, top: Math.min(right.y + right.h + 8, vh - 62), width: Math.max(0, Math.min(right.w, hintRightEdge - right.x)) }}>
         {p.photoBusy && p.photoCount > 0 ? (
           <span>проявляю фото…</span>
+        ) : p.photoNote && !p.photoCount ? (
+          <span className="photo-note" role="status">{p.photoNote}</span>
         ) : p.photoCount ? (
           <>
+            {p.photoNote && <span className="photo-note" role="status">{p.photoNote}</span>}
+            {p.photoSeen && <span className="photo-seen" role="status">{p.photoSeen}</span>}
             <span>фото {p.photoCount}/{MAX_PHOTOS}</span>
             {p.photoCount < MAX_PHOTOS && <CardButton mini icon="plus" label="ещё" tape={0} onClick={() => fileRef.current?.click()} disabled={p.busy} ariaLabel="добавить ещё фото" />}
             <CardButton mini icon="minus" label="убрать" tape={1} onClick={p.onRemoveLastPhoto} disabled={p.busy} ariaLabel="убрать последнее фото" />
@@ -172,25 +191,29 @@ export function WriteLayer(p: Props) {
         ) : p.need.includes('photos') ? (
           <span>нужно хотя бы одно фото</span>
         ) : null}
+        {p.songReady === false && !p.busy && (
+          <span className={`song-hint${p.need.includes('song') ? ' warn' : ''}`} role="status">♪ выбери песню дня</span>
+        )}
       </div>
 
       <Cassette
         style={cassStyle}
         compact={cassCompact}
         song={p.song}
+        advice={p.songAdvice}
         onSong={p.onSong}
         need={p.need.includes('song')}
         disabled={p.busy}
       />
 
       <SealButton
-        className="write-seal"
+        className={`write-seal${p.songReady === false && !p.busy ? ' locked' : ''}`}
         style={{ left: sealX, top: sealY, width: seal, height: sealH }}
         onClick={p.onCollect}
         disabled={p.busy}
         busy={p.busy}
-        ariaLabel="Собрать день"
-        title="Собрать"
+        ariaLabel={p.songReady === false && !p.busy ? 'Собрать день — сначала выбери песню дня' : 'Собрать день'}
+        title={p.songReady === false && !p.busy ? 'сначала выбери песню дня' : 'Собрать'}
       />
       {p.busy && (
         <PinNote className="busy-note" spinner seed="busy" style={{ right: Math.max(6, vw - sealX + 6), top: Math.max(6, sealY + seal * 0.05) }}>

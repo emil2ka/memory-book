@@ -67,7 +67,7 @@ export const pack6: Entry[] = [
     box([13, 8, 3], [0.6, 16, 0.6], 'woodLight', { r: [0, 0, 18] }),
   )),
   e('study', item(
-    { id: 'school_desk', ru: 'парта', kk: 'парта', en: 'school desk', stems: ['парт', 'school desk'], tags: ['study', 'school', 'morning', 'place'], hold: 'ground', scene: 'stand' },
+    { id: 'school_desk', ru: 'парта', kk: 'парта', en: 'school desk', stems: ['парт$', 'парта$', 'парте$', 'парту$', 'партой$', 'партах$', 'парты$', 'school desk'], tags: ['study', 'school', 'morning', 'place'], hold: 'ground', scene: 'stand' },
     box([0, 15, 0], [24, 1, 11], 'wood', { r: [8, 0, 0], n: 'top' }),
     box([0, 15.5, -5.8], [24, 0.8, 2], 'woodLight'),
     box([0, 11.5, -0.5], [22, 1, 8], 'wood'),

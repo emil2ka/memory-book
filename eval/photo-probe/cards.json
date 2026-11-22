@@ -1,0 +1,165 @@
+[
+ {
+  "file": "photo_cafe.jpg",
+  "ms": 4880,
+  "caption": "мы с подругой пьём какао в кофейне",
+  "place": {
+   "ru": "кофейня у окна",
+   "ref": "cafe_table"
+  },
+  "things": [
+   {
+    "ru": "какао",
+    "ref": "cocoa",
+    "where": "table"
+   },
+   {
+    "ru": "какао",
+    "ref": "cocoa",
+    "where": "table"
+   },
+   {
+    "ru": "дождь за окном",
+    "ref": "rain_cloud",
+    "where": "sky"
+   }
+  ],
+  "people": [
+   {
+    "role": "подруга",
+    "jacket": "greyBlue",
+    "scarf": "ochre",
+    "hair": "brown",
+    "accessory": "long_hair",
+    "action": "sit"
+   },
+   {
+    "role": "подруга",
+    "jacket": "brickDark",
+    "scarf": "greyLight",
+    "hair": "brownDark",
+    "accessory": "bun",
+    "action": "sit"
+   }
+  ],
+  "time_of_day": "evening",
+  "weather": "rain",
+  "palette": [
+   "brown",
+   "ochre",
+   "brick",
+   "cream",
+   "wood",
+   "greyBlue",
+   "amber"
+  ],
+  "mood": "уютно, тепло, вдвоём",
+  "match": "После пар встретились с Айгерим в кофейне, пили какао у окна."
+ },
+ {
+  "file": "photo_kitchen.jpg",
+  "ms": 2606,
+  "caption": "бабушка угощает баурсаками в доме",
+  "place": {
+   "ru": "дом бабушки, кухня",
+   "ref": "kitchen_table"
+  },
+  "things": [
+   {
+    "ru": "баурсаки на блюде",
+    "ref": "baursak",
+    "where": "table"
+   },
+   {
+    "ru": "самовар",
+    "ref": "samovar",
+    "where": "table"
+   },
+   {
+    "ru": "пиала с чаем",
+    "ref": "kese",
+    "where": "table"
+   },
+   {
+    "ru": "домбра на стене",
+    "ref": "dombra",
+    "where": "wall"
+   }
+  ],
+  "people": [
+   {
+    "role": "бабушка",
+    "jacket": "ink",
+    "scarf": "ochre",
+    "hair": "grey",
+    "accessory": "headscarf",
+    "action": "carry"
+   }
+  ],
+  "time_of_day": "evening",
+  "weather": "clear",
+  "palette": [
+   "ink",
+   "ochre",
+   "brown",
+   "cream",
+   "amber",
+   "coral",
+   "paper",
+   "greenSoft"
+  ],
+  "mood": "тёплый домашний вечер",
+  "match": "Вечером поехали к бабушке, она напекла баурсаков."
+ },
+ {
+  "file": "photo_yard.jpg",
+  "ms": 2372,
+  "caption": "мы с братом лепим снеговика во дворе",
+  "place": {
+   "ru": "двор ночью, снег",
+   "ref": "snowman"
+  },
+  "things": [
+   {
+    "ru": "снег",
+    "ref": "snowflake",
+    "where": "sky"
+   },
+   {
+    "ru": "морковка-нос снеговика",
+    "ref": "",
+    "where": "ground"
+   }
+  ],
+  "people": [
+   {
+    "role": "брат",
+    "jacket": "navy",
+    "scarf": "navy",
+    "hair": "ink",
+    "accessory": "none",
+    "action": "carry"
+   },
+   {
+    "role": "младший брат",
+    "jacket": "yellow",
+    "scarf": "yellow",
+    "hair": "ink",
+    "accessory": "cap",
+    "action": "sit"
+   }
+  ],
+  "time_of_day": "night",
+  "weather": "snow",
+  "palette": [
+   "navy",
+   "yellow",
+   "white",
+   "ink",
+   "amber",
+   "slate"
+  ],
+  "mood": "тихий вечер, снег, братская возня",
+  "match": "Потом во дворе с младшим братом лепили снеговика, шёл снег."
+ }
+]

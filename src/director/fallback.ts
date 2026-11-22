@@ -6,6 +6,9 @@ import { CONTRADICTION_RULES, LEXICON, MOOD_WORDS, TIME_WORDS, type LexEntry } f
 import { expandToWord, findStem, norm, words } from './text'
 import { findByWord } from '../kit/library'
 import { kitResult, toKit } from './results'
+import { MIN_BEATS, emotionOnly, storyRules } from './beatFields'
+import { actFromText, emotionFromText } from './emotions'
+import { dropRepeats, fillStories, sentenceOf } from './story'
 
 const clamp = (v: number, lo = -1, hi = 1) => Math.min(hi, Math.max(lo, v))
 const round2 = (v: number) => Math.round(v * 100) / 100
@@ -14,6 +17,14 @@ interface Hit {
   entry: LexEntry
   quote: string
   start: number
+  /** Слово-чувство: бит-чувство с этой эмоцией. */
+  emotion?: string
+}
+
+/** Часть предложения с цитатой: между запятыми и связками «потом», «а», «но», «и тут». */
+function clauseAround(text: string, quote: string): string {
+  const s = sentenceOf(text, quote)
+  return s.split(/\s*[,;:—–]\s*|\s+(?=(?:потом|затем|а|но|и тут)\s)/).find((p) => p.includes(quote)) ?? s
 }
 
 function lexHits(text: string): Hit[] {
@@ -33,6 +44,14 @@ function lexHits(text: string): Hit[] {
         hits.push({ entry, quote: text.slice(start, end), start })
       }
     }
+  }
+  // слова-чувства («скучно», «устал», «обрадовался») — бит-чувство: человечек играет эмоцию
+  for (const w of words(text)) {
+    if (taken.some(([a, b]) => w.start < b && w.start + w.text.length > a)) continue
+    const emotion = emotionFromText(w.text)
+    if (!emotion) continue
+    taken.push([w.start, w.start + w.text.length])
+    hits.push({ entry: { stems: [], result: kitResult('crystal'), noun: undefined }, quote: w.text, start: w.start, emotion })
   }
   // слова, которых нет в словаре, но есть в библиотеке кита (юрта, самовар, тюльпан…)
   for (const w of words(text)) {
@@ -128,28 +147,48 @@ export function fallbackDirect(input: Pick<DirectorInput, 'text'> & Partial<Dire
   const mood = moodFromText(text)
   const contradiction = contradictionFromText(text)
 
-  // 1. Слова из словаря, разные результаты, в порядке текста.
+  // 1. Слова из словаря, разные результаты, в порядке текста — по одному на предложение и равномерно по всей записи
+  //    (длинная запись: от начала дня до его конца, а не все биты из первых строк).
   const hits = lexHits(text)
-  const chosen: Hit[] = []
+  const distinct: Hit[] = []
   const seen = new Set<string>()
   for (const h of hits) {
     const r = toKit(h.entry.result)
-    const key = `${r.kind}:${r.id}`
+    const key = h.emotion ? `emotion:${h.emotion}` : `${r.kind}:${r.id}`
     if (seen.has(key)) continue
     seen.add(key)
-    chosen.push(h)
-    if (chosen.length === 7) break
+    distinct.push(h)
   }
+  const want = text.length < 800 ? 7 : 8
+  const sentenceAt = (pos: number) => (text.slice(0, pos).match(/[.!?…\n]+/g) ?? []).length
+  const bySentence = new Map<number, Hit[]>()
+  for (const h of distinct) {
+    const k = sentenceAt(h.start)
+    bySentence.set(k, [...(bySentence.get(k) ?? []), h])
+  }
+  const firsts = [...bySentence.values()].map((a) => a[0])
+  let chosen: Hit[]
+  if (firsts.length >= want) {
+    const pick = new Set(Array.from({ length: want }, (_, k) => Math.round((k * (firsts.length - 1)) / Math.max(1, want - 1))))
+    chosen = firsts.filter((_, i) => pick.has(i))
+  } else {
+    chosen = [...firsts]
+    for (const h of distinct) {
+      if (chosen.length >= want) break
+      if (!chosen.includes(h)) chosen.push(h)
+    }
+  }
+  chosen.sort((a, b) => a.start - b.start)
 
-  const beats: Beat[] = chosen.map((h) => ({ quote: h.quote, action: defaultAction(h), result: toKit(h.entry.result), camera: 'wide', effect: null }))
+  const beats: Beat[] = chosen.map((h) => ({ quote: h.quote, action: defaultAction(h), result: toKit(h.entry.result), camera: 'wide', effect: null, ...(h.emotion ? { emotion: h.emotion, kind: 'feeling' as const } : {}) }))
 
-  // 2. Добрать до 4 битов самыми длинными словами (кристаллы памяти).
-  if (beats.length < 4) {
+  // 2. Добрать до MIN_BEATS битов самыми длинными словами (кристаллы памяти).
+  if (beats.length < MIN_BEATS) {
     const used = new Set(beats.map((b) => b.quote))
     const long = words(text).filter((w) => w.text.length >= 3 && !used.has(w.text)).sort((a, b) => b.text.length - a.text.length || a.start - b.start)
     const pool = long.length ? long : words(text)
     let k = 0
-    while (beats.length < 4) {
+    while (beats.length < MIN_BEATS) {
       const w = pool[k % Math.max(1, pool.length)]
       const quote = w ? w.text : text.trim() || text
       beats.push({ quote, action: beats.length % 2 ? 'walk' : 'sit', result: kitResult('crystal'), camera: 'wide', effect: null })
@@ -204,6 +243,25 @@ export function fallbackDirect(input: Pick<DirectorInput, 'text'> & Partial<Dire
     measured ? `Песня: ${Math.round(measured)} bpm → ${song.tempo === 'fast' ? 'быстрый' : song.tempo === 'slow' ? 'медленный' : 'ровный'} шаг` : `Песня: темп оценён по настроению → ${song.tempo === 'fast' ? 'быстрый' : song.tempo === 'slow' ? 'медленный' : 'ровный'} шаг`,
   ]
 
+  // эмоции: цитата — само чувство («скучно», «устал») → бит-чувство без предмета; иначе поза — по чувству предложения
+  for (const b of beats) {
+    const own = emotionFromText(b.quote)
+    if (own) {
+      b.emotion = own
+      b.kind = 'feeling'
+      continue
+    }
+    // поза — по чувству своей части предложения (не всего: «скучно, потом позвонила подруга» — у подруги не скука)
+    const part = clauseAround(text, b.quote)
+    const around = emotionFromText(part)
+    if (around) b.emotion = around
+    const act = actFromText(part)
+    if (act) b.act = act
+  }
+  // поля плана 13 и правила истории (главный предмет — вещь, 2–8 битов), одна мысль — один раз
+  const told = storyRules(beats, { contradiction, time_of_day: time, weather })
+  told.beats = dropRepeats(told.beats, MIN_BEATS, emotionOnly).beats
+
   return {
     title: makeTitle(time, nouns),
     mood,
@@ -213,7 +271,8 @@ export function fallbackDirect(input: Pick<DirectorInput, 'text'> & Partial<Dire
     place,
     palette_hint: paletteFromMood(mood, weather),
     song,
-    beats,
+    // строки рассказа: полное предложение бита и связка по порядку
+    beats: fillStories(told.beats, input.text ?? '', { hero: input.hero }).beats,
     why,
   }
 }

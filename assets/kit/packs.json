@@ -146,6 +146,7 @@
   "boat"
  ],
  "pack7": [
+  "rocket",
   "dastarkhan_feast",
   "trash_bin",
   "cat_sleeping",
@@ -154,5 +155,35 @@
   "leaf_pile",
   "book_stack",
   "balloon_bunch"
+ ],
+ "pack8": [
+  "gym",
+  "canteen",
+  "hospital",
+  "dacha",
+  "scooter",
+  "popcorn",
+  "money",
+  "skateboard",
+  "gamepad",
+  "calculator",
+  "washing_machine",
+  "mop",
+  "dorm",
+  "apartment_block",
+  "lake",
+  "pool",
+  "dumplings",
+  "carton_box",
+  "salad",
+  "energy_drink",
+  "hamster",
+  "skis",
+  "manty",
+  "crosswalk",
+  "shop",
+  "sandbox",
+  "university",
+  "plate"
  ]
 }

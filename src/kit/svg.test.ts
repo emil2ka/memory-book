@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { KIT_LIBRARY, kitById } from './library'
+import { KIT_LIBRARY, kitById, packOf } from './library'
 import { validateSvg } from './svg'
 
 const dir = join(__dirname, '../../assets/kit2d')
@@ -18,8 +18,10 @@ describe('картинки предметов (SVG)', () => {
   it('у каждого предмета библиотеки есть картинка, stems от 3 букв', () => {
     const have = new Set(readdirSync(dir).filter((f) => f.endsWith('.svg')).map((f) => f.replace(/\.svg$/, '')))
     for (const m of KIT_LIBRARY) {
-      // декорации и детали сценок (scene: stand / detail) — только 3D: без картинки сцена строит кит
-      if (m.scene !== 'stand' && m.scene !== 'detail') expect(have.has(m.id), m.id).toBe(true)
+      // декорации и детали сценок (scene: stand / detail) и предметы мастера (pack8+, eval/make-batch) — только 3D:
+      // без картинки сцена строит кит
+      const only3d = m.scene === 'stand' || m.scene === 'detail' || Number(packOf(m.id)?.slice(4) ?? 0) >= 8
+      if (!only3d) expect(have.has(m.id), m.id).toBe(true)
       for (const st of m.stems) expect(st.replace(/\$$/, '').length, `${m.id}: ${st}`).toBeGreaterThanOrEqual(2)
     }
   })

@@ -25,3 +25,5 @@
 .tag-btn.is-hover .sheet { filter: drop-shadow(0 2px 2px rgba(27, 14, 6, 0.45)) drop-shadow(0 12px 14px rgba(27, 14, 6, 0.4)); }
 .tag-btn.is-active { transform: translateY(1px) scale(0.985); }
 .tag-btn.is-active .sheet { filter: drop-shadow(0 1px 1px rgba(27, 14, 6, 0.55)); }
+/* ?lab=ui&only=bookmark: закладка поверх кадра фильма, как в приложении */
+.bm-stage { position: fixed; inset: 0; background: #1b1410 center / cover no-repeat; overflow: hidden; }

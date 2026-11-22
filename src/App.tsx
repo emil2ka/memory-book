@@ -4,16 +4,30 @@ import { PALETTE, css } from './scene/palette'
 import { SpriteBank } from './actors/sprites'
 import { SongPlayer } from './audio/SongPlayer'
 import { directDay } from './director'
-import { dayPalette, photoFromStored, preparePhoto, type PreparedPhoto } from './photos'
-import { deleteDay, demoDays, downloadBlob, exportDayZip, isDemo, listDays, localDate, newDayId, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
+import { byTakenTime, dayPalette, photoCardNote, photoFromStored, photoProblem, preparePhoto, type PreparedPhoto } from './photos'
+import { deleteDay, demoDays, downloadBlob, exportDayZip, getDay, isDemo, listDays, localDate, newDayId, saveDay, dayFolderName, type StoredDay, type StoredSong } from './store'
+import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDay, currentUser, localOnlyChosen, onUserChange, signIn, signOut, signUp, type CloudUser } from './store/cloud'
+import { AccountCard, CloudBadge, MovePrompt, MyDays, Welcome, type SaveState } from './ui/Account'
 import { seedFromString } from './timeline/rng'
+import type { SongShape } from './timeline/songShape'
+import { findListedByYt, findListedSong } from './director/songList'
+
+/** Песня из списка (по ролику или названию): у неё известны темп и «про что» она. */
+const listedSong = (s: { yt?: string; title?: string; artist?: string } | null | undefined) =>
+  s ? (findListedByYt(s.yt) ?? (s.title ? findListedSong(s.title, s.artist) : null)) : null
+/** Темп песни YouTube: известный из списка, иначе по ручке tempo. */
+const ytBpm = (s: { yt?: string; title?: string; artist?: string; tempo?: number } | null | undefined) => listedSong(s)?.bpm ?? knobBpm(s?.tempo)
 import type { TimelinePlayer } from './timeline/Player'
-import type { DirectorInput } from './types/script'
+import type { DirectorInput, PhotoCard, SongSuggestion } from './types/script'
 import { Bookmark } from './ui/Bookmark'
+import { YouTubeSong, knobBpm, youTubeId } from './ui/youtube'
+import { photoHash, requestPhotoCard } from './kit/scenePhoto'
+import { fetchSongAdvice } from './kit/sceneSong'
 import type { SongDraft } from './ui/Cassette'
-import { missingParts, type Need } from './ui/checks'
+import { countSentences, missingParts, type Need } from './ui/checks'
 import { FlagButton, PinNote, Sheet, SlipButton, TagButton } from './ui/paper'
 import { PersonPick, loadPerson, savePerson, type PersonKind } from './ui/PersonPick'
+import { HeroPick } from './ui/HeroPick'
 import { Shelf } from './ui/Shelf'
 import { applyKnobs, fadeOut, linkMeta, makeSongClock, unlockSong } from './ui/song'
 import { MAX_PHOTOS, WriteLayer, type PageRects } from './ui/WriteLayer'
@@ -30,6 +44,9 @@ interface Current {
 }
 
 const EMPTY_SONG: SongDraft = { kind: 'none' }
+
+/** Запись заметно изменилась (для повторного вопроса о песне): разница длины больше четверти и не меньше 40 знаков. */
+const textMovedOn = (was: string, now: string) => Math.abs(now.length - was.length) >= Math.max(40, was.length * 0.25)
 
 function isUrl(s?: string) {
   if (!s) return false
@@ -102,18 +119,77 @@ function DiaryApp() {
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [days, setDays] = useState<StoredDay[]>(demoDays)
+  // ---- аккаунт и облако (план 15 § 2): без VITE_SUPABASE_URL ничего этого не видно ----
+  const [cloudUser, setCloudUser] = useState<CloudUser | null>(() => currentUser())
+  const [welcome, setWelcome] = useState(() => cloudReady && !currentUser() && !localOnlyChosen())
+  const [saveState, setSaveState] = useState<SaveState>(() => (currentUser() ? 'cloud' : 'local'))
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [myDaysOpen, setMyDaysOpen] = useState(false)
+  const [cloudIds, setCloudIds] = useState<Set<string>>(new Set())
+  const [movePrompt, setMovePrompt] = useState<{ ids: string[]; busy: boolean } | null>(null)
+  useEffect(() => onUserChange((u) => setCloudUser(u)), [])
   const [rects, setRects] = useState<PageRects | null>(null)
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PreparedPhoto[]>([])
   const [photoBusy, setPhotoBusy] = useState(false)
+  /** что не так с последними фото (HEIC, не открылось, больше 5) — листок под карточкой фото */
+  const [photoNote, setPhotoNote] = useState('')
+  /**
+   * Карточки снимков (PhotoCard, /api/photo, src/kit/scenePhoto): по хэшу снимка, чтобы поздний ответ
+   * после «убрать фото» не лёг на чужой снимок. Нет сети или ключа — карточки нет, всё работает как раньше.
+   */
+  const [photoCards, setPhotoCards] = useState<Record<string, PhotoCard | null>>({})
+  const cardOf = (p: PreparedPhoto) => photoCards[photoHash(p.dataUrl)] ?? null
+
   const [song, setSong] = useState<SongDraft>(EMPTY_SONG)
   const [need, setNeed] = useState<Need[]>([])
+  /** записка «ты не поставил песню» на кассете (план 14 § 2): песни от ИИ по записи и фото; null — записки нет */
+  const [songAdvice, setSongAdvice] = useState<{ state: 'loading' | 'ready'; songs: SongSuggestion[]; why?: string; withPhotos?: boolean } | null>(null)
+  /** по чему уже спрашивали песню: повторно — если запись заметно изменилась или сменился набор карточек фото */
+  const adviceFor = useRef<{ text: string; cards: string } | null>(null)
+  /** какие снимки уже с карточками: добавили или убрали фото, пришла карточка — песни подбираются заново */
+  const cardsKey = photos.map((p) => (photoCards[photoHash(p.dataUrl)] ? photoHash(p.dataUrl) : '')).filter(Boolean).join(',')
+
+  // Запись написана (пауза 2.5 с), а песни нет — ИИ предлагает три песни. Без сети записки нет, ничего не блокирует.
+  useEffect(() => {
+    if (phase !== 'write' || song.kind !== 'none') return
+    const t = text.trim()
+    if (t.length < 30 || countSentences(t) < 1) return
+    const asked = adviceFor.current
+    if (asked !== null && !textMovedOn(asked.text, t) && asked.cards === cardsKey) return
+    const timer = setTimeout(() => {
+      const ask = { text: asked && !textMovedOn(asked.text, t) ? asked.text : t, cards: cardsKey }
+      adviceFor.current = ask
+      // старая записка остаётся, пока подбирается новая
+      setSongAdvice((cur) => (cur?.state === 'ready' ? cur : { state: 'loading', songs: [] }))
+      const cards = photos.map(cardOf)
+      void fetchSongAdvice(t, cards).then((a) => {
+        if (adviceFor.current !== ask) return
+        setSongAdvice((cur) => (a && a.songs.length ? { state: 'ready', songs: a.songs, why: a.why, withPhotos: cards.some(Boolean) } : cur?.state === 'ready' ? cur : null))
+      })
+    }, 2500)
+    return () => clearTimeout(timer)
+    // карточки фото учитываются, если уже пришли; ждать их не нужно
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, text, song.kind, cardsKey])
+
+  // ссылка YouTube (своя или из записки ИИ): ролик готовим заранее, чтобы в клике «Собрать» успеть его разблокировать
+  const draftYt = song.kind === 'link' ? song.yt ?? youTubeId(song.url) : null
+  useEffect(() => {
+    if (phase === 'write' && draftYt) void getYt().load(draftYt, knobBpm(song.tempo)).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, draftYt])
   const [current, setCurrent] = useState<Current | null>(null)
   const [status, setStatus] = useState<string>('')
   /** В сцене идёт фильм (в том числе запущенный в обход App, например из консоли). */
   const [sceneFilm, setSceneFilm] = useState(false)
 
   const getSong = () => (songRef.current ??= new SongPlayer())
+  /** песня по ссылке YouTube (своя или предложенная ИИ) — встроенный плеер, src/ui/youtube.ts */
+  const ytRef = useRef<YouTubeSong | null>(null)
+  const getYt = () => (ytRef.current ??= new YouTubeSong())
+  /** играет ли сейчас фильм под YouTube (для паузы пробелом) */
+  const ytOn = useRef(false)
 
   // Пока режиссёр думает (5–10 с), показываем, что именно сейчас происходит, а не одно «собираю…».
   const [busyStep, setBusyStep] = useState(0)
@@ -194,6 +270,61 @@ function DiaryApp() {
     for (const [k, v] of Object.entries(PALETTE)) root.style.setProperty(`--${k}`, css(v))
   }, [])
 
+  /** Сохранить день: всегда на устройстве; вошли — ещё и в облако (значок сверху говорит, где он). */
+  const persistDay = async (day: StoredDay) => {
+    await saveDay(day)
+    if (!currentUser()) {
+      setSaveState('local')
+      return
+    }
+    setSaveState('saving')
+    try {
+      await cloudSaveDay(day)
+      setCloudIds((ids) => new Set(ids).add(day.id))
+      setSaveState('cloud')
+    } catch (e) {
+      console.warn('[cloud]', e)
+      setSaveState('failed')
+    }
+  }
+
+  /** После входа: дни из облака — на это устройство (полка работает и без сети); свои дни без облака — предложить перенести. */
+  const syncFromCloud = async () => {
+    try {
+      const remote = await cloudListDays()
+      for (const d of remote) if (!(await getDay(d.id))) await saveDay(d)
+      const ids = new Set(remote.map((d) => d.id))
+      setCloudIds(ids)
+      const localOnly = (await listDays()).filter((d) => !isDemo(d.id) && !ids.has(d.id)).map((d) => d.id)
+      if (localOnly.length) setMovePrompt({ ids: localOnly, busy: false })
+      setSaveState('cloud')
+      await refreshDays()
+    } catch (e) {
+      console.warn('[cloud]', e)
+      setSaveState('failed')
+    }
+  }
+
+  const moveToCloud = async () => {
+    if (!movePrompt) return
+    setMovePrompt({ ...movePrompt, busy: true })
+    setSaveState('saving')
+    let ok = true
+    for (const id of movePrompt.ids) {
+      const d = await getDay(id)
+      if (!d) continue
+      try {
+        await cloudSaveDay(d)
+        setCloudIds((ids) => new Set(ids).add(id))
+      } catch (e) {
+        console.warn('[cloud]', e)
+        ok = false
+      }
+    }
+    setSaveState(ok ? 'cloud' : 'failed')
+    setMovePrompt(null)
+  }
+
   const refreshDays = useCallback(async () => {
     try {
       setDays([...demoDays, ...(await listDays())])
@@ -264,6 +395,8 @@ function DiaryApp() {
       worldRef.current?.dispose()
       worldRef.current = null
       songRef.current?.dispose()
+      ytRef.current?.dispose()
+      ytRef.current = null
     }
   }, [refreshDays])
 
@@ -317,10 +450,14 @@ function DiaryApp() {
 
   // Черновик → сцена.
   const caretRef = useRef<number | null>(null)
+  /** кегль книги в долях ширины страницы (книга мельчит шрифт ступенями, пока текст не влезет) — поле ввода берёт тот же */
+  const [pageFont, setPageFont] = useState<number | undefined>(undefined)
   useEffect(() => {
     if (phase !== 'write' && phase !== 'directing') return
     const w = worldRef.current
     w?.setDraftText(text)
+    const f = (w as unknown as { pageFontFrac?: () => number } | null)?.pageFontFrac?.()
+    if (f && f !== pageFont) setPageFont(f)
     // setDraftText перерисовывает страницу — позицию курсора отправляем заново
     if (phase === 'write') (w as unknown as { setDraftCaret?: (p: number | null) => void } | null)?.setDraftCaret?.(caretRef.current)
   }, [text, phase])
@@ -352,7 +489,15 @@ function DiaryApp() {
       if (e.key === 'Escape' && phase !== 'write' && sp && sp.playing) sp.seek(sp.duration)
       if (phase === 'film' && p && e.key === ' ' && (e.target as HTMLElement)?.tagName !== 'TEXTAREA') {
         e.preventDefault()
-        if (p.playing) { p.pause(); songRef.current?.pause() } else { void songRef.current?.play().catch(() => {}); p.play() }
+        if (p.playing) {
+          p.pause()
+          songRef.current?.pause()
+          if (ytOn.current) ytRef.current?.pause()
+        } else {
+          if (ytOn.current) ytRef.current?.resume()
+          else void songRef.current?.play().catch(() => {})
+          p.play()
+        }
       }
     }
     window.addEventListener('keydown', onKey)
@@ -365,6 +510,8 @@ function DiaryApp() {
     playerRef.current?.pause()
     playerRef.current = null
     songRef.current?.pause()
+    ytRef.current?.pause()
+    ytOn.current = false
   }
 
   const toShelf = () => {
@@ -402,6 +549,8 @@ function DiaryApp() {
       setText('')
       setPhotos([])
       setSong(EMPTY_SONG)
+      setSongAdvice(null)
+      adviceFor.current = null
       songLoadedFor.current = null
     }
     draftPending.current = true
@@ -450,17 +599,47 @@ function DiaryApp() {
         console.warn('[song] не запустилась, фильм идёт без звука', e)
       }
     }
-    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock, photoCount: cur.photos.length, dayId: cur.day.id })
-    if (clock && sp) player.setAudio(sp)
+    // ссылка YouTube: фильм ждёт, пока песня реально заиграет (реклама, загрузка), часы — от плеера
+    let yt: YouTubeSong | null = null
+    const ytId = !withSong && cur.day.song?.kind === 'link' ? cur.day.song.yt ?? youTubeId(cur.day.song.url) : null
+    if (ytId) {
+      const y = getYt()
+      setStatus('включаю песню…')
+      try {
+        await y.load(ytId, ytBpm(cur.day.song))
+        if (await y.start()) {
+          yt = y
+          clock = y.clock()
+          beatTimes = y.beatTimes()
+        } else console.warn('[youtube] не заиграла, фильм идёт без звука', y.error)
+      } catch (e) {
+        console.warn('[youtube] не загрузилась, фильм идёт без звука', e)
+      }
+      setStatus('')
+    }
+    ytOn.current = !!yt
+    // форма песни для хореографа (план 15): файл — доли и кривая громкости из анализа; YouTube — известный темп
+    const shape: SongShape | undefined = clock && sp && !yt && sp.analysis
+      ? { bpm: sp.analysis.bpm || undefined, beatTimes, energyCurve: sp.analysis.energyCurve, duration: sp.analysis.duration }
+      : yt
+        ? { bpm: ytBpm(cur.day.song), beatTimes }
+        : undefined
+    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock, photoCount: cur.photos.length, dayId: cur.day.id, song: shape })
+    if (clock && sp && !yt) player.setAudio(sp)
+    if (yt) player.setAudio(yt)
     playerRef.current = player
     player.onEnd(async () => {
-      if (clock && sp) fadeOut(sp)
+      if (clock && sp && !yt) fadeOut(sp)
+      if (yt) {
+        yt.fadeOut()
+        ytOn.current = false
+      }
       const cover = await captureCover()
       // Новый день сохраняется сам: «На полку» без «Сохранить» не должно терять запись.
       let saved = cur.saved
       if (!saved) {
         try {
-          await saveDay({ ...cur.day })
+          await persistDay({ ...cur.day })
           saved = true
           setStatus('день сохранён на полке')
           void refreshDays()
@@ -483,13 +662,21 @@ function DiaryApp() {
     try {
       const room = MAX_PHOTOS - photos.length
       const next = [...photos]
-      for (const f of files.slice(0, room)) {
+      const sorted = byTakenTime(files)
+      const failed: File[] = []
+      for (const f of sorted.slice(0, room)) {
         try {
-          next.push(await preparePhoto(f))
+          const p = await preparePhoto(f)
+          next.push(p)
+          // карточку снимка просим сразу: придёт через 3–5 с, тот же снимок второй раз — из кэша
+          const key = photoHash(p.dataUrl)
+          void requestPhotoCard(p.dataUrl, text).then((card) => setPhotoCards((c) => ({ ...c, [key]: card })))
         } catch (e) {
           console.warn('[photos] не читается', f.name, e)
+          failed.push(f)
         }
       }
+      setPhotoNote(photoProblem(failed, Math.max(0, sorted.length - room)))
       setPhotos(next)
       worldRef.current?.setDraftPhotos(next.map((p) => p.image))
       setNeed((n) => n.filter((x) => x !== 'photos'))
@@ -522,7 +709,10 @@ function DiaryApp() {
   }
 
   const collect = async () => {
-    const songOk = (song.kind === 'file' && !!song.file) || (song.kind === 'link' && isUrl(song.url))
+    // песня не обязательна (план 14 § 2): нет — фильм идёт как есть; ссылка годится и без адреса, если есть название
+    // (песню назвал ИИ в записке «ты не поставил песню»)
+    // песня обязательна (план 15: история подстраивается под песню): одна из предложенных ИИ, свой файл или ссылка
+    const songOk = (song.kind === 'file' && !!song.file) || (song.kind === 'link' && (isUrl(song.url) || !!song.title))
     const miss = missingParts({ text, photos: photos.length, song: songOk })
     if (miss.length) {
       setNeed(miss)
@@ -531,16 +721,42 @@ function DiaryApp() {
     setNeed([])
     const sp = song.kind === 'file' ? getSong() : null
     // Звук разблокируется в том же клике, иначе браузер не даст играть после ответа режиссёра.
+    if (draftYt) ytRef.current?.prime()
     if (sp) await unlockSong(sp)
     setPhase('directing')
+    // живое ожидание (план 13 § 5): рука постукивает ручкой, человечек выглядывает из книги
+    worldRef.current?.setWaiting(true)
+    try {
+      await collectDirected(sp)
+    } catch (e) {
+      worldRef.current?.setWaiting(false)
+      throw e
+    }
+  }
 
+  const collectDirected = async (sp: ReturnType<typeof getSong> | null) => {
     const input: DirectorInput = {
       text: text.trim(),
+      // род героя для строк рассказа: «я встретился» / «я встретилась»
+      hero: person,
       photos: photos.map((p) => p.dataUrl),
+      // карточки снимков: у всех есть — режиссёру не нужны сами картинки; нет — directDay подождёт до 6 с
+      photoCards: photos.map(cardOf),
       song:
         song.kind === 'file'
-          ? { title: song.title, measuredTempoBpm: song.bpm }
-          : { title: song.title || undefined, artist: song.artist || undefined },
+          ? { title: song.title, measuredTempoBpm: song.bpm, ...(sp?.analysis ? { energy: sp.analysis.energy } : {}) }
+          : song.kind === 'link'
+            ? {
+                title: song.title || undefined,
+                artist: song.artist || undefined,
+                // история под песню: известный темп (список), энергия и «про что» песня
+                ...(listedSong(song) ? { bpm: listedSong(song)!.bpm, mood: listedSong(song)!.mood } : {}),
+                ...(typeof song.energy === 'number' ? { energy: song.energy } : {}),
+                ...(song.why && !listedSong(song) ? { mood: song.why } : {}),
+                // «Почему так»: «Песня: предложил ИИ по записи и фото — {why}» (общее «почему» ответа /api/song)
+                ...(song.suggested ? { suggested: { why: songAdvice?.why || song.why || '', photos: !!songAdvice?.withPhotos } } : {}),
+              }
+            : null,
     }
     const res = await directDay(input)
     let script = song.kind === 'link' ? applyKnobs(res.script, { tempo: song.tempo, energy: song.energy }) : res.script
@@ -550,10 +766,21 @@ function DiaryApp() {
     if (sp) {
       await Promise.race([sp.analysisReady, new Promise((r) => setTimeout(r, 6000))])
     }
-    const storedSong: StoredSong =
+    const storedSong: StoredSong | null =
       song.kind === 'file'
         ? { kind: 'file', blob: song.file, title: song.title, bpm: sp?.analysis?.bpm || song.bpm }
-        : { kind: 'link', url: song.url, title: song.title, artist: song.artist, tempo: song.tempo, energy: song.energy }
+        : song.kind === 'link'
+          ? {
+              kind: 'link',
+              url: song.url,
+              title: song.title,
+              artist: song.artist,
+              tempo: song.tempo,
+              energy: song.energy,
+              ...(draftYt ? { yt: draftYt } : {}),
+              ...(song.suggested ? { suggested: true, why: songAdvice?.why || song.why } : {}),
+            }
+          : null
     const now = new Date()
     const day: StoredDay = {
       id: editingId.current ?? newDayId(now),
@@ -569,6 +796,7 @@ function DiaryApp() {
     }
     if (res.source === 'fallback') console.info('[director] запасной сценарий:', res.reason)
     draftPending.current = false
+    worldRef.current?.setWaiting(false)
     await startFilm({ day, photos, stored: false, saved: false }, !!sp)
   }
 
@@ -577,6 +805,13 @@ function DiaryApp() {
   openDayRef.current = (d: StoredDay) => void openDay(d)
   const openDay = async (d: StoredDay) => {
     setStatus('')
+    // день с песней YouTube: в клике по книге разблокируем плеер (если ролик уже готов)
+    const dYt = d.song?.kind === 'link' ? d.song.yt ?? youTubeId(d.song.url) : null
+    if (dYt) {
+      const y = getYt()
+      if (y.videoId === dYt) y.prime()
+      else void y.load(dYt, knobBpm(d.song?.tempo)).catch(() => {})
+    }
     setPhase('opening')
     let prepared: PreparedPhoto[] = []
     try {
@@ -604,7 +839,7 @@ function DiaryApp() {
   const save = async () => {
     if (!current) return
     try {
-      await saveDay({ ...current.day })
+      await persistDay({ ...current.day })
       setCurrent({ ...current, saved: true, stored: true })
       setStatus('день на полке')
       await refreshDays()
@@ -628,6 +863,7 @@ function DiaryApp() {
   const replay = () => {
     if (!current) return
     const withSong = current.day.song?.kind === 'file' && !!songRef.current && songLoadedFor.current === current.day.song.blob
+    ytRef.current?.prime()
     void startFilm(current, withSong)
   }
 
@@ -635,14 +871,93 @@ function DiaryApp() {
     if (!current || isDemo(current.day.id)) return
     if (!window.confirm(`Удалить день «${current.day.script.title}»? Это нельзя отменить.`)) return
     await deleteDay(current.day.id)
+    if (cloudIds.has(current.day.id)) void cloudDeleteDay(current.day.id).catch((e) => console.warn('[cloud]', e))
     await refreshDays()
     toShelf()
   }
+
+  // вошли (или уже были вошедшими при открытии) — подтянуть облако; вышли — значок «только на устройстве»
+  useEffect(() => {
+    if (!cloudReady) return
+    if (cloudUser) void syncFromCloud()
+    else {
+      setCloudIds(new Set())
+      setSaveState('local')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudUser?.id])
+
+  // обложки для 2D-списка «Мои дни»: первое фото дня (адреса живут, пока список открыт)
+  const [covers, setCovers] = useState<Record<string, string>>({})
+  useEffect(() => {
+    if (!myDaysOpen) return
+    const urls: Record<string, string> = {}
+    for (const d of days) if (d.photos[0]) urls[d.id] = URL.createObjectURL(d.photos[0])
+    setCovers(urls)
+    return () => Object.values(urls).forEach((u) => URL.revokeObjectURL(u))
+  }, [myDaysOpen, days])
 
   return (
     <div className="app">
       <div ref={host} className="stage" />
       <div className={`overlay phase-${phase}${sceneFilm ? ' scene-film' : ''}`}>
+        {cloudReady && phase !== 'film' && !welcome && (
+          <CloudBadge state={saveState} email={cloudUser?.email} onClick={() => setAccountOpen((o) => !o)} />
+        )}
+        {cloudReady && accountOpen && (
+          <AccountCard
+            email={cloudUser?.email ?? null}
+            onDays={() => {
+              setMyDaysOpen(true)
+              setAccountOpen(false)
+            }}
+            onSignOut={() => {
+              void signOut()
+              setAccountOpen(false)
+            }}
+            onSignIn={() => {
+              setWelcome(true)
+              setAccountOpen(false)
+            }}
+            onClose={() => setAccountOpen(false)}
+            person={person}
+            onPerson={pickPerson}
+          />
+        )}
+        {phase === 'shelf' && !myDaysOpen && !welcome && (
+          <button className="my-days-btn" onClick={() => setMyDaysOpen(true)}>
+            мои дни · {days.length}
+          </button>
+        )}
+        {myDaysOpen && (phase === 'shelf' || phase === 'after') && (
+          <MyDays
+            days={days}
+            covers={covers}
+            inCloud={cloudIds}
+            onOpen={(d) => {
+              setMyDaysOpen(false)
+              void openDay(d)
+            }}
+            onClose={() => setMyDaysOpen(false)}
+          />
+        )}
+        {movePrompt && <MovePrompt count={movePrompt.ids.length} busy={movePrompt.busy} onYes={() => void moveToCloud()} onNo={() => setMovePrompt(null)} />}
+        {welcome && (
+          <Welcome
+            onSignIn={async (e, p) => {
+              await signIn(e, p)
+              setWelcome(false)
+            }}
+            onSignUp={async (e, p) => {
+              await signUp(e, p)
+              setWelcome(false)
+            }}
+            onLocal={() => {
+              chooseLocalOnly(true)
+              setWelcome(false)
+            }}
+          />
+        )}
         {(phase === 'shelf' || phase === 'opening' || (phase === 'film' && current?.stored === true)) && (
           <Shelf days={days} hidden={phase !== 'shelf' || sceneFilm} onOpen={(d) => void openDay(d)} onNew={newDay} />
         )}
@@ -653,6 +968,8 @@ function DiaryApp() {
           </PinNote>
         )}
         {phase === 'shelf' && !sceneFilm && <PersonPick value={person} onChange={pickPerson} />}
+        {/* «Кто ведёт дневник?» — один раз, на первом экране полки (после входа) */}
+        {phase === 'shelf' && !sceneFilm && !welcome && <HeroPick value={person} onChange={pickPerson} />}
         {phase === 'shelf' && !sceneFilm && ctaReady && (
           <div className={`shelf-cta${ctaAt ? ' at-book' : ''}`} style={ctaAt ? { right: ctaAt.right, top: ctaAt.top, bottom: 'auto' } : undefined}>
             <TagButton onClick={newDay} seed="cta">
@@ -678,12 +995,18 @@ function DiaryApp() {
             sceneCaret={sceneCaret}
             onCaret={onCaret}
             song={song}
+            // песня обязательна (план 15): без неё сургуч «Собрать» бледный, под страницей «♪ выбери песню дня»
+            songReady={(song.kind === 'file' && !!song.file) || (song.kind === 'link' && (isUrl(song.url) || !!song.title))}
             onSong={changeSong}
+            songAdvice={songAdvice}
             need={need}
             busy={phase !== 'write'}
             busyText={phase === 'directing' ? busyText : undefined}
             hidden={phase === 'film'}
             photoBusy={photoBusy}
+            photoNote={photoNote}
+            pageFont={pageFont}
+            photoSeen={photoCardNote([...photos].reverse().map(cardOf).find(Boolean))}
             onCollect={() => void collect()}
             onBack={toShelf}
           />

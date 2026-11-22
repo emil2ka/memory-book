@@ -192,12 +192,17 @@ export function chooseItems(script: DayScript, seed: number, items: ItemDef[] = 
   return out
 }
 
-/** Цвет книги-дня на полке: первый цвет палитры дня, иначе по id. */
+/** Насыщенные цвета корешков: полка читается серией, а не стеной одного тёмного тона. */
+export const SPINE_COLORS = ['brick_red', 'amber', 'teal', 'coral', 'navy', 'ochre', 'soft_green']
+
+/**
+ * Цвет книги-дня на полке (и обложки в фильме — тот же): насыщенный цвет из палитры дня,
+ * какой из них — по id (у похожих палитр разные дни получают разные цвета); в палитре таких нет — по id из всех.
+ */
 export function spineColorName(paletteHint: string[] | undefined, id: string): string {
-  const names = ['brick_red', 'amber', 'soft_green', 'slate_blue', 'navy', 'ochre', 'teal', 'coral', 'brown']
-  const first = paletteHint?.find((n) => n !== 'white' && n !== 'cream' && n !== 'grey_blue')
-  if (first) return first
   let h = 0
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return names[h % names.length]
+  const own = (paletteHint ?? []).filter((n) => SPINE_COLORS.includes(n))
+  const pool = own.length ? own : SPINE_COLORS
+  return pool[h % pool.length]
 }

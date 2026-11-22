@@ -2,6 +2,7 @@
 // Vercel (Web-сигнатура) и локальный dev через плагин в vite.config.ts зовут одну и ту же логику.
 // Ключ читается только здесь, из process.env, и никогда не уходит в ответ или логи.
 import Anthropic from '@anthropic-ai/sdk'
+import { sanitizePhotoCard } from '../src/kit/scenePhoto'
 import type { DayScript, DirectorInput } from '../src/types/script'
 import { buildUserText, SYSTEM_PROMPT } from '../src/director/prompt'
 import { buildScriptSchema } from '../src/director/schema'
@@ -60,9 +61,15 @@ export function parseInput(body: unknown): DirectorInput {
         title: typeof s.title === 'string' ? s.title.slice(0, 200) : undefined,
         artist: typeof s.artist === 'string' ? s.artist.slice(0, 200) : undefined,
         measuredTempoBpm: typeof s.measuredTempoBpm === 'number' && s.measuredTempoBpm > 0 ? s.measuredTempoBpm : undefined,
+        bpm: typeof s.bpm === 'number' && s.bpm >= 40 && s.bpm <= 220 ? s.bpm : undefined,
+        energy: typeof s.energy === 'number' && s.energy >= 0 && s.energy <= 1 ? s.energy : undefined,
+        mood: typeof s.mood === 'string' ? s.mood.slice(0, 120) : undefined,
       }
     : null
-  return { text, photos, song }
+  // карточки снимков (по индексу фото): режиссёр читает их текстом вместо картинок
+  const photoCards = Array.isArray(b.photoCards) ? b.photoCards.slice(0, MAX_PHOTOS).map((c) => sanitizePhotoCard(c)) : undefined
+  const hero = b.hero === 'boy' || b.hero === 'girl' ? b.hero : undefined
+  return { text, photos, song, ...(photoCards && photoCards.some(Boolean) ? { photoCards } : {}), ...(hero ? { hero } : {}) }
 }
 
 function imageBlock(dataUrl: string): Anthropic.ImageBlockParam {
@@ -71,9 +78,11 @@ function imageBlock(dataUrl: string): Anthropic.ImageBlockParam {
 }
 
 /** Один вызов LLM на день. Бросает DirectorError при отказе, обрыве или кривом JSON. */
-export async function runDirector(input: DirectorInput, opts: { model?: string; effort?: Effort; signal?: AbortSignal } = {}): Promise<DirectorRun> {
+export async function runDirector(input: DirectorInput, opts: { model?: string; effort?: Effort; signal?: AbortSignal; thinking?: 'off' | 'default' } = {}): Promise<DirectorRun> {
   const model = opts.model ?? process.env.DIRECTOR_MODEL ?? DEFAULT_MODEL
   const effort = opts.effort ?? ((process.env.DIRECTOR_EFFORT as Effort | undefined) || 'low')
+  // без размышлений режиссёр отвечает в 2–3 раза быстрее; фильм должен стартовать через несколько секунд после «Собрать»
+  const thinking = opts.thinking ?? ((process.env.DIRECTOR_THINKING as 'off' | 'default' | undefined) || 'off')
   const t0 = Date.now()
   let response: Anthropic.Message
   try {
@@ -89,6 +98,7 @@ export async function runDirector(input: DirectorInput, opts: { model?: string; 
             content: [...input.photos.map(imageBlock), { type: 'text', text: buildUserText(input) }],
           },
         ],
+        ...(thinking === 'off' ? { thinking: { type: 'disabled' as const } } : {}),
         output_config: { effort, format: { type: 'json_schema', schema: SCRIPT_SCHEMA } },
       },
       { signal: opts.signal },
@@ -108,7 +118,7 @@ export async function runDirector(input: DirectorInput, opts: { model?: string; 
   } catch {
     throw new DirectorError('bad_json', 'Ответ не JSON', 502)
   }
-  const { script, issues } = validateScript(raw, input.text)
+  const { script, issues } = validateScript(raw, input.text, { photos: Math.max(input.photos.length, input.photoCards?.length ?? 0), cards: input.photoCards, hero: input.hero })
   const u = response.usage
   return {
     script,
@@ -125,7 +135,7 @@ export async function runDirector(input: DirectorInput, opts: { model?: string; 
   }
 }
 
-// Простой лимит по IP: 12 запросов за 10 минут на экземпляр функции.
+// Простой лимит по IP: 12 запросов за 10 минут на экземпляр функции (DIRECTOR_RATE_LIMIT — для прогонов оценки).
 const hits = new Map<string, number[]>()
 function rateLimited(ip: string): boolean {
   const now = Date.now()
@@ -133,7 +143,7 @@ function rateLimited(ip: string): boolean {
   list.push(now)
   hits.set(ip, list)
   if (hits.size > 5000) hits.clear()
-  return list.length > 12
+  return list.length > (Number(process.env.DIRECTOR_RATE_LIMIT) || 12)
 }
 
 /** Общая логика для Vercel и dev-сервера. */

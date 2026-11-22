@@ -1,11 +1,15 @@
 // Страховка (05-director-llm, «Страховка в коде»): из любого ответа LLM делает валидный DayScript.
-import type { ActionId, Beat, BeatResult, CameraId, Contradiction, DayScript, Mood, PlaceId, SceneEffectId, StagingId, Tempo, TimeOfDay, Weather } from '../types/script'
+import type { ActionId, Beat, BeatResult, CameraId, Contradiction, DayScript, Mood, PhotoCard, PlaceId, SceneEffectId, StagingId, Tempo, TimeOfDay, Weather } from '../types/script'
 import { contradictionFromText, fallbackDirect, moodFromText, varyActions } from './fallback'
 import { ACTION_SYNONYMS, CAMERA_SYNONYMS, LEXICON, RESULT_SYNONYMS, SCENE_EFFECT_SYNONYMS, STAGING_SYNONYMS } from './lexicon'
 import { ids } from './schema'
 import { expandToWord, findStem, isLetter, nearestQuote, norm, words } from './text'
 import { findByName, findByWord, kitById } from '../kit/library'
 import { kitFromQuote, kitResult, makeResult, toKit } from './results'
+import { MAX_BEATS, MIN_BEATS, emotionOnly, settleFeelings, storyRules } from './beatFields'
+import { emotionFromText, isAct, isEmotion } from './emotions'
+import { matchPhotos } from './photos'
+import { dropRepeats, fillStories, photoRef } from './story'
 
 export interface ValidationReport {
   script: DayScript
@@ -118,8 +122,24 @@ function fixTitle(raw: string, fallbackTitle: string): string {
   return count >= 3 && count <= 7 ? t : fallbackTitle
 }
 
+/**
+ * Бит из конца длинной записи (≥ 600 знаков), если последний бит режиссёра — раньше последней четверти текста:
+ * ближайший к концу бит запасного словаря после него. null — не нужен или не нашёлся.
+ */
+export function endingBeat<B extends Beat>(beats: readonly Beat[], text: string, candidates: readonly B[]): B | null {
+  const len = text.trim().length
+  if (len < 600 || !beats.length) return null
+  const lastPos = Math.max(...beats.map((b) => text.indexOf(b.quote)))
+  if (lastPos >= len * 0.75) return null
+  const later = candidates
+    .map((b) => ({ b, pos: text.indexOf(b.quote) }))
+    .filter((x) => x.pos > lastPos + len * 0.1 && !beats.some((b) => b.quote === x.b.quote))
+    .sort((a, b) => b.pos - a.pos)
+  return later[0]?.b ?? null
+}
+
 /** Проверить и починить сценарий. Никогда не бросает. */
-export function validateScript(raw: unknown, text: string): ValidationReport {
+export function validateScript(raw: unknown, text: string, ctx: { photos?: number; cards?: readonly (PhotoCard | null)[]; hero?: 'boy' | 'girl' } = {}): ValidationReport {
   const issues: string[] = []
   const stats = { beatsIn: 0, dropped: 0, padded: 0, quotesFixed: 0, idsFixed: 0 }
   const src = isObj(raw) ? raw : {}
@@ -164,11 +184,30 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
       stats.idsFixed += nFixed
       issues.push(`id исправлены в бите «${fq.quote}»`)
     }
-    beats.push({ quote: fq.quote, action: action.value, result: result.result, camera: camera.value, effect })
+    // поля плана 13 как пришли — их приводит в порядок storyRules ниже
+    beats.push({
+      quote: fq.quote,
+      action: action.value,
+      result: result.result,
+      camera: camera.value,
+      effect,
+      ...(typeof b.hero_prop === 'string' ? { hero_prop: b.hero_prop } : {}),
+      ...(b.place === null || typeof b.place === 'string' ? { place: (b.place as string | null) || null } : {}),
+      ...(b.companion === null || isObj(b.companion) ? { companion: b.companion as Beat['companion'] } : {}),
+      ...(typeof b.kind === 'string' ? { kind: b.kind as Beat['kind'] } : {}),
+      ...(typeof b.weight === 'number' ? { weight: Math.round(b.weight) as Beat['weight'] } : {}),
+      ...(inList<TimeOfDay>(ids.timesOfDay, b.time_of_day) ? { time_of_day: b.time_of_day } : {}),
+      ...(inList<Weather>(ids.weathers, b.weather) ? { weather: b.weather } : {}),
+      ...(typeof b.photo === 'number' ? { photo: Math.round(b.photo) } : b.photo === null ? { photo: null } : {}),
+      ...(typeof b.story === 'string' ? { story: b.story } : {}),
+      ...(isEmotion(b.emotion) ? { emotion: b.emotion } : b.emotion === null ? { emotion: null } : {}),
+      ...(isAct(b.act) ? { act: b.act } : b.act === null ? { act: null } : {}),
+    })
   }
-  if (beats.length > 7) {
-    issues.push(`битов ${beats.length} → 7`)
-    beats.length = 7
+  // грубый предел до правил истории (там — MAX_BEATS по важности)
+  if (beats.length > 10) {
+    issues.push(`битов ${beats.length} → 10`)
+    beats.length = 10
   }
   // не больше MAX_MAKES дорисовок: лишние — кристалл (каждая дорисовка — отдельный вызов)
   let makes = 0
@@ -180,18 +219,18 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
     }
   }
 
-  // Меньше 4 — добрать из запасного словаря, потом кристаллами на самых длинных словах.
-  if (beats.length < 4) {
+  // Меньше MIN_BEATS — добрать из запасного словаря (только новые мысли), потом кристаллами на самых длинных словах.
+  if (beats.length < MIN_BEATS) {
     for (const fbBeat of fb.beats) {
-      if (beats.length >= 4) break
-      if (usedQuotes.has(fbBeat.quote)) continue
+      if (beats.length >= MIN_BEATS) break
+      if (usedQuotes.has(fbBeat.quote) || beats.some((b) => b.quote.includes(fbBeat.quote) || fbBeat.quote.includes(b.quote))) continue
       usedQuotes.add(fbBeat.quote)
-      beats.push({ ...fbBeat, action: fbBeat.result.kind === 'crystal' || fbBeat.result.id === 'crystal' ? 'walk' : fbBeat.action })
+      beats.push({ ...fbBeat, story: undefined, action: fbBeat.result.kind === 'crystal' || fbBeat.result.id === 'crystal' ? 'walk' : fbBeat.action })
       stats.padded++
     }
     const long = words(text).filter((w) => !usedQuotes.has(w.text)).sort((a, b) => b.text.length - a.text.length)
     let k = 0
-    while (beats.length < 4) {
+    while (beats.length < MIN_BEATS) {
       const w = long[k++]
       const quote = w ? w.text : beats[0]?.quote ?? (text.trim() || text)
       if (w) usedQuotes.add(w.text)
@@ -235,6 +274,70 @@ export function validateScript(raw: unknown, text: string): ValidationReport {
   const weather = inList<Weather>(ids.weathers, src.weather) ? src.weather : fb.weather
   const place = inList<PlaceId>(ids.places, src.place) ? src.place : fb.place
   if (time !== src.time_of_day || weather !== src.weather || place !== src.place) issues.push('сцена (время/погода/место) дополнена')
+
+  // --- правила истории (план 13): главный предмет — вещь, result = он, без повторов подряд, 4–6 битов ---
+  // какие биты — чувства, решает код (режиссёр путает): цитата-чувство без действия — бит-чувство, остальное — обычный бит
+  issues.push(...settleFeelings(beats))
+  // эмоции (до правил истории: бит-чувство остаётся без предмета): бит-чувство без эмоции от режиссёра — по словам цитаты и строки; не нашлась — обычный бит с предметом
+  for (const b of beats) {
+    if (b.emotion === undefined || (b.kind === 'feeling' && !b.emotion)) {
+      const e = emotionFromText(`${b.quote} ${b.story ?? ''}`)
+      if (e) b.emotion = e
+    }
+  }
+  const told = storyRules(beats, { contradiction, time_of_day: time, weather, text })
+  issues.push(...told.issues)
+  beats.splice(0, beats.length, ...told.beats)
+  // одна мысль — один раз: бит, чья мысль уже сказана рассказом прошлого бита, или то же чувство подряд — уходит
+  const rep = dropRepeats(beats, MIN_BEATS, emotionOnly)
+  if (rep.issues.length) {
+    issues.push(...rep.issues)
+    beats.splice(0, beats.length, ...rep.beats)
+  }
+  // длинная запись, а биты кончились в середине дня — рассказ обрывается: бит из конца записи (запасной словарь)
+  const ending = endingBeat(beats, text, fb.beats)
+  if (ending) {
+    if (beats.length >= MAX_BEATS) {
+      // место — за счёт самого лёгкого бита (не первого и не с человеком)
+      let drop = -1
+      beats.forEach((b, i) => {
+        if (i === 0 || b.companion || (drop >= 0 && (b.weight ?? 2) >= (beats[drop].weight ?? 2))) return
+        drop = i
+      })
+      if (drop >= 0) beats.splice(drop, 1)
+    }
+    if (beats.length < MAX_BEATS) {
+      beats.push({ ...ending, story: undefined })
+      issues.push(`конец дня: добавлен бит «${ending.quote}»`)
+    }
+  }
+  // снимки: номер в пределах фото дня, один бит на снимок (первому биту снимок проявляет сцена во время раскрытия книги)
+  const seenPhoto = new Set<number>()
+  beats.forEach((b, i) => {
+    if (b.photo === undefined || b.photo === null) return
+    const n = ctx.photos ?? 0
+    if (b.photo < 0 || b.photo >= n || seenPhoto.has(b.photo)) {
+      issues.push(`photo ${b.photo} у бита «${b.quote}» → null`)
+      b.photo = null
+      return
+    }
+    seenPhoto.add(b.photo)
+  })
+  // режиссёр не связал снимок с фразой — связываем кодом по вещам и месту с фото (match — запасной признак);
+  // связь хранится в сценарии, и день с полки собирается так же
+  if (ctx.cards?.some(Boolean)) {
+    const taken = beats.map((b, i) => (b.photo !== undefined && b.photo !== null ? i : -1)).filter((i) => i >= 0)
+    const pairs = matchPhotos(beats, ctx.cards, { takenBeats: taken, takenPhotos: [...seenPhoto], max: Math.max(0, 3 - seenPhoto.size) })
+    for (const [i, p] of pairs) {
+      beats[i].photo = p
+      issues.push(`снимок ${p} → бит «${beats[i].quote}»`)
+    }
+  }
+  // строки рассказа (план 15 § 1.1): строка режиссёра, если годится (длина, имена из текста), иначе — предложение бита со связкой
+  // факты сверяем с записью и снимками; род «я» — по герою
+  const st = fillStories(beats, text, { hero: ctx.hero, ref: [text, ...photoRef(ctx.cards)].join('\n') })
+  beats.splice(0, beats.length, ...st.beats)
+  issues.push(...st.issues)
   let palette = (Array.isArray(src.palette_hint) ? src.palette_hint : []).filter((c): c is string => inList(ids.paletteColors, c))
   palette = [...new Set(palette)].slice(0, 5)
   if (palette.length === 0) {
@@ -271,7 +374,7 @@ export function checkScript(s: DayScript, text: string): string[] {
   if (!s || typeof s !== 'object') return ['не объект']
   const tw = s.title?.split(/\s+/).filter((x) => /[\p{L}\p{N}]/u.test(x)).length ?? 0
   if (tw < 3 || tw > 7) errs.push(`title ${tw} слов`)
-  if (!Array.isArray(s.beats) || s.beats.length < 4 || s.beats.length > 7) errs.push(`битов ${s.beats?.length}`)
+  if (!Array.isArray(s.beats) || s.beats.length < MIN_BEATS || s.beats.length > MAX_BEATS) errs.push(`битов ${s.beats?.length}`)
   for (const b of s.beats ?? []) {
     if (!b.quote || !text.includes(b.quote)) errs.push(`quote не подстрока: «${b.quote}»`)
     if (!ids.actions.includes(b.action)) errs.push(`action ${b.action}`)

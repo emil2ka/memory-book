@@ -23,18 +23,17 @@ export const pack1: Entry[] = [
   )),
   e('drinks', item(
     { id: 'coffee', ru: 'кофе', kk: 'кофе', en: 'coffee', stems: ['кофе', 'кофей', 'капучин', 'латте', 'эспресс', 'американо', 'coffee'], tags: ['drink', 'warm', 'cafe', 'morning'], hold: 'hand', grip: [0, 4.5, 0], scene: 'hand', fx: [{ kind: 'steam', at: [0, 9.5, 0] }] },
-    // стакан навынос: крышка, гофра-манжета, логотип — читается в 15 пикселях
-    cyl([0, 0.5, 0], [5, 1, 5], 'paperShade', { k: 16 }),
-    cyl([0, 2.75, 0], [5.5, 3.5, 5.5], 'white', { k: 16, n: 'body' }),
-    cyl([0, 7.5, 0], [6.5, 3, 6.5], 'white', { k: 16 }),
-    cyl([0, 5.25, 0], [6.3, 3.5, 6.3], 'wood', { k: 16, n: 'sleeve' }),
-    cyl([0, 5.25, 0], [6.5, 0.5, 6.5], 'brown', { k: 16 }),
-    sph([0, 5.25, 3.1], [2.5, 2.5, 0.5], 'cream'),
-    box([0, 5.25, 3.4], [1.5, 0.5, 0.5], 'brownDark'),
-    cyl([0, 9.5, 0], [7, 1, 7], 'cream', { k: 16, n: 'lid' }),
-    cyl([0, 10.5, 0], [5.5, 1, 5.5], 'paperShade', { k: 16 }),
-    box([0, 11, 1.75], [2, 0.5, 1], 'brownDark'),
-    cyl([0, 8.75, 0], [6.6, 0.5, 6.6], 'teal', { k: 16 }),
+    // стакан навынос: тёмная крышка, яркая манжета с зёрнышком — громкий признак «кофе с собой»
+    cyl([0, 1.5, 0], [5, 3, 5], 'white', { k: 16 }),
+    cyl([0, 4.5, 0], [5.8, 3, 5.8], 'white', { k: 16, n: 'body' }),
+    cyl([0, 7.4, 0], [6.4, 2.8, 6.4], 'white', { k: 16 }),
+    cyl([0, 5, 0], [6.2, 3.4, 6.2], 'teal', { k: 16, n: 'sleeve' }),
+    sph([0, 5, 3.1], [2.6, 2.6, 0.5], 'white'),
+    sph([0, 5, 3.35], [1.4, 1.8, 0.4], 'brownDark', { n: 'bean' }),
+    box([0, 5, 3.6], [0.3, 1.5, 0.3], 'cream'),
+    cyl([0, 9.3, 0], [7, 1.2, 7], 'brownDark', { k: 16, n: 'lid' }),
+    cyl([0, 10.3, 0], [5.6, 1, 5.6], 'brown', { k: 16 }),
+    box([0, 10.9, 1.8], [2, 0.5, 1], 'ink'),
   )),
   e('drinks', item(
     { id: 'tea', ru: 'чай', kk: 'шай', en: 'tea', stems: ['чай$', 'чайн', 'чайк$', 'чая$', 'чаю$', 'чаем$', 'чаёк', 'чаепит', 'шай', 'шәй', 'tea$'], tags: ['drink', 'warm', 'home', 'kz'], hold: 'hand', grip: [4.5, 4.5, 0], scene: 'hand', fx: [{ kind: 'steam', at: [0, 10.5, 0] }] },
@@ -94,15 +93,13 @@ export const pack1: Entry[] = [
   )),
   e('weather', item(
     { id: 'drop', ru: 'капля', kk: 'тамшы', en: 'drop', stems: ['капл', 'капел', 'тамшы', 'drop'], tags: ['weather', 'rain', 'water', 'cold'], hold: 'hand' },
-    torus([0, 0.5, 0], [10, 10, 1], 'ice', { r: [90, 0, 0] }),
-    torus([0, 0.5, 0], [6.5, 6.5, 1], 'frost', { r: [90, 0, 0] }),
-    sph([0, 4, 0], [6.5, 6.5, 6.5], 'greyBlue', { n: 'body' }),
-    cone([0, 7.5, 0], [5, 3.5, 5], 'greyBlue'),
-    sph([0.5, 3.5, 1], [4.5, 4.5, 4.5], 'ice'),
-    sph([-1.5, 5.5, 2.5], [1.5, 2, 1], 'white'),
-    sph([-2, 3.5, 2.5], [1, 1, 1], 'frost'),
-    sph([3, 1, 2], [1.5, 1.5, 1.5], 'ice'),
-    sph([-3.5, 1, 1.5], [1, 1, 1], 'ice'),
+    sph([0, 4.2, 0], [7.5, 7.5, 7.5], 'teal', { n: 'body' }),
+    cone([0, 9.5, 0], [5.6, 5, 5.6], 'teal'),
+    sph([0.4, 4, 1.4], [5.6, 5.6, 4.4], 'mint'),
+    sph([-1.7, 6, 3.4], [1.4, 2.6, 1], 'white'),
+    sph([-1.2, 3.4, 3.5], [0.9, 0.9, 0.8], 'white'),
+    ...sym(sph([5, 2.2, 0], [2, 2, 2], 'teal')),
+    ...sym(cone([5, 3.9, 0], [1.5, 1.6, 1.5], 'teal')),
   )),
   e('weather', item(
     { id: 'sun', ru: 'солнце', kk: 'күн', en: 'sun', stems: ['солн', 'солнеч', 'күн$', 'күннің', 'шуақ', 'sun'], tags: ['weather', 'warm', 'day', 'summer', 'joy'], hold: 'both', fx: [{ kind: 'glow' }, { kind: 'spin', part: 'rays' }] },
@@ -113,7 +110,7 @@ export const pack1: Entry[] = [
     box([0, 6.5, 1], [2, 0.5, 1], 'brick'),
   )),
   e('weather', item(
-    { id: 'moon', ru: 'луна', kk: 'ай', en: 'moon', stems: ['луна', 'луны', 'луну', 'лунн', 'месяц', 'ай$', 'moon'], tags: ['weather', 'night', 'calm', 'dream'], hold: 'both', fx: [{ kind: 'glow' }] },
+    { id: 'moon', ru: 'луна', kk: 'ай', en: 'moon', stems: ['луна', 'луны', 'луну', 'лунн', 'ай$', 'moon'], tags: ['weather', 'night', 'calm', 'dream'], hold: 'both', fx: [{ kind: 'glow' }] },
     ...[195, 212, 229, 246, 263, 280, 297, 314, 331, 348].map((a, i) => {
       const k = Math.sin(((i + 0.5) / 10) * Math.PI)
       const s = 1.5 + k * 4
@@ -201,7 +198,7 @@ export const pack1: Entry[] = [
     torus([1, 30, 0], [3, 3, 1], 'slate'),
   )),
   e('city', item(
-    { id: 'bench_small', ru: 'скамейка', kk: 'орындық', en: 'bench', stems: ['скамей', 'скамеек', 'лавочк', 'лавка', 'орындық', 'bench'], tags: ['city', 'park', 'rest'], hold: 'both' },
+    { id: 'bench_small', ru: 'скамейка', kk: 'орындық', en: 'bench', stems: ['скамей', 'скамеек', 'лавочк', 'лавка', 'орындық', 'bench'], tags: ['city', 'park', 'rest'], hold: 'ground', scene: 'detail' },
     ...sym(box([5, 2.5, 1], [1.5, 5, 1.5], 'slateDark')),
     ...sym(box([5, 2.5, -2.5], [1.5, 5, 1.5], 'slateDark')),
     ...sym(box([5, 8, -3], [1.5, 6, 1.5], 'slateDark', { r: [-8, 0, 0] })),
@@ -263,16 +260,18 @@ export const pack1: Entry[] = [
 
   // ---------- дом ----------
   e('home', item(
-    { id: 'candle', ru: 'свеча', kk: 'балауыз шам', en: 'candle', stems: ['свеч', 'свечк', 'балауыз', 'candle'], tags: ['home', 'warm', 'night', 'calm', 'light'], hold: 'hand', fx: [{ kind: 'flame', at: [0, 11.5, 0] }] },
+    { id: 'candle', ru: 'свеча', kk: 'балауыз шам', en: 'candle', stems: ['свеч', 'свечк', 'балауыз', 'candle'], tags: ['home', 'warm', 'night', 'calm', 'light'], hold: 'hand', fx: [{ kind: 'flame', at: [0, 10, 0] }, { kind: 'glow', at: [0, 9.5, 0] }] },
     cyl([0, 0.5, 0], [8, 1, 8], 'amber', { k: 12 }),
     cyl([0, 1, 0], [6, 1, 6], 'ochre', { k: 12 }),
     torus([4.5, 1.5, 0], [3, 3, 1], 'amber', { n: 'handle' }),
-    cyl([0, 5.5, 0], [4, 8, 4], 'cream', { n: 'wax' }),
-    sph([1.5, 8.5, 1.5], [1.5, 2, 1.5], 'white'),
-    sph([-1.5, 7.5, 1], [1, 2.5, 1], 'white'),
-    box([0, 10, 0], [0.5, 1.5, 0.5], 'ink'),
-    sph([0, 11.5, 0], [2.5, 3.5, 2.5], 'amber', { glow: true, n: 'flame' }),
-    sph([0, 11, 0.5], [1.5, 2, 1.5], 'yellow', { glow: true }),
+    cyl([0, 4.2, 0], [4.4, 5.6, 4.4], 'cream', { k: 14, n: 'wax' }),
+    sph([1.6, 6.6, 1.6], [1.4, 2, 1.4], 'white'),
+    sph([-1.5, 5.8, 1.2], [1, 2.4, 1], 'white'),
+    box([0, 7.4, 0], [0.5, 1.2, 0.5], 'ink'),
+    // крупное пламя: оранжевое, жёлтое, белая сердцевина
+    sph([0, 9.5, 0], [3.8, 4.8, 3.8], 'amber', { glow: true, n: 'flame' }),
+    sph([0, 9.2, 0.6], [2.4, 3.4, 2.4], 'yellow', { glow: true }),
+    sph([0, 8.7, 1.2], [1.1, 1.6, 1], 'white', { glow: true }),
   )),
   e('home', item(
     { id: 'clock', ru: 'будильник', kk: 'сағат', en: 'clock', stems: ['будильн', 'часы$', 'часов$', 'часик', 'сағат', 'clock', 'alarm'], tags: ['home', 'morning', 'time', 'study', 'work'], hold: 'hand' },
@@ -443,13 +442,17 @@ export const pack1: Entry[] = [
 
   // ---------- музыка ----------
   e('music', item(
-    { id: 'note', ru: 'нота', kk: 'нота', en: 'music note', stems: ['нот$', 'ноты', 'нота', 'музык', 'мелоди', 'песн', 'песен', 'музыка', 'ән$', 'әнді', 'әуен', 'music', 'song'], tags: ['music', 'joy', 'sound'], hold: 'hand', fx: [{ kind: 'notes' }, { kind: 'bob' }] },
-    ...[-3, 3].map((x) => sph([x, 2, 0], [4.5, 3.5, 2.5], 'slateDark', { r: [0, 0, 20], n: 'head' })),
-    ...[-3, 3].map((x) => sph([x - 0.5, 2.5, 1], [1.5, 1, 0.5], 'greyBlue')),
-    ...[-1, 5].map((x) => box([x, 6.5, 0], [1, 9, 1.5], 'slateDark', { n: 'stem' })),
-    box([2, 11, 0], [7, 2, 1.5], 'slateDark', { r: [0, 0, 8], n: 'beam' }),
-    box([2, 8.5, 0], [7, 1.5, 1.5], 'slateDark', { r: [0, 0, 8] }),
-    box([1.5, 11.5, 1], [4, 0.5, 0.5], 'greyBlue', { r: [0, 0, 8] }),
+    { id: 'note', ru: 'нота', kk: 'нота', en: 'music note', stems: ['нот$', 'ноты', 'нота', 'музык', 'мелоди', 'песн', 'песен', 'музыка', 'ән$', 'әнді', 'әуен', 'music', 'song'], tags: ['music', 'joy', 'sound'], hold: 'hand', grip: [-1.5, 2.6, 0], fx: [{ kind: 'notes' }, { kind: 'bob' }] },
+    // толстая восьмая: тёмная головка, штиль, флажок; рядом маленькая бирюзовая
+    sph([-1.5, 2.6, 0], [6, 4.4, 3], 'amber', { r: [0, 0, 25], n: 'head' }),
+    sph([-2.4, 3.3, 1.3], [2, 1.2, 0.6], 'yellow'),
+    box([1.2, 7, 0], [1.6, 9.6, 1.6], 'amber', { n: 'stem' }),
+    box([2.8, 10.2, 0], [1.6, 4.4, 1.4], 'amber', { r: [0, 0, 40], n: 'flag' }),
+    box([3.6, 8, 0], [1.4, 3.6, 1.4], 'amber', { r: [0, 0, 15] }),
+    sph([5.2, 1.6, 0], [3, 2.2, 1.6], 'teal', { r: [0, 0, 25] }),
+    box([6.3, 4.4, 0], [0.8, 5.4, 0.8], 'teal'),
+    box([7.1, 6.4, 0], [0.8, 2.4, 0.8], 'teal', { r: [0, 0, 40] }),
+    sph([4.6, 2, 0.8], [1, 0.6, 0.4], 'mint'),
   )),
   e('music', item(
     { id: 'guitar', ru: 'гитара', kk: 'гитара', en: 'guitar', stems: ['гитар', 'guitar'], tags: ['music', 'friends', 'evening'], hold: 'both', grip: [0, 12, 0.5], scene: 'hand', fx: [{ kind: 'notes', at: [4, 10, 0] }] },
@@ -467,11 +470,11 @@ export const pack1: Entry[] = [
   )),
   e('music', item(
     { id: 'headphones', ru: 'наушники', kk: 'құлаққап', en: 'headphones', stems: ['наушник', 'аирпод', 'эйрпод', 'құлаққап', 'headphone'], tags: ['music', 'tech', 'calm', 'city'], hold: 'hand', fx: [{ kind: 'notes' }] },
-    ...[-70, -45, -22, 0, 22, 45, 70].map((a) => box(onXY(5, a, 0, 5), [2.5, 1.5, 2.5], 'slateDark', { r: [0, 0, -a], n: 'band' })),
-    ...[-45, 0, 45].map((a) => box(onXY(4, a, 0, 5), [2, 1, 2], 'greyLight', { r: [0, 0, -a] })),
-    ...sym(cyl([5, 3, 0], [5.5, 2.5, 5.5], 'coral', { r: [0, 0, 90], n: 'cup' })),
-    ...sym(cyl([6.5, 3, 0], [4, 0.5, 4], 'brick', { r: [0, 0, 90] })),
-    ...sym(cyl([3.5, 3, 0], [4.5, 1, 4.5], 'ink', { r: [0, 0, 90] })),
+    ...[-70, -45, -22, 0, 22, 45, 70].map((a) => box(onXY(5, a, 0, 5), [2.6, 1.8, 2.6], 'ink', { r: [0, 0, -a], n: 'band' })),
+    ...[-45, 0, 45].map((a) => box(onXY(4, a, 0, 5), [2, 1, 2], 'grey', { r: [0, 0, -a] })),
+    ...sym(cyl([5.2, 2.8, 0], [6.4, 2.8, 6.4], 'ink', { r: [0, 0, 90], k: 16, n: 'cup' })),
+    ...sym(cyl([6.7, 2.8, 0], [4, 0.4, 4], 'coral', { r: [0, 0, 90], k: 16 })),
+    ...sym(cyl([3.5, 2.8, 0], [5.4, 1, 5.4], 'grey', { r: [0, 0, 90], k: 16 })),
   )),
 
   // ---------- животные ----------
@@ -513,10 +516,11 @@ export const pack1: Entry[] = [
   // ---------- праздники ----------
   e('holiday', item(
     { id: 'star', ru: 'звезда', kk: 'жұлдыз', en: 'star', stems: ['звезд', 'звёзд', 'жұлдыз', 'star'], tags: ['holiday', 'night', 'dream', 'joy'], hold: 'hand', fx: [{ kind: 'sparkle' }, { kind: 'glow' }] },
-    cyl([0, 6.5, 0], [5.5, 2.5, 5.5], 'yellow', { r: [90, 0, 0], k: 5, glow: true }),
-    ...ring(5, (a) => cone(onXY(3.5, a, 0, 6.5), [3.5, 4, 2], 'yellow', { r: [0, 0, -a], k: 4, glow: true, n: 'ray' })),
-    ...ring(5, (a) => cone(onXY(3.5, a, -0.5, 6.5), [4, 4.5, 1.5], 'amber', { r: [0, 0, -a], k: 4 })),
-    ...face(7, 1.5, 2.5, { eye: 1 }),
+    // пухлая пятиконечная: толстые лучи-подушки, тёмная кайма сзади
+    sph([0, 6, 0], [5.6, 5.6, 3.6], 'yellow', { glow: true, n: 'body' }),
+    ...ring(5, (a) => cone(onXY(3.6, a, 0, 6), [4.6, 4.4, 3], 'yellow', { r: [0, 0, -a], k: 4, glow: true, n: 'ray' })),
+    ...ring(5, (a) => cone(onXY(3.8, a, -0.9, 6), [5.2, 5, 1.6], 'amber', { r: [0, 0, -a], k: 4 })),
+    ...face(6.4, 1.8, 2.6, { eye: 1 }),
   )),
 
   // ---------- чувства ----------

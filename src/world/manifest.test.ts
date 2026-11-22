@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { sampleDays } from '../timeline/samples'
 import type { DayScript } from '../types/script'
-import { WORLD, chooseItems, dayTags, spineColorName, type ItemDef } from './manifest'
+import { SPINE_COLORS, WORLD, chooseItems, dayTags, spineColorName, type ItemDef } from './manifest'
 
 const item = (id: string, tags: string[], slots = ['behind_lamp', 'right_back', 'by_cassette', 'left_front', 'sill_0', 'sill_1']): ItemDef => ({
   id,
@@ -88,8 +88,13 @@ describe('world manifest', () => {
     expect(chooseItems(sampleDays[0].script as DayScript, 1, [])).toEqual([])
   })
 
-  it('spine colour comes from the day palette, skipping pale colours', () => {
-    expect(spineColorName(['white', 'grey_blue', 'slate_blue'], 'x')).toBe('slate_blue')
+  it('spine colour is a saturated colour from the day palette, otherwise from the id', () => {
+    expect(spineColorName(['white', 'grey_blue', 'teal'], 'x')).toBe('teal')
+    // в палитре нет насыщенных — цвет всё равно насыщенный, одинаковый для одного id
+    expect(SPINE_COLORS).toContain(spineColorName(['white', 'grey_blue', 'slate_blue'], 'x'))
     expect(spineColorName([], 'abc')).toBe(spineColorName(undefined, 'abc'))
+    // семь дней с одной палитрой — не одна стена одного цвета
+    const days = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'].map((id) => spineColorName(['slate_blue', 'grey_blue'], id))
+    expect(new Set(days).size).toBeGreaterThan(3)
   })
 })

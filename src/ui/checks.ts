@@ -35,3 +35,6 @@ export function spineColor(m: Mood): string {
 export function spineWidth(textLength: number): number {
   return Math.round(Math.min(40, Math.max(18, 14 + textLength / 12)))
 }
+
+/** Самая длинная запись дня (план 15 § 1.5). */
+export const MAX_TEXT = 3000

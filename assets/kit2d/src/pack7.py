@@ -4,7 +4,7 @@ from lib import *
 def eyes(cx, cy, gap=12, e=2.4):
     return face(cx, cy, gap, e, 'coral', False)
 
-item('bird', 'animals', 'птица', 'құс', 'bird', ['птиц', 'птичк', 'воробей', 'воробь', 'синиц', 'голуб', 'құс$', 'құстар', 'bird'], ['animal', 'nature', 'sky', 'spring', 'joy'], 'hand', svg(
+item('bird', 'animals', 'птица', 'құс', 'bird', ['птиц', 'птичк', 'воробей', 'воробь', 'синиц', 'голубь', 'голуби', 'голубей', 'голубк', 'құс$', 'құстар', 'bird'], ['animal', 'nature', 'sky', 'spring', 'joy'], 'hand', svg(
     rect(10, 84, 80, 6, 'brown', 3), tube('M44 76 L42 84 M54 76 L56 84', 'amber', 1.6),
     shape('M22 56 Q22 30 46 28 Q70 28 74 50 Q78 76 50 78 Q28 78 22 56 Z', 'slate'), ell(50, 60, 16, 14, 'cream', 0),
     shape('M40 50 Q56 44 66 58 Q58 70 44 64 Z', 'slateDark', 2), shape('M22 54 L6 46 L10 60 Z', 'slateDark', 2),

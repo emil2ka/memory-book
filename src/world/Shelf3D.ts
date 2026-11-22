@@ -19,6 +19,8 @@ export const SHELF_SLOTS = 12
 /** Первый корешок яруса — у правой стенки полки (внутренний край 4.25). */
 const BOOKS_RIGHT_X = 3.95
 const BOOK_PITCH = 0.55
+/** Книг на верхнем ярусе: вся серия дней (5–7) видна одним рядом. */
+const BOOKS_PER_ROW = 7
 
 /**
  * Пространство корешка (стоит, высота по Y, корешок к +Z) → пространство закрытой книги на столе
@@ -94,7 +96,14 @@ export class Shelf3D {
       }
       // книги стоят от правого края яруса (ближе к центру кадра: стоя на телефоне видна именно эта часть),
       // декор — слева
-      this.slots.forEach((s, i) => (s.position.x = BOOKS_RIGHT_X - (i % 6) * BOOK_PITCH))
+      // серия дней — семь книг в один ряд на верхнем ярусе (7-я не уезжает на другой ярус), дальше — нижний ярус
+      const row0 = this.slots[0]?.position.clone()
+      const row1 = this.slots[6]?.position.clone()
+      this.slots.forEach((s, i) => {
+        const top = i < BOOKS_PER_ROW
+        const base = top ? row0 : row1
+        if (base) s.position.set(BOOKS_RIGHT_X - (top ? i : i - BOOKS_PER_ROW) * BOOK_PITCH, base.y, base.z)
+      })
       for (const name of ['slot_decor_0', 'slot_decor_1']) {
         const d = m.root.getObjectByName(name)
         if (d) d.position.x = -Math.abs(d.position.x)

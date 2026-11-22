@@ -1,0 +1,3397 @@
+[
+ {
+  "word": "кофе",
+  "kk": "кофе",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "кофе",
+   "coffee"
+  ],
+  "lib": "coffee",
+  "lib3d": true
+ },
+ {
+  "word": "капучино",
+  "kk": "капучино",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "капучин",
+   "cappuccino"
+  ],
+  "lib": "coffee",
+  "lib3d": true
+ },
+ {
+  "word": "латте",
+  "kk": "латте",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "латте",
+   "latte"
+  ],
+  "lib": "coffee",
+  "lib3d": true
+ },
+ {
+  "word": "раф",
+  "kk": "раф",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "раф$"
+  ],
+  "lib": "coffee",
+  "lib3d": true
+ },
+ {
+  "word": "какао",
+  "kk": "какао",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "какао",
+   "cocoa"
+  ],
+  "lib": "cocoa",
+  "lib3d": true
+ },
+ {
+  "word": "горячий шоколад",
+  "kk": "ыстық шоколад",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "горячий шоколад",
+   "горячего шоколада"
+  ],
+  "lib": "cocoa",
+  "lib3d": true
+ },
+ {
+  "word": "чай",
+  "kk": "шай",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "чай$",
+   "чаю$",
+   "чая$",
+   "чаем$",
+   "чаёк$",
+   "чаек$",
+   "шай$",
+   "tea"
+  ],
+  "lib": "tea",
+  "lib3d": true
+ },
+ {
+  "word": "кесе",
+  "kk": "кесе",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "кесе",
+   "пиал"
+  ],
+  "lib": "kese",
+  "lib3d": true
+ },
+ {
+  "word": "сок",
+  "kk": "шырын",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "сок$",
+   "сока",
+   "соку",
+   "шырын",
+   "juice"
+  ],
+  "lib": "juice",
+  "lib3d": true
+ },
+ {
+  "word": "вода",
+  "kk": "су",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "вода$",
+   "воды$",
+   "воду$",
+   "бутылк",
+   "water"
+  ],
+  "lib": "water_bottle",
+  "lib3d": true
+ },
+ {
+  "word": "лимонад",
+  "kk": "лимонад",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "лимонад"
+  ],
+  "lib": "lemonade",
+  "lib3d": true
+ },
+ {
+  "word": "молочный коктейль",
+  "kk": "сүт коктейлі",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "коктейл",
+   "милкшейк"
+  ],
+  "lib": "milkshake",
+  "lib3d": true
+ },
+ {
+  "word": "газировка",
+  "kk": "газдалған су",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "газировк",
+   "кола",
+   "колу",
+   "пепси"
+  ],
+  "lib": "soda_can",
+  "lib3d": true
+ },
+ {
+  "word": "энергетик",
+  "kk": "энергетик",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "энергетик",
+   "ред булл"
+  ],
+  "lib": "energy_drink",
+  "lib3d": true
+ },
+ {
+  "word": "кумыс",
+  "kk": "қымыз",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "кумыс",
+   "қымыз"
+  ],
+  "lib": "torsyk",
+  "lib3d": true
+ },
+ {
+  "word": "айран",
+  "kk": "айран",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "айран"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "шубат",
+  "kk": "шұбат",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "шубат",
+   "шұбат"
+  ],
+  "lib": "torsyk",
+  "lib3d": true
+ },
+ {
+  "word": "молоко",
+  "kk": "сүт",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "молок",
+   "сүт"
+  ],
+  "lib": "milk",
+  "lib3d": true
+ },
+ {
+  "word": "термос",
+  "kk": "термос",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "термос"
+  ],
+  "lib": "thermos",
+  "lib3d": true
+ },
+ {
+  "word": "бабл-ти",
+  "kk": "бабл-ти",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "бабл",
+   "тапиок"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "смузи",
+  "kk": "смузи",
+  "role": "hand",
+  "group": "напитки",
+  "forms": [
+   "смузи"
+  ],
+  "lib": "milkshake",
+  "lib3d": true
+ },
+ {
+  "word": "торт",
+  "kk": "торт",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "торт"
+  ],
+  "lib": "cake",
+  "lib3d": true
+ },
+ {
+  "word": "пицца",
+  "kk": "пицца",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "пицц"
+  ],
+  "lib": "pizza",
+  "lib3d": true
+ },
+ {
+  "word": "бургер",
+  "kk": "бургер",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "бургер",
+   "гамбургер"
+  ],
+  "lib": "burger",
+  "lib3d": true
+ },
+ {
+  "word": "картошка фри",
+  "kk": "фри",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "фри$",
+   "картошк"
+  ],
+  "lib": "fries",
+  "lib3d": true
+ },
+ {
+  "word": "хот-дог",
+  "kk": "хот-дог",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "хот-дог",
+   "хотдог"
+  ],
+  "lib": "hotdog",
+  "lib3d": true
+ },
+ {
+  "word": "шаурма",
+  "kk": "шаурма",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "шаурм",
+   "шаверм",
+   "донер"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "мороженое",
+  "kk": "балмұздақ",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "морожен",
+   "пломбир",
+   "балмұздақ"
+  ],
+  "lib": "ice_cream",
+  "lib3d": true
+ },
+ {
+  "word": "пончик",
+  "kk": "пончик",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "пончик",
+   "донат"
+  ],
+  "lib": "donut",
+  "lib3d": true
+ },
+ {
+  "word": "печенье",
+  "kk": "печенье",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "печень",
+   "печенюш"
+  ],
+  "lib": "cookie",
+  "lib3d": true
+ },
+ {
+  "word": "круассан",
+  "kk": "круассан",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "круассан"
+  ],
+  "lib": "croissant",
+  "lib3d": true
+ },
+ {
+  "word": "яичница",
+  "kk": "қуырылған жұмыртқа",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "яичниц",
+   "омлет"
+  ],
+  "lib": "fried_egg",
+  "lib3d": true
+ },
+ {
+  "word": "суп",
+  "kk": "сорпа",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "суп$",
+   "супа",
+   "супом",
+   "сорпа"
+  ],
+  "lib": "soup",
+  "lib3d": true
+ },
+ {
+  "word": "лапша",
+  "kk": "кеспе",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "лапш",
+   "доширак",
+   "рамен",
+   "кеспе"
+  ],
+  "lib": "noodles",
+  "lib3d": true
+ },
+ {
+  "word": "суши",
+  "kk": "суши",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "суши",
+   "ролл"
+  ],
+  "lib": "sushi",
+  "lib3d": true
+ },
+ {
+  "word": "банан",
+  "kk": "банан",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "банан"
+  ],
+  "lib": "banana",
+  "lib3d": true
+ },
+ {
+  "word": "апельсин",
+  "kk": "апельсин",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "апельсин",
+   "мандарин"
+  ],
+  "lib": "orange",
+  "lib3d": true
+ },
+ {
+  "word": "арбуз",
+  "kk": "қарбыз",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "арбуз",
+   "қарбыз"
+  ],
+  "lib": "watermelon",
+  "lib3d": true
+ },
+ {
+  "word": "дыня",
+  "kk": "қауын",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "дын$",
+   "дыни",
+   "дыню",
+   "қауын"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "клубника",
+  "kk": "құлпынай",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "клубник",
+   "құлпынай"
+  ],
+  "lib": "strawberry",
+  "lib3d": true
+ },
+ {
+  "word": "шоколадка",
+  "kk": "шоколад",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "шоколадк"
+  ],
+  "lib": "chocolate",
+  "lib3d": true
+ },
+ {
+  "word": "блины",
+  "kk": "құймақ",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "блин",
+   "блинч",
+   "құймақ"
+  ],
+  "lib": "pancakes",
+  "lib3d": true
+ },
+ {
+  "word": "яблоко",
+  "kk": "алма",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "яблок",
+   "апорт",
+   "алма"
+  ],
+  "lib": "apple",
+  "lib3d": true
+ },
+ {
+  "word": "баурсаки",
+  "kk": "бауырсақ",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "баурсак",
+   "бауырсақ"
+  ],
+  "lib": "baursak",
+  "lib3d": true
+ },
+ {
+  "word": "бешбармак",
+  "kk": "бешбармақ",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "бешбармак",
+   "бешбармақ",
+   "ет$"
+  ],
+  "lib": "beshbarmak",
+  "lib3d": true
+ },
+ {
+  "word": "самса",
+  "kk": "самса",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "самс"
+  ],
+  "lib": "samsa",
+  "lib3d": true
+ },
+ {
+  "word": "плов",
+  "kk": "палау",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "плов",
+   "палау"
+  ],
+  "lib": "kazan",
+  "lib3d": true
+ },
+ {
+  "word": "манты",
+  "kk": "манты",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "мант$",
+   "манты",
+   "мантов"
+  ],
+  "lib": "manty",
+  "lib3d": true
+ },
+ {
+  "word": "лагман",
+  "kk": "лағман",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "лагман",
+   "лағман"
+  ],
+  "lib": "noodles",
+  "lib3d": true
+ },
+ {
+  "word": "курт",
+  "kk": "құрт",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "курт$",
+   "құрт"
+  ],
+  "lib": "kurt",
+  "lib3d": true
+ },
+ {
+  "word": "лепёшка",
+  "kk": "нан",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "лепешк",
+   "нан$",
+   "хлеб"
+  ],
+  "lib": "nan",
+  "lib3d": true
+ },
+ {
+  "word": "казы",
+  "kk": "қазы",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "казы$",
+   "қазы"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "чак-чак",
+  "kk": "шәкшәк",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "чак-чак",
+   "шәкшәк"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "бутерброд",
+  "kk": "бутерброд",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "бутерброд",
+   "сэндвич"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "салат",
+  "kk": "салат",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "салат"
+  ],
+  "lib": "salad",
+  "lib3d": true
+ },
+ {
+  "word": "попкорн",
+  "kk": "попкорн",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "попкорн"
+  ],
+  "lib": "popcorn",
+  "lib3d": true
+ },
+ {
+  "word": "конфета",
+  "kk": "кәмпит",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "конфет",
+   "кәмпит"
+  ],
+  "lib": "candy",
+  "lib3d": false
+ },
+ {
+  "word": "пельмени",
+  "kk": "тұшпара",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "пельмен",
+   "тұшпара"
+  ],
+  "lib": "dumplings",
+  "lib3d": true
+ },
+ {
+  "word": "каша",
+  "kk": "ботқа",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "каш$",
+   "каши",
+   "кашу",
+   "ботқа"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "чизкейк",
+  "kk": "чизкейк",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "чизкейк"
+  ],
+  "lib": "cake",
+  "lib3d": true
+ },
+ {
+  "word": "пирожок",
+  "kk": "бәліш",
+  "role": "hand",
+  "group": "еда",
+  "forms": [
+   "пирож",
+   "бәліш"
+  ],
+  "lib": "samsa",
+  "lib3d": true
+ },
+ {
+  "word": "автобус",
+  "kk": "автобус",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "автобус"
+  ],
+  "lib": "bus",
+  "lib3d": true
+ },
+ {
+  "word": "маршрутка",
+  "kk": "маршрутка",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "маршрутк"
+  ],
+  "lib": "bus",
+  "lib3d": true
+ },
+ {
+  "word": "метро",
+  "kk": "метро",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "метро"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "такси",
+  "kk": "такси",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "такси",
+   "яндекс"
+  ],
+  "lib": "car",
+  "lib3d": true
+ },
+ {
+  "word": "машина",
+  "kk": "көлік",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "машин",
+   "авто$",
+   "көлік",
+   "көлікпен"
+  ],
+  "lib": "car",
+  "lib3d": true
+ },
+ {
+  "word": "велосипед",
+  "kk": "велосипед",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "велосипед",
+   "велик"
+  ],
+  "lib": "bicycle",
+  "lib3d": true
+ },
+ {
+  "word": "самокат",
+  "kk": "самокат",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "самокат"
+  ],
+  "lib": "scooter",
+  "lib3d": true
+ },
+ {
+  "word": "поезд",
+  "kk": "пойыз",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "поезд",
+   "электричк",
+   "пойыз"
+  ],
+  "lib": "train",
+  "lib3d": false
+ },
+ {
+  "word": "самолёт",
+  "kk": "ұшақ",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "самолет",
+   "ұшақ"
+  ],
+  "lib": "plane",
+  "lib3d": false
+ },
+ {
+  "word": "трамвай",
+  "kk": "трамвай",
+  "role": "place",
+  "group": "транспорт",
+  "forms": [
+   "трамва"
+  ],
+  "lib": "tram",
+  "lib3d": false
+ },
+ {
+  "word": "скейт",
+  "kk": "скейт",
+  "role": "hand",
+  "group": "транспорт",
+  "forms": [
+   "скейт"
+  ],
+  "lib": "skateboard",
+  "lib3d": true
+ },
+ {
+  "word": "кофейня",
+  "kk": "кофехана",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "кофейн",
+   "кофехана",
+   "старбакс"
+  ],
+  "lib": "cafe_counter",
+  "lib3d": true
+ },
+ {
+  "word": "кафе",
+  "kk": "кафе",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "кафе$",
+   "кафешк",
+   "ресторан",
+   "мейрамхана"
+  ],
+  "lib": "cafe_table",
+  "lib3d": true
+ },
+ {
+  "word": "столовая",
+  "kk": "асхана",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "столов",
+   "асхана"
+  ],
+  "lib": "canteen",
+  "lib3d": true
+ },
+ {
+  "word": "остановка",
+  "kk": "аялдама",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "остановк",
+   "аялдама"
+  ],
+  "lib": "bus_stop",
+  "lib3d": true
+ },
+ {
+  "word": "юрта",
+  "kk": "киіз үй",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "юрт",
+   "киіз"
+  ],
+  "lib": "yurt",
+  "lib3d": true
+ },
+ {
+  "word": "пара",
+  "kk": "сабақ",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "пара$",
+   "пары$",
+   "паре$",
+   "парах$",
+   "сабақ",
+   "сабаққа"
+  ],
+  "lib": "school_desk",
+  "lib3d": true
+ },
+ {
+  "word": "лекция",
+  "kk": "дәріс",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "лекци",
+   "дәріс"
+  ],
+  "lib": "school_board",
+  "lib3d": true
+ },
+ {
+  "word": "аудитория",
+  "kk": "аудитория",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "аудитори"
+  ],
+  "lib": "school_board",
+  "lib3d": true
+ },
+ {
+  "word": "парта",
+  "kk": "парта",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "парт$",
+   "парта$",
+   "парте$",
+   "парту$",
+   "партой$",
+   "партах$"
+  ],
+  "lib": "school_desk",
+  "lib3d": true
+ },
+ {
+  "word": "университет",
+  "kk": "университет",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "универ",
+   "университет",
+   "вуз$"
+  ],
+  "lib": "university",
+  "lib3d": true
+ },
+ {
+  "word": "школа",
+  "kk": "мектеп",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "школ",
+   "мектеп"
+  ],
+  "lib": "school_board",
+  "lib3d": true
+ },
+ {
+  "word": "библиотека",
+  "kk": "кітапхана",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "библиотек",
+   "кітапхана"
+  ],
+  "lib": "book_stack",
+  "lib3d": true
+ },
+ {
+  "word": "общага",
+  "kk": "жатақхана",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "общаг",
+   "общежит",
+   "жатақхана"
+  ],
+  "lib": "dorm",
+  "lib3d": true
+ },
+ {
+  "word": "кухня",
+  "kk": "ас үй",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "кухн"
+  ],
+  "lib": "kitchen_table",
+  "lib3d": true
+ },
+ {
+  "word": "комната",
+  "kk": "бөлме",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "комнат",
+   "бөлме"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "квартира",
+  "kk": "пәтер",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "квартир",
+   "пәтер"
+  ],
+  "lib": "apartment_block",
+  "lib3d": true
+ },
+ {
+  "word": "дом",
+  "kk": "үй",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "дом$",
+   "дома",
+   "домой",
+   "үй$",
+   "үйге"
+  ],
+  "lib": "house",
+  "lib3d": true
+ },
+ {
+  "word": "балкон",
+  "kk": "балкон",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "балкон"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "окно",
+  "kk": "терезе",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "окн",
+   "окошк",
+   "терезе"
+  ],
+  "lib": "window_sill",
+  "lib3d": true
+ },
+ {
+  "word": "подъезд",
+  "kk": "кіреберіс",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "подъезд"
+  ],
+  "lib": "entrance_door",
+  "lib3d": true
+ },
+ {
+  "word": "двор",
+  "kk": "аула",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "двор$",
+   "двора$",
+   "дворе$",
+   "двору$",
+   "дворик"
+  ],
+  "lib": "sandbox",
+  "lib3d": true
+ },
+ {
+  "word": "парк",
+  "kk": "саябақ",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "парк$",
+   "парке$",
+   "парка$",
+   "парку$",
+   "парком$",
+   "саябақ"
+  ],
+  "lib": "bench",
+  "lib3d": true
+ },
+ {
+  "word": "площадка",
+  "kk": "ойын алаңы",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "площадк"
+  ],
+  "lib": "swing",
+  "lib3d": true
+ },
+ {
+  "word": "фонтан",
+  "kk": "субұрқақ",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "фонтан",
+   "субұрқақ"
+  ],
+  "lib": "fountain",
+  "lib3d": true
+ },
+ {
+  "word": "улица",
+  "kk": "көше",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "улиц",
+   "көше"
+  ],
+  "lib": "lamp_post",
+  "lib3d": true
+ },
+ {
+  "word": "рынок",
+  "kk": "базар",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "рынок",
+   "рынке",
+   "базар"
+  ],
+  "lib": "market_stall",
+  "lib3d": true
+ },
+ {
+  "word": "магазин",
+  "kk": "дүкен",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "магазин",
+   "супермаркет",
+   "дүкен"
+  ],
+  "lib": "shop",
+  "lib3d": true
+ },
+ {
+  "word": "торговый центр",
+  "kk": "сауда орталығы",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "трц",
+   "мега$",
+   "молл"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "спортзал",
+  "kk": "спортзал",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "спортзал",
+   "тренажер",
+   "фитнес"
+  ],
+  "lib": "gym",
+  "lib3d": true
+ },
+ {
+  "word": "стадион",
+  "kk": "стадион",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "стадион",
+   "поле$"
+  ],
+  "lib": "football_goal",
+  "lib3d": true
+ },
+ {
+  "word": "бассейн",
+  "kk": "бассейн",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "бассейн"
+  ],
+  "lib": "pool",
+  "lib3d": true
+ },
+ {
+  "word": "каток",
+  "kk": "мұз айдыны",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "каток",
+   "катке",
+   "медеу"
+  ],
+  "lib": "skates",
+  "lib3d": false
+ },
+ {
+  "word": "офис",
+  "kk": "кеңсе",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "офис",
+   "кеңсе"
+  ],
+  "lib": "work_desk",
+  "lib3d": true
+ },
+ {
+  "word": "работа",
+  "kk": "жұмыс",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "работ",
+   "жұмыс"
+  ],
+  "lib": "work_desk",
+  "lib3d": true
+ },
+ {
+  "word": "больница",
+  "kk": "аурухана",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "больниц",
+   "поликлиник",
+   "врач",
+   "аурухана"
+  ],
+  "lib": "hospital",
+  "lib3d": true
+ },
+ {
+  "word": "кинотеатр",
+  "kk": "кинотеатр",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "кино",
+   "кинотеатр",
+   "фильм"
+  ],
+  "lib": "ticket",
+  "lib3d": false
+ },
+ {
+  "word": "театр",
+  "kk": "театр",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "театр"
+  ],
+  "lib": "ticket",
+  "lib3d": false
+ },
+ {
+  "word": "концерт",
+  "kk": "концерт",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "концерт"
+  ],
+  "lib": "microphone",
+  "lib3d": false
+ },
+ {
+  "word": "вокзал",
+  "kk": "вокзал",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "вокзал"
+  ],
+  "lib": "train",
+  "lib3d": false
+ },
+ {
+  "word": "аэропорт",
+  "kk": "әуежай",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "аэропорт",
+   "әуежай"
+  ],
+  "lib": "plane",
+  "lib3d": false
+ },
+ {
+  "word": "аул",
+  "kk": "ауыл",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "аул$",
+   "ауле$",
+   "аулу$",
+   "ауыл",
+   "ауылға"
+  ],
+  "lib": "yurt",
+  "lib3d": true
+ },
+ {
+  "word": "дача",
+  "kk": "саяжай",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "дача$",
+   "даче$",
+   "дачу$",
+   "дачи$",
+   "дачн",
+   "саяжай"
+  ],
+  "lib": "sprout",
+  "lib3d": true
+ },
+ {
+  "word": "горы",
+  "kk": "тау",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "гор$",
+   "горы",
+   "горах",
+   "тау$",
+   "алатау"
+  ],
+  "lib": "alatau",
+  "lib3d": true
+ },
+ {
+  "word": "озеро",
+  "kk": "көл",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "озер",
+   "көл$",
+   "көлге"
+  ],
+  "lib": "lake",
+  "lib3d": true
+ },
+ {
+  "word": "река",
+  "kk": "өзен",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "рек$",
+   "реки",
+   "реке",
+   "речк",
+   "өзен"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "море",
+  "kk": "теңіз",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "мор$",
+   "моря",
+   "море",
+   "теңіз"
+  ],
+  "lib": "wave",
+  "lib3d": true
+ },
+ {
+  "word": "пляж",
+  "kk": "жағажай",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "пляж",
+   "жағажай"
+  ],
+  "lib": "wave",
+  "lib3d": true
+ },
+ {
+  "word": "лес",
+  "kk": "орман",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "лес$",
+   "леса",
+   "лесу",
+   "орман"
+  ],
+  "lib": "fir",
+  "lib3d": true
+ },
+ {
+  "word": "костёр",
+  "kk": "алау",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "костер",
+   "костр"
+  ],
+  "lib": "bonfire",
+  "lib3d": true
+ },
+ {
+  "word": "палатка",
+  "kk": "шатыр",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "палатк",
+   "шатыр"
+  ],
+  "lib": "big_tent",
+  "lib3d": true
+ },
+ {
+  "word": "Байтерек",
+  "kk": "Бәйтерек",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "байтерек",
+   "бәйтерек"
+  ],
+  "lib": "baiterek",
+  "lib3d": true
+ },
+ {
+  "word": "мост",
+  "kk": "көпір",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "мост",
+   "көпір"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "баня",
+  "kk": "монша",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "бан$",
+   "бани",
+   "баню",
+   "монша"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "сцена",
+  "kk": "сахна",
+  "role": "place",
+  "group": "места",
+  "forms": [
+   "сцен",
+   "сахна"
+  ],
+  "lib": "microphone",
+  "lib3d": false
+ },
+ {
+  "word": "дождь",
+  "kk": "жаңбыр",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "дожд",
+   "ливен",
+   "жаңбыр"
+  ],
+  "lib": "rain_cloud",
+  "lib3d": true
+ },
+ {
+  "word": "снег",
+  "kk": "қар",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "снег",
+   "снеж",
+   "қар$",
+   "қар жауды"
+  ],
+  "lib": "snowflake",
+  "lib3d": true
+ },
+ {
+  "word": "солнце",
+  "kk": "күн сәулесі",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "солн",
+   "күн шықты"
+  ],
+  "lib": "sun",
+  "lib3d": true
+ },
+ {
+  "word": "ветер",
+  "kk": "жел",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "ветер",
+   "ветр",
+   "жел$"
+  ],
+  "lib": "wind",
+  "lib3d": true
+ },
+ {
+  "word": "туман",
+  "kk": "тұман",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "туман",
+   "тұман"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "гроза",
+  "kk": "найзағай",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "гроз",
+   "молни",
+   "найзағай"
+  ],
+  "lib": "lightning",
+  "lib3d": true
+ },
+ {
+  "word": "радуга",
+  "kk": "кемпірқосақ",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "радуг",
+   "кемпірқосақ"
+  ],
+  "lib": "rainbow",
+  "lib3d": true
+ },
+ {
+  "word": "жара",
+  "kk": "аптап",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "жара$",
+   "жаре$",
+   "жарко",
+   "зной"
+  ],
+  "lib": "sun",
+  "lib3d": true
+ },
+ {
+  "word": "холод",
+  "kk": "суық",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "холод",
+   "мороз",
+   "суық"
+  ],
+  "lib": "thermometer",
+  "lib3d": true
+ },
+ {
+  "word": "облака",
+  "kk": "бұлт",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "облак",
+   "туч",
+   "пасмурн",
+   "бұлт"
+  ],
+  "lib": "cloud",
+  "lib3d": true
+ },
+ {
+  "word": "лужа",
+  "kk": "шалшық",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "луж",
+   "шалшық"
+  ],
+  "lib": "puddle",
+  "lib3d": true
+ },
+ {
+  "word": "сугроб",
+  "kk": "үйінді қар",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "сугроб"
+  ],
+  "lib": "snowdrift",
+  "lib3d": true
+ },
+ {
+  "word": "гололёд",
+  "kk": "көктайғақ",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "гололед",
+   "скольз",
+   "көктайғақ"
+  ],
+  "lib": "icicle",
+  "lib3d": true
+ },
+ {
+  "word": "буран",
+  "kk": "боран",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "буран",
+   "метел",
+   "вьюг",
+   "боран"
+  ],
+  "lib": "snowflake",
+  "lib3d": true
+ },
+ {
+  "word": "звёзды",
+  "kk": "жұлдыз",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "звезд",
+   "жұлдыз"
+  ],
+  "lib": "star",
+  "lib3d": true
+ },
+ {
+  "word": "луна",
+  "kk": "ай",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "лун$",
+   "луна$",
+   "луну$",
+   "луной$"
+  ],
+  "lib": "moon",
+  "lib3d": true
+ },
+ {
+  "word": "закат",
+  "kk": "күн бату",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "закат",
+   "рассвет"
+  ],
+  "lib": "sun",
+  "lib3d": true
+ },
+ {
+  "word": "листопад",
+  "kk": "жапырақ",
+  "role": "weather",
+  "group": "погода",
+  "forms": [
+   "листопад",
+   "листья",
+   "листьях",
+   "жапырақ"
+  ],
+  "lib": "leaf_pile",
+  "lib3d": true
+ },
+ {
+  "word": "ноутбук",
+  "kk": "ноутбук",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "ноутбук",
+   "ноут$",
+   "макбук",
+   "компьютер"
+  ],
+  "lib": "laptop",
+  "lib3d": true
+ },
+ {
+  "word": "телефон",
+  "kk": "телефон",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "телефон",
+   "смартфон",
+   "айфон"
+  ],
+  "lib": "phone",
+  "lib3d": true
+ },
+ {
+  "word": "книга",
+  "kk": "кітап",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "книг",
+   "кітап"
+  ],
+  "lib": "book",
+  "lib3d": true
+ },
+ {
+  "word": "тетрадь",
+  "kk": "дәптер",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "тетрад",
+   "конспект",
+   "дәптер"
+  ],
+  "lib": "notebook",
+  "lib3d": false
+ },
+ {
+  "word": "ручка",
+  "kk": "қалам",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "ручк",
+   "қалам"
+  ],
+  "lib": "pencil",
+  "lib3d": false
+ },
+ {
+  "word": "карандаш",
+  "kk": "қарындаш",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "карандаш",
+   "қарындаш"
+  ],
+  "lib": "pencil",
+  "lib3d": false
+ },
+ {
+  "word": "рюкзак",
+  "kk": "рюкзак",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "рюкзак",
+   "портфел"
+  ],
+  "lib": "backpack",
+  "lib3d": true
+ },
+ {
+  "word": "экзамен",
+  "kk": "емтихан",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "экзамен",
+   "сессия",
+   "зачет",
+   "емтихан"
+  ],
+  "lib": "notebook",
+  "lib3d": false
+ },
+ {
+  "word": "доска",
+  "kk": "тақта",
+  "role": "place",
+  "group": "учёба и работа",
+  "forms": [
+   "доск",
+   "тақта"
+  ],
+  "lib": "school_board",
+  "lib3d": true
+ },
+ {
+  "word": "дедлайн",
+  "kk": "дедлайн",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "дедлайн"
+  ],
+  "lib": "hourglass",
+  "lib3d": false
+ },
+ {
+  "word": "диплом",
+  "kk": "диплом",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "диплом",
+   "курсов"
+  ],
+  "lib": "notebook",
+  "lib3d": false
+ },
+ {
+  "word": "наушники",
+  "kk": "құлаққап",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "наушник",
+   "құлаққап",
+   "airpods"
+  ],
+  "lib": "headphones",
+  "lib3d": true
+ },
+ {
+  "word": "лампа",
+  "kk": "шам",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "ламп",
+   "торшер",
+   "шам$"
+  ],
+  "lib": "desk_lamp",
+  "lib3d": false
+ },
+ {
+  "word": "очки",
+  "kk": "көзілдірік",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "очки",
+   "очках",
+   "көзілдірік"
+  ],
+  "lib": "glasses",
+  "lib3d": false
+ },
+ {
+  "word": "будильник",
+  "kk": "оятқыш",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "будильник",
+   "оятқыш"
+  ],
+  "lib": "clock",
+  "lib3d": true
+ },
+ {
+  "word": "часы",
+  "kk": "сағат",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "часы$",
+   "сағат"
+  ],
+  "lib": "clock",
+  "lib3d": true
+ },
+ {
+  "word": "калькулятор",
+  "kk": "калькулятор",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "калькулятор"
+  ],
+  "lib": "calculator",
+  "lib3d": true
+ },
+ {
+  "word": "презентация",
+  "kk": "презентация",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "презентаци",
+   "слайд"
+  ],
+  "lib": "laptop",
+  "lib3d": true
+ },
+ {
+  "word": "письмо",
+  "kk": "хат",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "письм",
+   "записк",
+   "хат$"
+  ],
+  "lib": "envelope",
+  "lib3d": false
+ },
+ {
+  "word": "глобус",
+  "kk": "глобус",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "глобус"
+  ],
+  "lib": "globe",
+  "lib3d": false
+ },
+ {
+  "word": "стипендия",
+  "kk": "стипендия",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "стипенди",
+   "зарплат",
+   "деньги",
+   "ақша"
+  ],
+  "lib": "money",
+  "lib3d": true
+ },
+ {
+  "word": "студенческий",
+  "kk": "студенттік",
+  "role": "hand",
+  "group": "учёба и работа",
+  "forms": [
+   "студенческ",
+   "пропуск"
+  ],
+  "lib": "ticket",
+  "lib3d": false
+ },
+ {
+  "word": "ключ",
+  "kk": "кілт",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "ключ",
+   "кілт"
+  ],
+  "lib": "key",
+  "lib3d": false
+ },
+ {
+  "word": "телевизор",
+  "kk": "теледидар",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "телевизор",
+   "телик",
+   "сериал",
+   "теледидар"
+  ],
+  "lib": "tv",
+  "lib3d": false
+ },
+ {
+  "word": "кресло",
+  "kk": "кресло",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "кресл"
+  ],
+  "lib": "armchair",
+  "lib3d": false
+ },
+ {
+  "word": "диван",
+  "kk": "диван",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "диван"
+  ],
+  "lib": "sofa",
+  "lib3d": true
+ },
+ {
+  "word": "кровать",
+  "kk": "төсек",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "кроват",
+   "постел",
+   "төсек"
+  ],
+  "lib": "bed",
+  "lib3d": true
+ },
+ {
+  "word": "подушка",
+  "kk": "жастық",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "подушк",
+   "жастық"
+  ],
+  "lib": "pillow",
+  "lib3d": false
+ },
+ {
+  "word": "плед",
+  "kk": "плед",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "плед",
+   "одеял"
+  ],
+  "lib": "blanket",
+  "lib3d": false
+ },
+ {
+  "word": "фотография",
+  "kk": "сурет",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "фотк",
+   "фотограф",
+   "снимок"
+  ],
+  "lib": "photo_frame",
+  "lib3d": false
+ },
+ {
+  "word": "зеркало",
+  "kk": "айна",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "зеркал",
+   "айна"
+  ],
+  "lib": "mirror",
+  "lib3d": false
+ },
+ {
+  "word": "свеча",
+  "kk": "шам",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "свеч"
+  ],
+  "lib": "candle",
+  "lib3d": true
+ },
+ {
+  "word": "коробка",
+  "kk": "қорап",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "коробк",
+   "қорап"
+  ],
+  "lib": "carton_box",
+  "lib3d": true
+ },
+ {
+  "word": "чемодан",
+  "kk": "чемодан",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "чемодан"
+  ],
+  "lib": "suitcase",
+  "lib3d": false
+ },
+ {
+  "word": "цветок в горшке",
+  "kk": "гүл",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "горшк",
+   "фикус"
+  ],
+  "lib": "cactus",
+  "lib3d": true
+ },
+ {
+  "word": "ковёр",
+  "kk": "кілем",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "ковер",
+   "ковр",
+   "кілем",
+   "сырмақ"
+  ],
+  "lib": "syrmak",
+  "lib3d": true
+ },
+ {
+  "word": "дастархан",
+  "kk": "дастарқан",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "дастархан",
+   "дастарқан",
+   "стол$",
+   "стола$",
+   "столом$",
+   "столе$"
+  ],
+  "lib": "dastarkhan_feast",
+  "lib3d": true
+ },
+ {
+  "word": "казан",
+  "kk": "қазан",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "казан",
+   "қазан"
+  ],
+  "lib": "kazan",
+  "lib3d": true
+ },
+ {
+  "word": "самовар",
+  "kk": "самауыр",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "самовар",
+   "самауыр"
+  ],
+  "lib": "samovar",
+  "lib3d": true
+ },
+ {
+  "word": "чайник",
+  "kk": "шәйнек",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "чайник",
+   "шәйнек"
+  ],
+  "lib": "teapot",
+  "lib3d": true
+ },
+ {
+  "word": "посуда",
+  "kk": "ыдыс",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "посуд",
+   "тарелк",
+   "ыдыс"
+  ],
+  "lib": "plate",
+  "lib3d": true
+ },
+ {
+  "word": "стиралка",
+  "kk": "кір жуғыш",
+  "role": "place",
+  "group": "дом",
+  "forms": [
+   "стирал",
+   "стирк"
+  ],
+  "lib": "washing_machine",
+  "lib3d": true
+ },
+ {
+  "word": "уборка",
+  "kk": "тазалық",
+  "role": "hand",
+  "group": "дом",
+  "forms": [
+   "убор",
+   "пылесос",
+   "швабр",
+   "тазалық"
+  ],
+  "lib": "mop",
+  "lib3d": true
+ },
+ {
+  "word": "день рождения",
+  "kk": "туған күн",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "рождени",
+   "днюх",
+   "туған күн"
+  ],
+  "lib": "cake_birthday",
+  "lib3d": false
+ },
+ {
+  "word": "подарок",
+  "kk": "сыйлық",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "подарок",
+   "подарк",
+   "подарил",
+   "сыйлық"
+  ],
+  "lib": "gift",
+  "lib3d": true
+ },
+ {
+  "word": "шарики",
+  "kk": "шарлар",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "шарик",
+   "шар$",
+   "шары"
+  ],
+  "lib": "balloon",
+  "lib3d": true
+ },
+ {
+  "word": "ёлка",
+  "kk": "шырша",
+  "role": "place",
+  "group": "праздники",
+  "forms": [
+   "елк",
+   "шырша"
+  ],
+  "lib": "new_year_tree",
+  "lib3d": true
+ },
+ {
+  "word": "Новый год",
+  "kk": "Жаңа жыл",
+  "role": "place",
+  "group": "праздники",
+  "forms": [
+   "новый год",
+   "новогод",
+   "жаңа жыл"
+  ],
+  "lib": "new_year_tree",
+  "lib3d": true
+ },
+ {
+  "word": "Наурыз",
+  "kk": "Наурыз",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "наурыз"
+  ],
+  "lib": "nauryz_kozhe",
+  "lib3d": false
+ },
+ {
+  "word": "салют",
+  "kk": "салют",
+  "role": "weather",
+  "group": "праздники",
+  "forms": [
+   "салют",
+   "фейерверк"
+  ],
+  "lib": "firework",
+  "lib3d": false
+ },
+ {
+  "word": "той",
+  "kk": "той",
+  "role": "place",
+  "group": "праздники",
+  "forms": [
+   "той$",
+   "тоя$",
+   "тое$",
+   "свадьб"
+  ],
+  "lib": "dastarkhan_feast",
+  "lib3d": true
+ },
+ {
+  "word": "хлопушка",
+  "kk": "хлопушка",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "хлопушк",
+   "конфетти"
+  ],
+  "lib": "confetti",
+  "lib3d": false
+ },
+ {
+  "word": "выпускной",
+  "kk": "бітіру кеші",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "выпускн"
+  ],
+  "lib": "medal",
+  "lib3d": false
+ },
+ {
+  "word": "букет",
+  "kk": "гүл шоғы",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "букет",
+   "цветы$",
+   "цветов$",
+   "цветочк",
+   "гүл$",
+   "гүлдер"
+  ],
+  "lib": "flower",
+  "lib3d": true
+ },
+ {
+  "word": "тюльпаны",
+  "kk": "қызғалдақ",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "тюльпан",
+   "қызғалдақ"
+  ],
+  "lib": "tulip",
+  "lib3d": true
+ },
+ {
+  "word": "медаль",
+  "kk": "медаль",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "медал"
+  ],
+  "lib": "medal",
+  "lib3d": false
+ },
+ {
+  "word": "кубок",
+  "kk": "кубок",
+  "role": "hand",
+  "group": "праздники",
+  "forms": [
+   "кубок"
+  ],
+  "lib": "trophy",
+  "lib3d": false
+ },
+ {
+  "word": "собака",
+  "kk": "ит",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "собак",
+   "пес$",
+   "пса$",
+   "щен",
+   "ит$",
+   "күшік"
+  ],
+  "lib": "dog",
+  "lib3d": true
+ },
+ {
+  "word": "кошка",
+  "kk": "мысық",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "кошк",
+   "кот$",
+   "кота",
+   "котом",
+   "котик",
+   "мысық"
+  ],
+  "lib": "cat",
+  "lib3d": true
+ },
+ {
+  "word": "птица",
+  "kk": "құс",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "птиц",
+   "воробь",
+   "құс$"
+  ],
+  "lib": "bird",
+  "lib3d": false
+ },
+ {
+  "word": "голуби",
+  "kk": "көгершін",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "голубь",
+   "голуби",
+   "голубей",
+   "көгершін"
+  ],
+  "lib": "bird",
+  "lib3d": false
+ },
+ {
+  "word": "конь",
+  "kk": "ат",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "конь$",
+   "коня$",
+   "лошад",
+   "жеребен",
+   "атқа"
+  ],
+  "lib": "horse",
+  "lib3d": true
+ },
+ {
+  "word": "верблюд",
+  "kk": "түйе",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "верблюд",
+   "түйе"
+  ],
+  "lib": "camel",
+  "lib3d": true
+ },
+ {
+  "word": "беркут",
+  "kk": "бүркіт",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "беркут",
+   "бүркіт"
+  ],
+  "lib": "berkut",
+  "lib3d": true
+ },
+ {
+  "word": "рыбки",
+  "kk": "балық",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "рыб",
+   "балық"
+  ],
+  "lib": "fish",
+  "lib3d": false
+ },
+ {
+  "word": "овца",
+  "kk": "қой",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "овц",
+   "барашк",
+   "қой$"
+  ],
+  "lib": "sheep",
+  "lib3d": false
+ },
+ {
+  "word": "корова",
+  "kk": "сиыр",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "коров",
+   "сиыр"
+  ],
+  "lib": "cow",
+  "lib3d": false
+ },
+ {
+  "word": "утки",
+  "kk": "үйрек",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "утки$",
+   "утка$",
+   "уток$",
+   "утками$",
+   "уточк",
+   "үйрек"
+  ],
+  "lib": "duck",
+  "lib3d": false
+ },
+ {
+  "word": "белка",
+  "kk": "тиін",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "белк",
+   "тиін"
+  ],
+  "lib": "squirrel",
+  "lib3d": false
+ },
+ {
+  "word": "ёжик",
+  "kk": "кірпі",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "еж$",
+   "ежик",
+   "кірпі"
+  ],
+  "lib": "hedgehog",
+  "lib3d": false
+ },
+ {
+  "word": "хомяк",
+  "kk": "атжалман",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "хомяк",
+   "атжалман"
+  ],
+  "lib": "hamster",
+  "lib3d": true
+ },
+ {
+  "word": "попугай",
+  "kk": "тотықұс",
+  "role": "animal",
+  "group": "животные",
+  "forms": [
+   "попуга",
+   "тотықұс"
+  ],
+  "lib": "parrot",
+  "lib3d": false
+ },
+ {
+  "word": "мама",
+  "kk": "ана",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "мам$",
+   "мама",
+   "маме",
+   "мамой",
+   "мамин",
+   "ана$",
+   "анам"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "папа",
+  "kk": "әке",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "пап$",
+   "папа",
+   "папе",
+   "папой",
+   "отец",
+   "әке"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "бабушка",
+  "kk": "әже",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "бабушк",
+   "бабул",
+   "әже"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "дедушка",
+  "kk": "ата",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "дедушк",
+   "дед$",
+   "ата$",
+   "атам"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "брат",
+  "kk": "аға",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "брат",
+   "бауыр",
+   "аға$",
+   "інім"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "сестра",
+  "kk": "әпке",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "сестр",
+   "әпке",
+   "сіңлі"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "друг",
+  "kk": "дос",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "друг",
+   "друз",
+   "дос$",
+   "досым"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "подруга",
+  "kk": "құрбы",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "подруг",
+   "құрбы"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "одногруппник",
+  "kk": "топтас",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "одногрупп",
+   "однокурсн",
+   "топтас"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "сосед",
+  "kk": "көрші",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "сосед",
+   "көрші"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "преподаватель",
+  "kk": "ұстаз",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "препод",
+   "преподавател",
+   "учител",
+   "куратор",
+   "ұстаз",
+   "мұғалім"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "начальник",
+  "kk": "бастық",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "начальн",
+   "шеф",
+   "босс",
+   "бастық"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "коллега",
+  "kk": "әріптес",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "коллег",
+   "әріптес"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "парень",
+  "kk": "жігіт",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "парн",
+   "парень",
+   "жігіт"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "девушка",
+  "kk": "қыз",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "девушк",
+   "қыз$"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "малыш",
+  "kk": "бала",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "малыш",
+   "ребен",
+   "дет$",
+   "дети",
+   "детьми",
+   "бала$"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "семья",
+  "kk": "отбасы",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "семь",
+   "родн",
+   "родител",
+   "отбасы"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "тётя",
+  "kk": "апа",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "тет$",
+   "тети",
+   "тетя",
+   "апа$",
+   "тәте"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "дядя",
+  "kk": "көке",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "дяд",
+   "көке"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "тренер",
+  "kk": "жаттықтырушы",
+  "role": "person",
+  "group": "люди",
+  "forms": [
+   "тренер"
+  ],
+  "lib": null,
+  "lib3d": false
+ },
+ {
+  "word": "гитара",
+  "kk": "гитара",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "гитар"
+  ],
+  "lib": "guitar",
+  "lib3d": true
+ },
+ {
+  "word": "домбра",
+  "kk": "домбыра",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "домбр",
+   "домбыра"
+  ],
+  "lib": "dombra",
+  "lib3d": true
+ },
+ {
+  "word": "кобыз",
+  "kk": "қобыз",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "кобыз",
+   "қобыз"
+  ],
+  "lib": "kobyz",
+  "lib3d": true
+ },
+ {
+  "word": "пианино",
+  "kk": "пианино",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "пианин",
+   "фортепиан",
+   "рояль"
+  ],
+  "lib": "piano",
+  "lib3d": false
+ },
+ {
+  "word": "микрофон",
+  "kk": "микрофон",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "микрофон",
+   "караоке"
+  ],
+  "lib": "microphone",
+  "lib3d": false
+ },
+ {
+  "word": "песня",
+  "kk": "ән",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "песн",
+   "музык",
+   "трек",
+   "ән$"
+  ],
+  "lib": "note",
+  "lib3d": true
+ },
+ {
+  "word": "мяч",
+  "kk": "доп",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "мяч",
+   "доп$"
+  ],
+  "lib": "ball",
+  "lib3d": true
+ },
+ {
+  "word": "футбол",
+  "kk": "футбол",
+  "role": "place",
+  "group": "музыка и игры",
+  "forms": [
+   "футбол"
+  ],
+  "lib": "football_goal",
+  "lib3d": true
+ },
+ {
+  "word": "баскетбол",
+  "kk": "баскетбол",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "баскетбол",
+   "волейбол"
+  ],
+  "lib": "ball",
+  "lib3d": true
+ },
+ {
+  "word": "шахматы",
+  "kk": "шахмат",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "шахмат"
+  ],
+  "lib": "chess",
+  "lib3d": false
+ },
+ {
+  "word": "асыки",
+  "kk": "асық",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "асык",
+   "асық"
+  ],
+  "lib": "asyk",
+  "lib3d": true
+ },
+ {
+  "word": "приставка",
+  "kk": "приставка",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "приставк",
+   "плейстейшн",
+   "джойстик",
+   "геймпад",
+   "катку$",
+   "доту$",
+   "дота$"
+  ],
+  "lib": "gamepad",
+  "lib3d": true
+ },
+ {
+  "word": "коньки",
+  "kk": "коньки",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "коньк"
+  ],
+  "lib": "skates",
+  "lib3d": false
+ },
+ {
+  "word": "санки",
+  "kk": "шана",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "санк",
+   "ватрушк",
+   "шана"
+  ],
+  "lib": "sled",
+  "lib3d": false
+ },
+ {
+  "word": "лыжи",
+  "kk": "шаңғы",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "лыж",
+   "сноуборд",
+   "шаңғы"
+  ],
+  "lib": "skis",
+  "lib3d": true
+ },
+ {
+  "word": "воздушный змей",
+  "kk": "батпырауық",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "воздушный змей",
+   "воздушного змея",
+   "батпырауық"
+  ],
+  "lib": "kite",
+  "lib3d": false
+ },
+ {
+  "word": "фотоаппарат",
+  "kk": "фотоаппарат",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "фотоаппарат",
+   "камер",
+   "фотографировал"
+  ],
+  "lib": "camera",
+  "lib3d": false
+ },
+ {
+  "word": "пазл",
+  "kk": "пазл",
+  "role": "hand",
+  "group": "музыка и игры",
+  "forms": [
+   "пазл"
+  ],
+  "lib": "puzzle",
+  "lib3d": false
+ },
+ {
+  "word": "устал",
+  "kk": "шаршадым",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "устал",
+   "усталост",
+   "вымотал",
+   "шаршад"
+  ],
+  "lib": "pillow",
+  "lib3d": false
+ },
+ {
+  "word": "грустно",
+  "kk": "мұңды",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "грустн",
+   "грусть",
+   "печал",
+   "мұң"
+  ],
+  "lib": "tear",
+  "lib3d": false
+ },
+ {
+  "word": "радость",
+  "kk": "қуаныш",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "радост",
+   "рад$",
+   "рада",
+   "счастл",
+   "қуаныш",
+   "бақыт"
+  ],
+  "lib": "smile",
+  "lib3d": false
+ },
+ {
+  "word": "любовь",
+  "kk": "махаббат",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "любл",
+   "любов",
+   "махаббат"
+  ],
+  "lib": "heart",
+  "lib3d": true
+ },
+ {
+  "word": "скучал",
+  "kk": "сағындым",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "скучал",
+   "скучаю",
+   "соскуч",
+   "сағын"
+  ],
+  "lib": "heart_letter",
+  "lib3d": false
+ },
+ {
+  "word": "тревога",
+  "kk": "үрей",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "тревог",
+   "волнов",
+   "нервнич",
+   "страшн",
+   "үрей"
+  ],
+  "lib": "storm_cloud",
+  "lib3d": false
+ },
+ {
+  "word": "тепло на душе",
+  "kk": "жылы",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "тепл",
+   "уют",
+   "жылы"
+  ],
+  "lib": "cocoa",
+  "lib3d": true
+ },
+ {
+  "word": "мечта",
+  "kk": "арман",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "мечт",
+   "арман"
+  ],
+  "lib": "sparkle_star",
+  "lib3d": false
+ },
+ {
+  "word": "одиноко",
+  "kk": "жалғыз",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "одино",
+   "один$",
+   "одна$",
+   "жалғыз"
+  ],
+  "lib": "rain_cloud",
+  "lib3d": true
+ },
+ {
+  "word": "смеялись",
+  "kk": "күлдік",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "смея",
+   "смех",
+   "ржал",
+   "күл"
+  ],
+  "lib": "smile",
+  "lib3d": false
+ },
+ {
+  "word": "плакал",
+  "kk": "жыладым",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "плак",
+   "слез",
+   "жыла"
+  ],
+  "lib": "tear",
+  "lib3d": false
+ },
+ {
+  "word": "идея",
+  "kk": "идея",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "иде",
+   "придумал"
+  ],
+  "lib": "lightbulb",
+  "lib3d": false
+ },
+ {
+  "word": "спокойно",
+  "kk": "тыныш",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "спокойн",
+   "тих",
+   "тыныш"
+  ],
+  "lib": "tea",
+  "lib3d": true
+ },
+ {
+  "word": "злость",
+  "kk": "ашу",
+  "role": "feeling",
+  "group": "чувства",
+  "forms": [
+   "злост",
+   "злил",
+   "бесит",
+   "ашу"
+  ],
+  "lib": "storm_cloud",
+  "lib3d": false
+ }
+]

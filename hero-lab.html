@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Человечек: эмоции и действия</title>
+    <style>
+      html, body { margin: 0; background: #e9dcc2; font: 13px/1.3 system-ui, sans-serif; color: #2b2420; }
+      #grid { display: grid; grid-template-columns: repeat(auto-fill, 200px); gap: 6px; padding: 8px; }
+      .cell { background: #f6eedd; border-radius: 6px; overflow: hidden; }
+      .cell canvas { display: block; width: 200px; height: 210px; }
+      .cell b { display: block; padding: 4px 8px 0; }
+      .cell span { display: block; padding: 0 8px 6px; color: #6b5d50; font-size: 11px; }
+    </style>
+  </head>
+  <body>
+    <div id="grid"></div>
+    <script type="module" src="/src/lab/heroLab.ts"></script>
+  </body>
+</html>

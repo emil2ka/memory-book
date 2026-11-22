@@ -5,7 +5,7 @@
 // Общий для сервера (api/scene.ts), клиента (запасной вариант) и тестов.
 import type { KitModel, Part, Vec3 } from './format'
 import { KIT_LIBRARY } from './library'
-import { SCENE_ACTIONS, type KitScene, type SceneAction, type SceneObject, type SceneRole, type SceneSide } from './scene'
+import { SCENE_ACTIONS, type KitScene, type SceneAction, type SceneObject, type SceneRequest, type SceneRole, type SceneSide } from './scene'
 import { modelBounds, validateKit } from './validate'
 
 export const SCENE_ROLES: readonly SceneRole[] = ['hand', 'stand', 'detail']
@@ -86,7 +86,7 @@ export interface SceneCheck {
  * Проверить ответ модели. Ошибки — понятным языком, их можно отдать модели на повтор.
  * Предмет с ошибкой выбрасывается, но сценка годна, пока остаётся хотя бы один предмет.
  */
-export function checkScene(raw: unknown, quote: string): SceneCheck {
+export function checkScene(raw: unknown, quote: string, req?: Pick<SceneRequest, 'place' | 'hero_prop'>): SceneCheck {
   const errors: string[] = []
   const o = (raw && typeof raw === 'object' ? raw : {}) as { action?: unknown; objects?: unknown }
   let action: SceneAction = SCENE_ACTIONS.includes(o.action as SceneAction) ? (o.action as SceneAction) : 'idle'
@@ -98,12 +98,16 @@ export function checkScene(raw: unknown, quote: string): SceneCheck {
   let refs = 0
   let models = 0
   let hasHand = false
+  let hasStand = false
   list.slice(0, 3).forEach((r, i) => {
     let role: SceneRole = SCENE_ROLES.includes(r.role as SceneRole) ? (r.role as SceneRole) : 'detail'
-    if (role === 'hand' && hasHand) {
-      errors.push(`objects[${i}]: второй hand — стал detail (в руке только один предмет)`)
-      role = 'detail'
-    }
+    // план 13: одна картинка — главный предмет + место; деталей нет, второй hand и второе место не нужны
+    if (role === 'detail') return
+    if (role === 'hand' && hasHand) return
+    if (role === 'stand' && hasStand) return
+    // место только если режиссёр его назвал
+    if (role === 'stand' && req && !req.place) return
+    if (role === 'stand') hasStand = true
     const ru = typeof r.ru === 'string' && r.ru.trim() ? r.ru.trim().slice(0, 40) : 'предмет'
     const side: SceneSide = SCENE_SIDES.includes(r.side as SceneSide) ? (r.side as SceneSide) : role === 'stand' ? 'back' : role === 'hand' ? 'front' : 'right'
     const refId = typeof r.ref === 'string' ? r.ref.trim() : ''
@@ -152,22 +156,12 @@ export function checkScene(raw: unknown, quote: string): SceneCheck {
     const m = hand.ref ? sceneRef(hand.ref) : hand.model
     action = m && (m.tags.includes('drink') || m.tags.includes('food')) ? 'drink' : 'carry'
   }
-  // высокое и узкое (дерево, фонарь) за спиной торчит над головой, как шапка — ставим сбоку, напротив детали
-  for (const o of objects) {
-    if (o.role !== 'stand' || (o.side && o.side !== 'back')) continue
-    const parts = o.ref ? sceneRef(o.ref)?.parts : o.model?.parts
-    if (!parts?.length) continue
-    const b = modelBounds(parts)
-    if (b.size[1] > 1.35 * Math.max(b.size[0], b.size[2])) {
-      const taken = objects.find((x) => x !== o && (x.side === 'left' || x.side === 'right'))?.side
-      o.side = taken === 'left' ? 'right' : 'left'
-    }
-  }
-  // стенд: место + что в руках + деталь; меньше — просим дополнить (сценка при этом остаётся годной)
-  if (objects.length) {
-    if (!hand) errors.push('нет hand: добавь то, что человечек держит (из фразы или уместное месту и времени)')
-    if (!objects.some((o) => o.role === 'stand')) errors.push('нет stand: добавь признак места')
-    else if (objects.length < 3) errors.push(`предметов ${objects.length}: нужен стенд из трёх — stand + hand + detail`)
+  // место — сбоку, не за головой (за спиной оно торчит над человечком, как шапка, и закрывает главный предмет)
+  for (const o of objects) if (o.role === 'stand' && o.side !== 'left' && o.side !== 'right') o.side = 'left'
+  // главный предмет обязателен; место — если режиссёр его назвал (сценка при этом остаётся годной)
+  if (objects.length || req?.hero_prop) {
+    if (!hand) errors.push(`нет hand: главный предмет${req?.hero_prop ? ` «${req.hero_prop}»` : ''} у человечка в руках`)
+    if (req?.place && !objects.some((o) => o.role === 'stand')) errors.push(`нет stand: место «${req.place}» сбоку`)
   }
   return { scene: objects.length ? { quote, action, objects, by: 'claude' } : null, errors, refs, models }
 }

@@ -18,6 +18,7 @@ import feelings from '../../assets/kit/feelings.json'
 import kz from '../../assets/kit/kz.json'
 import packsJson from '../../assets/kit/packs.json'
 import meta2d from '../../assets/kit2d/meta.json'
+import dictionary from '../../assets/kit/dictionary.json'
 
 export { CATEGORIES, CATEGORY_RU, type Category } from './categories'
 
@@ -75,6 +76,15 @@ export const makeKey = (name: string) =>
     .filter(Boolean)
     .join(' ')
 
+interface DictAlias {
+  word: string
+  kk: string
+  role: string
+  forms: string[]
+  lib: string | null
+}
+const DICT_ALIASES = (dictionary as DictAlias[]).filter((d) => d.role !== 'feeling' && d.role !== 'person')
+
 interface StemRule {
   stem: string
   exact: boolean
@@ -96,6 +106,15 @@ function stemRules(models: readonly KitModel[]): StemRule[] {
     for (const s of m.stems) add(s.replace(/\$$/, ''), s.endsWith('$'), m.id)
     // сами названия — только целиком: «лист» не должен ловить «листать»
     for (const name of [m.ru, m.kk, m.en]) if (name) add(name, true, m.id)
+  }
+  // словарь дневника (assets/kit/dictionary.json): формы слов, которыми пишут о дне, → предмет.
+  // Основы кита важнее (добавлены раньше). Чувства и люди сюда не идут: «тепло» — не какао.
+  const ids = new Set(models.map((m) => m.id))
+  for (const d of DICT_ALIASES) {
+    if (!d.lib || !ids.has(d.lib)) continue
+    for (const f of d.forms) add(f.replace(/\$$/, ''), f.endsWith('$'), d.lib)
+    // названия короче 3 букв — не целиком: «су», «ай», «от» — частые слова
+    for (const name of [d.word, d.kk]) if (name && normWord(name).length >= 3) add(name, true, d.lib)
   }
   return rules.sort((a, b) => b.stem.length - a.stem.length)
 }

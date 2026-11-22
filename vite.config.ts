@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 import { snapshotPlugin } from './tools/snapshot-plugin'
 
 /**
- * Локальные POST /api/direct, /api/make и /api/scene под `npm run dev`: те же обработчики, что на Vercel (api/*.ts).
+ * Локальные POST /api/direct, /api/make, /api/scene, /api/photo и /api/song под `npm run dev`: те же обработчики, что на Vercel (api/*.ts).
  * .env читается только на сервере (переменные без префикса VITE_ в клиент не попадают).
  */
 function readDotEnv(root: string): Record<string, string> {
@@ -38,6 +38,8 @@ function directorApi(): Plugin {
         '/api/direct': ['/api/direct.ts', 'handleDirect'],
         '/api/make': ['/api/make.ts', 'handleMake'],
         '/api/scene': ['/api/scene.ts', 'handleScene'],
+        '/api/photo': ['/api/photo.ts', 'handlePhoto'],
+        '/api/song': ['/api/song.ts', 'handleSong'],
       }
       for (const [path, [file, handler]] of Object.entries(routes)) {
         server.middlewares.use(path, async (req, res) => {

@@ -4,20 +4,74 @@ import { useEffect, useState } from 'react'
 import { PALETTE, css } from '../scene/palette'
 import { demoDays } from '../store'
 import { Bookmark } from '../ui/Bookmark'
+import { CloudBadge, MovePrompt, MyDays, Welcome } from '../ui/Account'
 import { Cassette, type SongDraft } from '../ui/Cassette'
 import { CardButton, FlagButton, Icon, PinNote, SealButton, Sheet, SlipButton, Spinner, TagButton, Tape } from '../ui/paper'
 import { PersonPick, type PersonKind } from '../ui/PersonPick'
 import '../app.css'
 import './uilab.css'
+import frame from '../../assets/_raw/snaps/beat_portrait.jpg'
+
+/** ?lab=ui&only=bookmark — только закладка поверх кадра фильма (проверка шторки на телефоне). */
+const ONLY = new URLSearchParams(location.search).get('only')
 
 export default function UiLab() {
   const [person, setPerson] = useState<PersonKind>('boy')
-  const [song, setSong] = useState<SongDraft>({ kind: 'file', title: 'Песня дня', bpm: 92 })
+  const [song, setSong] = useState<SongDraft>(ONLY === 'advice' ? { kind: 'none' } : { kind: 'file', title: 'Песня дня', bpm: 92 })
   useEffect(() => {
     const root = document.documentElement
     for (const [k, v] of Object.entries(PALETTE)) root.style.setProperty(`--${k}`, css(v))
   }, [])
   const day = demoDays[0]
+  if (ONLY === 'account')
+    return (
+      <div className="bm-stage" style={{ backgroundImage: `url(${frame})` }}>
+        <CloudBadge state="cloud" email="emil@example.com" />
+        <MyDays days={demoDays} covers={{}} inCloud={new Set([demoDays[0].id])} onOpen={() => {}} onClose={() => {}} />
+        <MovePrompt count={2} busy={false} onYes={() => {}} onNo={() => {}} />
+        <Welcome onSignIn={async () => { throw new Error('неверная почта или пароль') }} onSignUp={async () => {}} onLocal={() => {}} />
+      </div>
+    )
+  if (ONLY === 'advice')
+    return (
+      <div className="bm-stage" style={{ backgroundImage: `url(${frame})`, padding: 24, overflow: 'auto' }}>
+        <Cassette
+          song={song}
+          onSong={setSong}
+          need={false}
+          disabled={false}
+          style={{ position: 'relative' }}
+          advice={{
+            state: 'ready',
+            songs: [
+              { title: 'Сағыныш', artist: 'Ерке Есмахан', why: 'тёплый вечер в кофейне и дождь за окном', tempo: 0.25, energy: 0.3 },
+              { title: 'Кукушка', artist: 'Кино', why: 'осень, разговоры допоздна', tempo: 0.5, energy: 0.5 },
+              { title: 'Here Comes the Sun', artist: 'The Beatles', why: 'после дождя — светлое настроение', tempo: 0.7, energy: 0.75 },
+            ],
+          }}
+        />
+      </div>
+    )
+  if (ONLY === 'bookmark')
+    return (
+      <div className="bm-stage" style={{ backgroundImage: `url(${frame})` }}>
+        <Bookmark
+          script={day.script}
+          source="llm"
+          saved={false}
+          canSave
+          canDelete
+          onSave={() => {}}
+          onDownload={() => {}}
+          onReplay={() => {}}
+          onDelete={() => {}}
+          onShelf={() => {}}
+          onNew={() => {}}
+          onEdit={() => {}}
+          status="день сохранён на полке"
+        />
+      </div>
+    )
   return (
     <div className="ui-lab">
       <div className="ui-lab-title">

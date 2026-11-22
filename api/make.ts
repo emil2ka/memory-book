@@ -241,7 +241,7 @@ function rateLimited(ip: string): boolean {
   list.push(now)
   hits.set(ip, list)
   if (hits.size > 5000) hits.clear()
-  return list.length > 30
+  return list.length > (Number(process.env.MAKE_RATE_LIMIT) || 30)
 }
 
 export async function handleMake(body: unknown, ip: string): Promise<{ status: number; json: unknown; headers: Record<string, string> }> {

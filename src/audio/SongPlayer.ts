@@ -9,12 +9,15 @@
 // Удары берутся из анализа файла (estimateBeats), а пока анализа нет — по скачку энергии.
 import { estimateBeats, tempoToCategory, toMono, type BeatEstimate } from './tempo'
 import type { Tempo } from '../types/script'
+import { energyCurve } from '../timeline/songShape'
 
 export interface SongAnalysis extends BeatEstimate {
   tempo: Tempo
   /** Средняя громкость трека 0..1 — подсказка для song.energy. */
   energy: number
   duration: number
+  /** Громкость по секундам 0..1 (первые 90 с): где подъём и затухание — под них поворот и конец фильма (план 15). */
+  energyCurve?: number[]
 }
 
 type AudioCtxCtor = typeof AudioContext
@@ -184,6 +187,7 @@ export class SongPlayer {
       tempo: tempoToCategory(est.bpm),
       energy: Math.round(Math.min(1, rms * 4) * 100) / 100,
       duration: decoded.duration,
+      energyCurve: energyCurve(slice, decoded.sampleRate),
     }
     if (token !== this.loadToken) return null
     this.analysis = result
