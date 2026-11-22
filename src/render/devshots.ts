@@ -21,6 +21,7 @@ type W = typeof window & {
       scene: unknown
       camera: unknown
       pixel: { render(r: unknown, s: unknown, c: unknown): void } | null
+      fit(): void
     }
   }
 }
@@ -29,7 +30,9 @@ const w = window as W
 
 /** Нарисовать кадр сразу, не дожидаясь requestAnimationFrame (во фоновой вкладке он стоит). */
 const frame = async () => {
-  const px = w.world.px
+  const px = w.world.px as typeof w.world.px & { fit(): void; renderer: { domElement: HTMLCanvasElement } }
+  // в скрытой панели ResizeObserver не срабатывает: подгоняем холст сами
+  if (px.renderer.domElement.width < 64) px.fit()
   if (px.pixel) px.pixel.render(px.renderer, px.scene, px.camera)
   else px.renderer.render(px.scene, px.camera)
 }
@@ -88,8 +91,8 @@ export async function filmSheet(day: number, times: number[], name: string, patc
   const f = w.world.film
   const realTick = p.tick.bind(p)
   p.tick = () => {}
-  // картинки-наклейки растрируются асинхронно
-  await sleep(400)
+  // картинки и сценки готовятся асинхронно (сценки — из кэша или от Haiku)
+  await sleep((window as unknown as { __sceneWait?: number }).__sceneWait ?? 400)
   const H = (Wd * 9) / 16
   const sheet = document.createElement('canvas')
   sheet.width = Wd * cols
@@ -172,4 +175,114 @@ export function testSvgs() {
   )
 }
 
-Object.assign(window, { __dev: { filmSheet, filmFrames, testPhotos, photoPatch, save, testSvgs } })
+/**
+ * Проба «Haiku собирает сценку»: показать сценки из eval/haiku-scene/scenes.json прямо в сцене —
+ * человечек в позе, предмет в руках, декорация и деталь вокруг. Два ракурса на сценку, лист в snaps/.
+ */
+export async function showScenes(name = 'haiku_scenes.png') {
+  const THREE = await import('three')
+  const { buildKit } = await import('../kit/build')
+  const { toonFor, toPixelLayer } = await import('./PixelLayer')
+  const { KIT_UNIT } = await import('../kit/format')
+  type Obj = { role: string; ru: string; at: [number, number]; rotY: number; parts: unknown[] }
+  type Sc = { phrase: string; action: string; objects: Obj[] }
+  const scenes = (await (await fetch('/eval/haiku-scene/scenes.json')).json()) as Sc[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const f = (w.world as any).film
+  const px = w.world.px as any
+  if (px.renderer.domElement.width < 64) px.fit()
+  f.person?.setVisible(false)
+  f.book.setOpen(1)
+  // вход человека и экран полки управляют камерой сами — выключаем, иначе первые кадры общие
+  f.introDone = true
+  f.introCam = null
+  f.shelfMode = false
+  const W = 640
+  const H = 400
+  const sheet = document.createElement('canvas')
+  sheet.width = W * 2
+  sheet.height = H * scenes.length
+  const g = sheet.getContext('2d')!
+  const fig = f.figures[0].fig
+  const hero = f.hero.object
+  for (let i = 0; i < scenes.length; i++) {
+    const sc = scenes[i]
+    f.book.setText(sc.phrase)
+    const at = new THREE.Vector3(-1.5, f.book.pageY, 0.4)
+    hero.position.copy(at)
+    hero.visible = true
+    f.anim.hero = { row: sc.action, t0: 0, loop: sc.action !== 'sit', fps: 6, dur: 1.5 }
+    const made: any[] = []
+    let handObj: any = null
+    let handH = 0
+    for (const o of sc.objects) {
+      const model = { id: 'scene', ru: o.ru, stems: [], tags: [], hold: o.role === 'hand' ? 'hand' : 'ground', parts: o.parts }
+      const obj = buildKit(model as never, toonFor)
+      toPixelLayer(obj)
+      obj.rotation.y = ((o.rotY || 0) * Math.PI) / 180
+      if (o.role === 'hand') {
+        handObj = obj
+        handH = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3()).y
+      } else obj.position.set(at.x + (o.at?.[0] ?? 0) * KIT_UNIT, at.y, at.z + (o.at?.[1] ?? -25) * KIT_UNIT)
+      px.scene.add(obj)
+      made.push(obj)
+    }
+    const views = [
+      { pos: [1.3, 1.25, 2.9], look: [0.05, 0.5, -0.45] },
+      { pos: [-2.6, 1.0, 1.4], look: [0.1, 0.5, -0.4] },
+    ]
+    for (let v = 0; v < 2; v++) {
+      for (let k = 0; k < 40; k++) {
+        f.camPos.set(at.x + views[v].pos[0], at.y + views[v].pos[1], at.z + views[v].pos[2])
+        f.camLook.set(at.x + views[v].look[0], at.y + views[v].look[1], at.z + views[v].look[2])
+        f.update(1 + k / 30, 1 / 30)
+        if (handObj) {
+          const p = new THREE.Vector3()
+          if (sc.action === 'drink') fig.head.localToWorld(p.set(1.5, 3.0, 9))
+          else fig.chest.getWorldPosition(p)
+          handObj.position.copy(p)
+          handObj.position.y -= handH * 0.5
+          handObj.rotation.y = fig.object.rotation.y
+        }
+      }
+      f.applyCamera()
+      px.pixel.render(px.renderer, px.scene, px.camera)
+      const c = px.renderer.domElement
+      g.drawImage(c, 0, 0, c.width, c.height, v * W, i * H, W, H)
+    }
+    g.fillStyle = 'rgba(0,0,0,0.55)'
+    g.fillRect(0, i * H, W * 2, 30)
+    g.fillStyle = '#fff'
+    g.font = '20px sans-serif'
+    g.fillText(`«${sc.phrase}» — ${sc.objects.map((o) => o.ru).join(', ')}`, 10, i * H + 22)
+    for (const o of made) px.scene.remove(o)
+  }
+  hero.visible = false
+  f.person?.setVisible(true)
+  await save(sheet, name)
+  return scenes.length
+}
+
+/** Проверка сценок в фильме без сервера: цитате бита сопоставляется сценка из файла (по порядку или по карте). */
+export async function fakeScenes(map: Record<string, number>, path = '/eval/haiku-scene/scenes.json') {
+  const scenes = (await (await fetch(path)).json()) as { action: string; objects: unknown[] }[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const f = (w.world as any).film
+  f.sceneProvider = {
+    request() {},
+    get(quote: string) {
+      const i = map[quote]
+      const s = i === undefined ? null : scenes[i]
+      if (!s) return null
+      // в пробе фигуры лежат прямо в объекте — заворачиваем в model
+      const objects = (s.objects as { role: string; ru: string; parts?: unknown[]; model?: unknown; ref?: string }[]).map((o) => ({
+        ...o,
+        model: o.model ?? (o.parts ? { id: 'probe', ru: o.ru, stems: [], tags: [], hold: o.role === 'hand' ? 'hand' : 'ground', parts: o.parts } : undefined),
+      }))
+      return { quote, action: s.action, objects }
+    },
+  }
+  return Object.keys(map).length
+}
+
+Object.assign(window, { __dev: { filmSheet, filmFrames, testPhotos, photoPatch, save, testSvgs, showScenes, fakeScenes } })

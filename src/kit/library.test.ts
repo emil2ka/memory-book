@@ -46,7 +46,8 @@ describe('библиотека кита', () => {
       expect(m.parts.length, m.id).toBeGreaterThanOrEqual(8)
       expect(m.parts.length, m.id).toBeLessThanOrEqual(40)
       const h = kitSize(m)[1]
-      const [lo, hi] = KIT_LIMITS.height[m.hold]
+      // детали сценок (scene: 'detail') ниже обычного «ground»: 6–20
+      const [lo, hi] = m.scene === 'detail' ? KIT_LIMITS.sceneHeight.detail : KIT_LIMITS.height[m.hold]
       expect(h, `${m.id} высота`).toBeGreaterThanOrEqual(lo * 0.85)
       expect(h, `${m.id} высота`).toBeLessThanOrEqual(hi * 1.15)
       const fam = new Set(m.parts.map((p) => FAMILY[p.c]).filter((f) => f !== 'ink'))

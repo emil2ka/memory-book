@@ -12,6 +12,8 @@ import type { DirectorInput } from './types/script'
 import { Bookmark } from './ui/Bookmark'
 import type { SongDraft } from './ui/Cassette'
 import { missingParts, type Need } from './ui/checks'
+import { FlagButton, PinNote, Sheet, SlipButton, TagButton } from './ui/paper'
+import { PersonPick, loadPerson, savePerson, type PersonKind } from './ui/PersonPick'
 import { Shelf } from './ui/Shelf'
 import { applyKnobs, fadeOut, linkMeta, makeSongClock, unlockSong } from './ui/song'
 import { MAX_PHOTOS, WriteLayer, type PageRects } from './ui/WriteLayer'
@@ -44,8 +46,29 @@ const LAB = typeof location !== 'undefined' ? new URLSearchParams(location.searc
 const KitLab = lazy(() => import('./lab/KitLab'))
 const Kit2DLab = lazy(() => import('./lab/Kit2DLab'))
 const LAB_MODE = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mode') : null
+const WorldLab = lazy(() => import('./lab/WorldLab'))
+const UiLab = lazy(() => import('./lab/UiLab'))
+const PenLab = lazy(() => import('./lab/PenLab'))
 
 export function App() {
+  if (LAB === 'world')
+    return (
+      <Suspense fallback={null}>
+        <WorldLab />
+      </Suspense>
+    )
+  if (LAB === 'pen')
+    return (
+      <Suspense fallback={null}>
+        <PenLab />
+      </Suspense>
+    )
+  if (LAB === 'ui')
+    return (
+      <Suspense fallback={null}>
+        <UiLab />
+      </Suspense>
+    )
   if (LAB === 'kit')
     return (
       <Suspense fallback={null}>
@@ -58,9 +81,24 @@ export function App() {
 function DiaryApp() {
   const host = useRef<HTMLDivElement>(null)
   const worldRef = useRef<World | null>(null)
+  const [person, setPersonState] = useState<PersonKind>(loadPerson)
+  const personRef = useRef(person)
+  const pickPerson = useCallback((kind: PersonKind) => {
+    personRef.current = kind
+    setPersonState(kind)
+    savePerson(kind)
+    worldRef.current?.setPerson(kind)
+  }, [])
   const songRef = useRef<SongPlayer | null>(null)
   const playerRef = useRef<TimelinePlayer | null>(null)
   const songLoadedFor = useRef<Blob | null>(null)
+  /** id дня, который правим после автосохранения (иначе — новый день). */
+  const editingId = useRef<string | null>(null)
+  /** Черновик записи ещё не собран в фильм (ушли на полку посреди записи). */
+  const draftPending = useRef(false)
+  // «записать» на главном экране держится слева от закрытой книги (книга теперь перед человеком, камера двигается)
+  const [ctaAt, setCtaAt] = useState<{ right: number; top: number } | null>(null)
+  const [ctaReady, setCtaReady] = useState(false)
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [days, setDays] = useState<StoredDay[]>(demoDays)
@@ -77,6 +115,79 @@ function DiaryApp() {
 
   const getSong = () => (songRef.current ??= new SongPlayer())
 
+  // Пока режиссёр думает (5–10 с), показываем, что именно сейчас происходит, а не одно «собираю…».
+  const [busyStep, setBusyStep] = useState(0)
+  useEffect(() => {
+    if (phase !== 'directing') return
+    setBusyStep(0)
+    const id = window.setInterval(() => setBusyStep((s) => s + 1), 1700)
+    return () => window.clearInterval(id)
+  }, [phase])
+  const busySteps = [
+    'читаю запись…',
+    ...(photos.length ? ['смотрю фото…'] : []),
+    ...(song.kind !== 'none' ? ['слушаю песню…'] : []),
+    'выбираю слова…',
+    'ставлю свет…',
+    'почти готово…',
+  ]
+  const busyText = busySteps[Math.min(busyStep, busySteps.length - 1)]
+
+  // Узкий портретный экран: кадр сцены 16:9, книга мелкая — советуем повернуть телефон.
+  const [portrait, setPortrait] = useState(() => typeof innerWidth === 'number' && innerWidth < 600 && innerHeight > innerWidth)
+  const [rotateDismissed, setRotateDismissed] = useState(false)
+  useEffect(() => {
+    const on = () => setPortrait(innerWidth < 600 && innerHeight > innerWidth)
+    addEventListener('resize', on)
+    return () => removeEventListener('resize', on)
+  }, [])
+
+  // Клик или тап по книге на 3D-полке открывает день (сцена отвечает только на экране полки).
+  const openDayRef = useRef<(d: StoredDay) => void>(() => {})
+  const newDayRef = useRef<() => void>(() => {})
+  const daysRef = useRef(days)
+  daysRef.current = days
+  useEffect(() => {
+    const w = worldRef.current
+    if (!w || phase === 'loading') return
+    const offShelf = w.onShelfPick((id) => {
+      const d = daysRef.current.find((x) => x.id === id)
+      if (d) openDayRef.current(d)
+    })
+    // клик по закрытой книге на столе — записать день
+    const offBook = w.onBookPick(() => newDayRef.current())
+    return () => {
+      offShelf()
+      offBook()
+    }
+  }, [phase === 'loading'])
+
+  // Полка-архив в 3D-мире: старые дни первыми; играющий новый день стоит на полке сразу,
+  // даже до сохранения — иначе его книге в финале некуда въехать.
+  useEffect(() => {
+    const w = worldRef.current
+    if (!w || phase === 'loading') return
+    const list = [...days]
+    if (current && !list.some((d) => d.id === current.day.id)) list.push(current.day)
+    list.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
+    w.setShelf(list.map((d) => ({ id: d.id, title: d.script.title, paletteHint: d.script.palette_hint })))
+  }, [days, current, phase])
+
+  // Книга ещё открывается, а человек уже пишет: копим нажатия, чтобы первые слова не пропали.
+  useEffect(() => {
+    if (phase !== 'write' || rects) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key.length === 1) setText((t) => t + e.key)
+      else if (e.key === 'Backspace') setText((t) => t.slice(0, -1))
+      else if (e.key === 'Enter') setText((t) => t + '\n')
+      else return
+      e.preventDefault()
+    }
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [phase, rects])
+
   // Цвета интерфейса — только из мастер-палитры сцены.
   useEffect(() => {
     const root = document.documentElement
@@ -92,6 +203,43 @@ function DiaryApp() {
     }
   }, [])
 
+  useEffect(() => {
+    if (phase !== 'shelf') return
+    let last = ''
+    let still = 0
+    const since = performance.now()
+    const place = () => {
+      const w = worldRef.current
+      if (!w) return
+      const book = w.pageRects().right
+      // пока человек входит и садится, а камера переезжает — подписи нет; появляется, когда кадр замер на ~1 с.
+      // Человек не загрузился (нет файла, сеть) — через 15 с подпись всё равно появится.
+      const busy = !w.personSettled && performance.now() - since < 15000
+      const key = `${Math.round(book.x / 4)},${Math.round(book.y / 4)}`
+      still = key === last && !busy ? still + 1 : 0
+      last = key
+      if (still < 3) {
+        setCtaAt((cur) => (cur ? null : cur))
+        setCtaReady(false)
+        return
+      }
+      setCtaReady(true)
+      const vw = innerWidth
+      // закрытая книга лежит на месте правой страницы; подпись — слева от неё, по середине высоты
+      // бирка «привязана» к книге: правым краем заходит на обложку
+      const right = Math.round(vw - book.x - Math.min(34, book.w * 0.12))
+      // бирка + полоска подсказки ≈ 104 px (на телефоне ×0.74) — не уходить за нижний край
+      const ctaH = (innerHeight <= 560 || vw <= 600 ? 0.74 : 1) * 104
+      const top = Math.round(Math.min(book.y + book.h * 0.3, innerHeight - ctaH - 6))
+      const fits = book.x > 300 && book.w > 20 && top > 0 && top < innerHeight - 60
+      const next = fits ? { right, top } : null
+      setCtaAt((cur) => (cur && next && Math.abs(cur.right - next.right) < 3 && Math.abs(cur.top - next.top) < 3 ? cur : next))
+    }
+    place()
+    const id = window.setInterval(place, 300)
+    return () => window.clearInterval(id)
+  }, [phase])
+
   // Мир сцены.
   useEffect(() => {
     let dead = false
@@ -104,6 +252,7 @@ function DiaryApp() {
         if (dead || !host.current) return
         const world = new World(host.current, bank)
         worldRef.current = world
+        world.setPerson(personRef.current)
         // для отладки в консоли
         Object.assign(window, { world, songPlayer: () => songRef.current })
         world.idle()
@@ -131,8 +280,30 @@ function DiaryApp() {
   const measure = useCallback(() => {
     const w = worldRef.current
     if (!w) return
-    setRects(w.pageRects())
+    const next = w.pageRects()
+    // камера из глаз доезжает и потом дышит вместе с головой — мелкую дрожь (<2 px) не переносим в DOM
+    setRects((cur) => {
+      if (!cur) return next
+      const near = (a: PageRects['left'], b: PageRects['left']) =>
+        Math.abs(a.x - b.x) < 2 && Math.abs(a.y - b.y) < 2 && Math.abs(a.w - b.w) < 2 && Math.abs(a.h - b.h) < 2
+      return near(cur.left, next.left) && near(cur.right, next.right) && cur.scale === next.scale ? cur : next
+    })
   }, [])
+  // Запись глазами человека: страницы на экране двигаются вместе с камерой — следим за ними всё время.
+  useEffect(() => {
+    if (phase !== 'write' && phase !== 'directing') return
+    let raf = 0
+    const tick = () => {
+      measure()
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    const id = window.setInterval(measure, 250) // фоновая вкладка: rAF почти стоит
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearInterval(id)
+    }
+  }, [phase, measure])
   useEffect(() => {
     if (phase !== 'write' && phase !== 'directing') return
     const ro = new ResizeObserver(() => requestAnimationFrame(measure))
@@ -206,6 +377,8 @@ function DiaryApp() {
   }
 
   const toWrite = () => {
+    // правка уже сохранённого дня перезапишет его, а не добавит второй корешок
+    editingId.current = current?.saved ? current.day.id : null
     stopFilm()
     const w = worldRef.current
     if (!w) return
@@ -220,17 +393,24 @@ function DiaryApp() {
     setTimeout(measure, 80) // запасной замер: в фоновой вкладке rAF не идёт
   }
 
+  newDayRef.current = () => newDay()
   const newDay = () => {
-    setText('')
-    setPhotos([])
-    setSong(EMPTY_SONG)
-    songLoadedFor.current = null
+    editingId.current = null
+    // Ушли на полку посреди записи — черновик ждёт; после собранного дня начинаем с чистого листа.
+    const keep = draftPending.current
+    if (!keep) {
+      setText('')
+      setPhotos([])
+      setSong(EMPTY_SONG)
+      songLoadedFor.current = null
+    }
+    draftPending.current = true
     songRef.current?.pause()
     const w = worldRef.current
     if (w) {
       w.enterWriteMode()
-      w.setDraftText('')
-      w.setDraftPhotos([])
+      w.setDraftText(keep ? text : '')
+      w.setDraftPhotos(keep ? photos.map((p) => p.image) : [])
     }
     setCurrent(null)
     setStatus('')
@@ -270,13 +450,26 @@ function DiaryApp() {
         console.warn('[song] не запустилась, фильм идёт без звука', e)
       }
     }
-    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock, photoCount: cur.photos.length })
+    const player = w.playDay(cur.day.text, cur.day.script, { seed: cur.day.seed, beatTimes, clock, photoCount: cur.photos.length, dayId: cur.day.id })
     if (clock && sp) player.setAudio(sp)
     playerRef.current = player
     player.onEnd(async () => {
       if (clock && sp) fadeOut(sp)
       const cover = await captureCover()
-      setCurrent((c) => (c && c.day.id === cur.day.id ? { ...c, cover: cover ?? c.cover } : c))
+      // Новый день сохраняется сам: «На полку» без «Сохранить» не должно терять запись.
+      let saved = cur.saved
+      if (!saved) {
+        try {
+          await saveDay({ ...cur.day })
+          saved = true
+          setStatus('день сохранён на полке')
+          void refreshDays()
+        } catch (e) {
+          console.error('[store]', e)
+          setStatus('не получилось сохранить — нажми «Сохранить» ещё раз')
+        }
+      }
+      setCurrent((c) => (c && c.day.id === cur.day.id ? { ...c, cover: cover ?? c.cover, saved: c.saved || saved } : c))
       setPhase('after')
     })
     setCurrent(cur)
@@ -363,7 +556,7 @@ function DiaryApp() {
         : { kind: 'link', url: song.url, title: song.title, artist: song.artist, tempo: song.tempo, energy: song.energy }
     const now = new Date()
     const day: StoredDay = {
-      id: newDayId(now),
+      id: editingId.current ?? newDayId(now),
       date: localDate(now),
       text: input.text,
       photos: photos.map((p) => p.blob),
@@ -375,11 +568,13 @@ function DiaryApp() {
       createdAt: now.getTime(),
     }
     if (res.source === 'fallback') console.info('[director] запасной сценарий:', res.reason)
+    draftPending.current = false
     await startFilm({ day, photos, stored: false, saved: false }, !!sp)
   }
 
   // ---------- полка и после фильма ----------
 
+  openDayRef.current = (d: StoredDay) => void openDay(d)
   const openDay = async (d: StoredDay) => {
     setStatus('')
     setPhase('opening')
@@ -451,6 +646,24 @@ function DiaryApp() {
         {(phase === 'shelf' || phase === 'opening' || (phase === 'film' && current?.stored === true)) && (
           <Shelf days={days} hidden={phase !== 'shelf' || sceneFilm} onOpen={(d) => void openDay(d)} onNew={newDay} />
         )}
+        {portrait && !rotateDismissed && phase !== 'film' && phase !== 'after' && !sceneFilm && (
+          <PinNote className="rotate-hint" role="note" seed="rotate">
+            <span>поверни телефон горизонтально — книга раскроется шире</span>
+            <SlipButton onClick={() => setRotateDismissed(true)} seed="rotate-ok">ок</SlipButton>
+          </PinNote>
+        )}
+        {phase === 'shelf' && !sceneFilm && <PersonPick value={person} onChange={pickPerson} />}
+        {phase === 'shelf' && !sceneFilm && ctaReady && (
+          <div className={`shelf-cta${ctaAt ? ' at-book' : ''}`} style={ctaAt ? { right: ctaAt.right, top: ctaAt.top, bottom: 'auto' } : undefined}>
+            <TagButton onClick={newDay} seed="cta">
+              {draftPending.current && (text || photos.length) ? 'Дописать день' : 'Записать день'}
+            </TagButton>
+            <span className="cta-hint">
+              <Sheet edge="torn" w={170} h={24} seed="cta-hint" />
+              <span>{draftPending.current && (text || photos.length) ? 'начатый день ждёт · или нажми на книгу' : 'или нажми на книгу'}</span>
+            </span>
+          </div>
+        )}
         {(phase === 'write' || phase === 'directing' || (phase === 'film' && current?.stored === false)) && (
           <WriteLayer
             rects={rects}
@@ -468,6 +681,7 @@ function DiaryApp() {
             onSong={changeSong}
             need={need}
             busy={phase !== 'write'}
+            busyText={phase === 'directing' ? busyText : undefined}
             hidden={phase === 'film'}
             photoBusy={photoBusy}
             onCollect={() => void collect()}
@@ -476,15 +690,15 @@ function DiaryApp() {
         )}
         {(phase === 'film' || (sceneFilm && phase !== 'write' && phase !== 'directing' && phase !== 'after')) && (
           <div className="film-hint">
-            <button
-              className="link"
+            <FlagButton
+              seed="skip"
               onClick={() => {
                 const p = playerRef.current ?? worldRef.current?.player
                 if (p) p.seek(p.duration)
               }}
             >
-              пропустить
-            </button>
+              пропустить »
+            </FlagButton>
           </div>
         )}
         {phase === 'after' && current && (

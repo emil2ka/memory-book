@@ -235,6 +235,19 @@ export function validateKit(raw: unknown, opts: ValidateOptions = {}): KitCheck 
 
   const hold = o.hold as Hold
   if (!HOLDS.includes(hold)) errors.push(`hold: одно из ${HOLDS.join(', ')} (получено ${JSON.stringify(o.hold)})`)
+  // роль в сценке (необязательно); у detail свой диапазон высоты вместо ground
+  let scene: KitModel['scene']
+  if (o.scene !== undefined) {
+    if (o.scene === 'hand' || o.scene === 'stand' || o.scene === 'detail') scene = o.scene
+    else warnings.push(`scene: одно из hand, stand, detail (получено ${JSON.stringify(o.scene)}) — выброшено`)
+  }
+  // точка хвата (необязательно): где ладонь, в единицах кита
+  let grip: Vec3 | undefined
+  if (o.grip !== undefined) {
+    const g = vec(o.grip)
+    if (!g) warnings.push('grip: не три числа — выброшено')
+    else grip = g
+  }
 
   // --- фигуры ---
   const parts: Part[] = []
@@ -339,6 +352,7 @@ export function validateKit(raw: unknown, opts: ValidateOptions = {}): KitCheck 
   if (minY !== 0 && opts.ground !== false) {
     for (const p of parts) p.p[1] = half(p.p[1] - minY)
     if (fx) for (const f of fx) if (f.at) f.at[1] = half(f.at[1] - minY)
+    if (grip) grip[1] = half(grip[1] - minY)
     if (Math.abs(minY) > 1) warnings.push(`основание сдвинуто на y = 0 (было ${minY})`)
     b = modelBounds(parts)
   }
@@ -350,7 +364,7 @@ export function validateKit(raw: unknown, opts: ValidateOptions = {}): KitCheck 
     }
   }
   let height = b.max[1] - b.min[1]
-  const [lo, hi] = KIT_LIMITS.height[hold]
+  const [lo, hi] = scene === 'detail' ? KIT_LIMITS.sceneHeight.detail : KIT_LIMITS.height[hold]
   if (opts.fit && height > 0 && (height < lo * (1 - slack) || height > hi * (1 + slack))) {
     // равномерный масштаб к ближайшей границе: пропорции предмета сохраняются
     const k = (height < lo ? lo : hi) / height
@@ -359,11 +373,13 @@ export function validateKit(raw: unknown, opts: ValidateOptions = {}): KitCheck 
       p.d = p.d.map((x) => Math.max(KIT_LIMITS.minSize, half(x * k))) as Vec3
     }
     if (fx) for (const f of fx) if (f.at) f.at = f.at.map((x) => half(x * k)) as Vec3
+    if (grip) grip = grip.map((x) => half(x * k)) as Vec3
     warnings.push(`высота ${height.toFixed(1)} → масштаб ×${k.toFixed(2)} под hold «${hold}»`)
     b = modelBounds(parts)
     if (b.min[1] !== 0) {
       const dy = half(b.min[1])
       for (const p of parts) p.p[1] = half(p.p[1] - dy)
+      if (grip) grip[1] = half(grip[1] - dy)
       b = modelBounds(parts)
     }
     height = b.max[1] - b.min[1]
@@ -375,7 +391,14 @@ export function validateKit(raw: unknown, opts: ValidateOptions = {}): KitCheck 
   if (wide > KIT_LIMITS.maxSize) errors.push(`ширина ${wide.toFixed(1)} больше ${KIT_LIMITS.maxSize}`)
   if (errors.length) return fail()
 
-  const model: KitModel = { id, ru, ...(kk ? { kk } : {}), ...(en ? { en } : {}), stems, tags, hold, ...(fx && fx.length ? { fx } : {}), parts }
+  if (grip && (grip.some((x, i) => x < b.min[i] - 2 || x > b.max[i] + 2))) {
+    warnings.push(`grip: точка ${grip.join(', ')} вне предмета — выброшена`)
+    grip = undefined
+  }
+  const model: KitModel = {
+    id, ru, ...(kk ? { kk } : {}), ...(en ? { en } : {}), stems, tags, hold,
+    ...(grip ? { grip } : {}), ...(scene ? { scene } : {}), ...(fx && fx.length ? { fx } : {}), parts,
+  }
   if (o.by === 'library' || o.by === 'claude') model.by = o.by
   return { ok: true, model, errors, warnings }
 }

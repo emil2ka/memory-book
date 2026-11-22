@@ -1,6 +1,7 @@
 // Хореограф: DayScript → Timeline. Чистая функция, без DOM и без Date/Math.random.
 // Структура: вступление ≈ 8 с → блок на каждый бит → (постановка противоречия) → финал ≈ 8 с.
 import { resultTags } from '../director/results'
+import { categoryOf } from '../kit/library'
 import type { ActionId, Beat, BeatResult, CameraId, DayScript, Mood } from '../types/script'
 import type { Timeline, TimelineEvent } from '../types/timeline'
 import { makeRng, type Rng } from './rng'
@@ -22,7 +23,9 @@ export const PHOTO_FAN_LEN = 2.5
 export const MIN_DURATION = 30
 export const MAX_DURATION = 60
 export const INTRO_LEN = 8
-export const OUTRO_LEN = 8
+/** Финал: сидит на краю 3.2 с (камера у сцены) → книга закрывается → название → на полку. */
+export const OUTRO_SIT = 3.2
+export const OUTRO_LEN = OUTRO_SIT + 6.2
 const SNAP_WINDOW = 0.4
 
 // Базовые длительности шагов бита (секунды при pace = 1). Сумма ≈ 6 с, как в 06-engine.
@@ -111,6 +114,37 @@ function orbitBeat(beats: Beat[]): number {
   return best
 }
 
+/** Больше битов при фото — суетливо (≈4,5 с на бит): оставляем столько. */
+export const MAX_BEATS_WITH_PHOTOS = 5
+
+/**
+ * Какие биты попадут в фильм. При фото и битах > 5 оставляем 5. Первыми уходят эффекты,
+ * потом повтор вида предмета, потом бит с самым коротким словом. Никогда не уходят бит облёта,
+ * бит со вторым человечком и бит противоречия. Сценарий не меняется — только таймлайн.
+ */
+export function keptBeats(beats: Beat[], photos: number, protect: number[]): number[] {
+  const all = beats.map((_, i) => i)
+  if (photos < 1 || beats.length <= MAX_BEATS_WITH_PHOTOS) return all
+  const kind = (b: Beat) => (b.result.kind === 'kit' || b.result.kind === 'item' || b.result.kind === 'popup' ? categoryOf(b.result.id) ?? b.result.id : `${b.result.kind}:${b.result.id}`)
+  const keep = new Set(all)
+  const safe = (i: number) => protect.includes(i) || beats[i].result.kind === 'person'
+  while (keep.size > MAX_BEATS_WITH_PHOTOS) {
+    const cand = [...keep].filter((i) => !safe(i))
+    if (!cand.length) break
+    const rank = (i: number) => {
+      const b = beats[i]
+      if (b.result.kind === 'effect') return 0
+      const k = kind(b)
+      if ([...keep].some((j) => j !== i && kind(beats[j]) === k)) return 1
+      return 2
+    }
+    // самый «лишний»: меньший ранг, затем самое короткое слово, затем более поздний бит
+    cand.sort((a, c) => rank(a) - rank(c) || beats[a].quote.length - beats[c].quote.length || c - a)
+    keep.delete(cand[0])
+  }
+  return [...keep].sort((a, b) => a - b)
+}
+
 /** Куда вставить полароид: после второго бита, при 4 битах и меньше — после первого. */
 export function photoAfter(beatCount: number): number {
   return beatCount <= 4 ? 0 : 1
@@ -157,13 +191,16 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
 
   // 1. Блоки и их длины.
   const contraAt = contradictionAfter(script)
-  const contraLen = script.contradiction ? clamp(2.5 * pace, 2, 3) : 0
+  // противоречие — полноценная картинка (иней и тепло, толпа, усталый шаг при ярком свете): 3.5–4 с
+  const contraLen = script.contradiction ? clamp(3.75 * pace, 3.5, 4) : 0
   const photos = Math.max(0, Math.floor(opts.photoCount ?? 0))
-  const photoAt = photos > 0 && beats.length ? photoAfter(beats.length) : -1
+  const orbitAt = orbitBeat(beats)
+  const kept = keptBeats(beats, photos, [orbitAt, contraAt])
+  const photoAt = photos > 0 && kept.length ? kept[photoAfter(kept.length)] : -1
   const photoLen = photos > 0 ? PHOTO_REVEAL_LEN + (photos > 1 ? PHOTO_FAN_LEN : 0) + 0.4 : 0
   const blocks: Block[] = []
   const stepSum = STEP.lead + STEP.walk + STEP.action + STEP.lift + STEP.transform + STEP.reaction + STEP.gap
-  beats.forEach((_, i) => {
+  kept.forEach((i) => {
     blocks.push({ kind: 'beat', beatIndex: i, len: stepSum * pace })
     if (i === contraAt) blocks.push({ kind: 'contradiction', beatIndex: i, len: contraLen + 0.4 })
     if (i === photoAt) blocks.push({ kind: 'photo', beatIndex: i, len: photoLen })
@@ -199,7 +236,6 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
   let minStart = INTRO_LEN - 0.3
   let prevCam: CameraId | null = 'push_in'
   let secondEntered = false
-  const orbitAt = orbitBeat(beats)
   for (const block of blocks) {
     const start = snap(cursor, minStart, beatTimes)
     if (block.kind === 'photo') {
@@ -249,7 +285,7 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
     walk *= fit; act *= fit
     const liftD = lift * fit, transD = transform * fit, reactD = reaction * fit, leadD = lead * fit
 
-    const shot: CameraId = i === orbitAt ? 'orbit_quarter' : editCamera(beat.camera, i, prevCam, mood, rng)
+    const shot: CameraId = i === orbitAt ? 'orbit_quarter' : editCamera(beat.camera, kept.indexOf(i), prevCam, mood, rng)
     prevCam = shot
     let t = start
     const contentDur = leadD + walk + act + liftD + transD + reactD
@@ -281,11 +317,13 @@ export function choreograph(script: DayScript, opts: ChoreographOptions): Timeli
 
   // 5. Финал.
   const o = snap(cursor, minStart, beatTimes)
-  push({ type: 'actor_action', t: o, dur: 1.5, beat: -1, actor: 'hero', action: 'sit' })
-  push({ type: 'camera', t: o + 1, dur: OUTRO_LEN - 1, beat: -1, shot: 'pull_out', targetQuote: null })
-  push({ type: 'book_close', t: o + 1.8, dur: 1.6, beat: -1 })
-  push({ type: 'title_reveal', t: o + 3.4, dur: 2.6, beat: -1, title: script.title })
-  push({ type: 'to_shelf', t: o + 6, dur: 2, beat: -1 })
+  // человечек идёт к краю правой страницы, садится, болтает ногами, машет и ныряет в книгу:
+  // на [o, o + OUTRO_SIT] камерой управляет сцена — событий camera там нет
+  push({ type: 'actor_action', t: o, dur: OUTRO_SIT, beat: -1, actor: 'hero', action: 'sit' })
+  push({ type: 'camera', t: o + OUTRO_SIT, dur: OUTRO_LEN - OUTRO_SIT, beat: -1, shot: 'pull_out', targetQuote: null })
+  push({ type: 'book_close', t: o + OUTRO_SIT, dur: 1.6, beat: -1 })
+  push({ type: 'title_reveal', t: o + OUTRO_SIT + 1.6, dur: 2.6, beat: -1, title: script.title })
+  push({ type: 'to_shelf', t: o + OUTRO_SIT + 4.2, dur: 2, beat: -1 })
 
   // Стабильная сортировка по t (порядок вставки сохраняется при равных t).
   const sorted = events.map((e, idx) => ({ e, idx })).sort((a, b) => a.e.t - b.e.t || a.idx - b.idx).map((x) => x.e)

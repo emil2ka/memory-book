@@ -1,0 +1,703 @@
+{
+ "summary": {
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "phrases": 30,
+  "ok": 30,
+  "firstTry": 27,
+  "latency": {
+   "median": 2018,
+   "p90": 6212,
+   "max": 8455
+  },
+  "objects": 90,
+  "refShare": 0.91,
+  "modelShare": 0.09,
+  "actions": {
+   "shake": 6,
+   "shiver": 2,
+   "drink": 8,
+   "carry": 10,
+   "sit": 3,
+   "cheer": 1
+  },
+  "full": 29,
+  "withHand": 30,
+  "withStand": 30,
+  "handButIdle": 0,
+  "avgObjects": 3,
+  "retried": 3,
+  "outputTokens": {
+   "median": 242
+  },
+  "cacheRead": 236940
+ },
+ "rows": [
+  {
+   "quote": "по парку",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2086,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shake",
+   "objects": [
+    "stand:ref tree",
+    "hand:ref leaf",
+    "detail:ref leaf_pile"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2215,
+    "output": 247,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "жёлтых листьях",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2587,
+   "attempts": 1,
+   "refs": 2,
+   "models": 1,
+   "action": "shake",
+   "objects": [
+    "hand:ref leaf",
+    "stand:ref leaf_pile",
+    "detail:model кучка листьев (4)"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2689,
+    "output": 427,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "холодно",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2306,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shiver",
+   "objects": [
+    "hand:ref icicle",
+    "stand:ref street_lamp",
+    "detail:ref snowdrift"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3273,
+    "output": 255,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "какао",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2252,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref bench",
+    "hand:ref cocoa",
+    "detail:ref leaf_pile"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2670,
+    "output": 237,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "мы",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2030,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref bench",
+    "hand:ref cocoa",
+    "detail:ref leaf_pile"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3257,
+    "output": 242,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Фонари",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1910,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref street_lamp",
+    "hand:ref thermos",
+    "detail:ref leaf_pile"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3232,
+    "output": 258,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "До дедлайна шесть часов",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1935,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref work_desk",
+    "hand:ref clock",
+    "detail:ref book_stack"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3923,
+    "output": 231,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Ноутбук горячий",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1868,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref work_desk",
+    "hand:ref laptop",
+    "detail:ref coffee"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2861,
+    "output": 241,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "кофе холодный",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 3634,
+   "attempts": 1,
+   "refs": 2,
+   "models": 1,
+   "action": "drink",
+   "objects": [
+    "hand:ref coffee",
+    "stand:ref icicle",
+    "detail:model лампа (4)"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2266,
+    "output": 457,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "горит только лампа",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2563,
+   "attempts": 1,
+   "refs": 2,
+   "models": 1,
+   "action": "sit",
+   "objects": [
+    "stand:ref work_desk",
+    "hand:ref cocoa",
+    "detail:model лампа (4)"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2658,
+    "output": 447,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "всё наконец заработало",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1892,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shake",
+   "objects": [
+    "stand:ref work_desk",
+    "hand:ref phone",
+    "detail:ref coffee"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3269,
+    "output": 239,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "засмеялся вслух",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1746,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shake",
+   "objects": [
+    "stand:ref work_desk",
+    "hand:ref phone",
+    "detail:ref laptop"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3261,
+    "output": 238,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "за окном всё белое",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1897,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref window_sill",
+    "hand:ref tea",
+    "detail:ref snowdrift"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3824,
+    "output": 227,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Заварил чай",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1931,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref window_sill",
+    "hand:ref tea",
+    "detail:ref teapot"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3639,
+    "output": 230,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "сел у окна",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 2161,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "sit",
+   "objects": [
+    "stand:ref window_sill",
+    "hand:ref tea",
+    "detail:ref snowdrift"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3825,
+    "output": 259,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "падает снег",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1961,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shake",
+   "objects": [
+    "hand:ref snowflake",
+    "stand:ref window_sill",
+    "detail:ref snowdrift"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2684,
+    "output": 257,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Очень тихо",
+   "set": "demo",
+   "ok": true,
+   "latencyMs": 1893,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref window_sill",
+    "hand:ref tea",
+    "detail:ref crystal"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2692,
+    "output": 235,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Купил мороженое в парке",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1717,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref ice_cream_kiosk",
+    "hand:ref ice_cream",
+    "detail:ref trash_bin"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3150,
+    "output": 231,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Катался на самокате до вечера",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 3092,
+   "attempts": 1,
+   "refs": 2,
+   "models": 1,
+   "action": "carry",
+   "objects": [
+    "stand:ref street_lamp",
+    "hand:model самокат (7)",
+    "detail:ref trash_bin"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3189,
+    "output": 510,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Ждал автобус под дождём",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1843,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shiver",
+   "objects": [
+    "stand:ref bus_stop",
+    "hand:ref umbrella",
+    "detail:ref puddle"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2378,
+    "output": 228,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Мама испекла блины на завтрак",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1844,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref kitchen_table",
+    "hand:ref pancakes",
+    "detail:ref cocoa"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3458,
+    "output": 244,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Весь вечер играл с котом",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1722,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "shake",
+   "objects": [
+    "stand:ref sofa",
+    "hand:ref ball",
+    "detail:ref cat"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 2739,
+    "output": 203,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Читал книгу на скамейке у фонтана",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1797,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "sit",
+   "objects": [
+    "stand:ref bench_small",
+    "stand:ref fountain",
+    "hand:ref book"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3592,
+    "output": 217,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Опоздал на урок и бежал по лестнице",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 2018,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref school_board",
+    "hand:ref book",
+    "detail:ref backpack"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3863,
+    "output": 222,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Купил шарики на день рождения сестры",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 1935,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "hand:ref balloon_bunch",
+    "stand:ref entrance_door",
+    "detail:ref gift"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3513,
+    "output": 255,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Поливал цветы на балконе",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 8455,
+   "attempts": 2,
+   "refs": 1,
+   "models": 2,
+   "action": "carry",
+   "objects": [
+    "stand:model балконные перила (8)",
+    "hand:model лейка (11)",
+    "detail:ref flower"
+   ],
+   "firstErrors": [
+    "objects[1] «лейка»: всего 5 фигур — нужно 6–24, главная черта крупно"
+   ],
+   "usage": {
+    "input": 7158,
+    "output": 1874,
+    "cacheRead": 14360,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Сдал экзамен и прыгал от радости",
+   "set": "own",
+   "ok": true,
+   "latencyMs": 6657,
+   "attempts": 2,
+   "refs": 2,
+   "models": 1,
+   "action": "cheer",
+   "objects": [
+    "hand:model лист с оценкой (13)",
+    "stand:ref school_board",
+    "detail:ref star"
+   ],
+   "firstErrors": [
+    "objects[0] «лист с оценкой»: всего 4 фигур — нужно 6–24, главная черта крупно"
+   ],
+   "usage": {
+    "input": 6338,
+    "output": 1264,
+    "cacheRead": 14360,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Әжемнің үйінде бауырсақ жедік",
+   "set": "kz",
+   "ok": true,
+   "latencyMs": 2057,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "drink",
+   "objects": [
+    "stand:ref dastarkhan",
+    "hand:ref baursak",
+    "detail:ref kazan"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3945,
+    "output": 236,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Таңертең қар жауды, аула аппақ",
+   "set": "kz",
+   "ok": true,
+   "latencyMs": 6212,
+   "attempts": 2,
+   "refs": 2,
+   "models": 1,
+   "action": "carry",
+   "objects": [
+    "stand:ref snowdrift",
+    "hand:ref snowflake",
+    "detail:model снежный ком (12)"
+   ],
+   "firstErrors": [
+    "objects[2] «снежный ком»: всего 3 фигур — нужно 4–24, главная черта крупно"
+   ],
+   "usage": {
+    "input": 5711,
+    "output": 1121,
+    "cacheRead": 14360,
+    "cacheWrite": 0
+   }
+  },
+  {
+   "quote": "Досыммен домбыра тарттық",
+   "set": "kz",
+   "ok": true,
+   "latencyMs": 2346,
+   "attempts": 1,
+   "refs": 3,
+   "models": 0,
+   "action": "carry",
+   "objects": [
+    "stand:ref yurt",
+    "hand:ref dombra",
+    "detail:ref tubeteika"
+   ],
+   "firstErrors": [],
+   "usage": {
+    "input": 3124,
+    "output": 232,
+    "cacheRead": 7180,
+    "cacheWrite": 0
+   }
+  }
+ ]
+}

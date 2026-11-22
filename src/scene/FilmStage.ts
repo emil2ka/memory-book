@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import type { Mood } from '../types/script'
 import type { ActorId, Stage, TimelineEvent } from '../types/timeline'
 import type { CameraId } from '../types/script'
-import { Book, PAGE_H, PAGE_W, SS, TEX_W } from './Book'
+import { Book, PAGE_H, PAGE_W, SS, TEX_H, TEX_W } from './Book'
 import { PALETTE } from './palette'
 import { HD, HERO3D, PixelStage, pixelTexture } from './PixelStage'
 import { Hero3D, SECOND_COLORS, type HeroAction } from '../actors/Hero3D'
@@ -13,11 +13,21 @@ import { toonFor, toPixelLayer } from '../render/PixelLayer'
 import { CRYSTAL, CubeSwarm, inkWord, letterPoints, objectPoints, rngFrom } from './WordMagic'
 import { EffectBurst, type EffectKind } from './Particles3D'
 import { Polaroid } from './Polaroid'
+import { Crowd, frostEdges, warmPool } from './Staging'
+import { sfx } from '../audio/sfx'
+import { DeskWorld } from '../world/DeskWorld'
+import { Person } from '../world/Person'
+import { PenWriter } from '../write/pen'
+import { glyphStrokes } from '../write/strokes'
+import { coverColorFor, type ShelfDay } from '../world/Shelf3D'
+import type { KitScene, SceneObject, SceneRequest } from '../kit/scene'
+import { forgetScenes, makeScene, sceneFor } from '../kit/sceneClient'
+import { sceneRef } from '../kit/sceneCheck'
 import { Sticker, prepareSticker, stickerCanvas } from './Sticker'
 import { makeKit, pictureFor } from '../kit/make'
 import type { KitPicture } from '../kit/svg'
 import type { Timeline } from '../types/timeline'
-import type { BeatResult } from '../types/script'
+import type { BeatResult, DayScript } from '../types/script'
 import type { PaletteName } from './palette'
 import { Room } from './Room'
 import { loadModels } from './models'
@@ -32,6 +42,39 @@ interface Tween {
   done?: () => void
   finished?: boolean
 }
+
+/** 2D-наклейки вместо объёмных предметов (до перехода на сценки). */
+const USE_STICKERS = false
+
+/** Предмет из слова → вещь на столе, которая на него отзывается (если она стоит на столе в этот день). */
+const DESK_ECHO: Record<string, string> = {
+  clock: 'alarm_clock',
+  alarm_clock: 'alarm_clock',
+  phone: 'phone',
+  dombra: 'dombra',
+  guitar: 'dombra',
+  note: 'dombra',
+}
+
+/** Цвета подсказки палитры (catalog.paletteColors) в мастер-палитре. */
+const DAY_COLORS: Record<string, number> = {
+  cream: PALETTE.cream,
+  amber: PALETTE.amber,
+  ochre: PALETTE.ochre,
+  brick_red: PALETTE.brick,
+  coral: PALETTE.coral,
+  soft_green: PALETTE.greenSoft,
+  teal: PALETTE.teal,
+  slate_blue: PALETTE.slate,
+  navy: PALETTE.navy,
+  grey_blue: PALETTE.greyBlue,
+  white: PALETTE.white,
+  brown: PALETTE.brown,
+}
+
+/** Ряд анимации: ряды листа спрайтов + позы, которые есть только у объёмного человечка. */
+type AnimRow = HeroRow | 'climb' | 'wave' | 'dangle'
+const spriteRow = (r: AnimRow): HeroRow => (r === 'climb' || r === 'wave' || r === 'dangle' ? 'idle' : r)
 
 /** Какой ряд листа человечка показывать для действия. */
 const ACTION_ROW: Record<ActionId, HeroRow> = {
@@ -59,7 +102,59 @@ const ease = (k: number) => {
 const clamp01 = (k: number) => Math.min(1, Math.max(0, k))
 
 /** Общий план: стол и книга целиком. */
-const WIDE = { pos: new THREE.Vector3(0, 8.6, 6.4), look: new THREE.Vector3(0, 0.3, 0.3) }
+/** Экран полки: полка с днями, окно и стол с закрытой книгой. */
+// сзади-сверху за спиной человека: лица не видно, книга на столе видна, полка и окно в кадре
+const SHELF_VIEW = { pos: new THREE.Vector3(-5.5, 11.0, 17.0), look: new THREE.Vector3(-2.6, 2.2, -2.0) }
+
+/** Камера записи относительно глаз человека: выше и сзади, чтобы разворот целиком помещался в кадр. */
+/** Кончик ручки над бумагой: прижат (пишет) и приподнят (переезжает между штрихами). */
+const PEN_DOWN = 0.006
+const PEN_LIFT = 0.05
+/** Какую часть длины руки считаем досягаемой без наклона; сколько наклона передаётся взгляду. */
+const ARM_REACH_K = 0.84
+// голова подаётся вперёд вместе с руками почти целиком — иначе в кадр попадает срез рукава у плеча
+const CAM_LEAN = 0.9
+// камера чуть выше и впереди глаз (перед плечами), разворот помещается за счёт широкого угла
+/** Бледная подсказка на пустой левой странице в записи. */
+const WRITE_PLACEHOLDER = 'Каким был сегодняшний день?\nЧто ты видел, слышал, чувствовал — пиши здесь.'
+const WRITE_EYE_OFFSET = new THREE.Vector3(0, 0.45, -0.25)
+const WRITE_FOV = 1.5
+
+/** Вход человека без узла eyes (запасной): камера сзади-справа, он идёт от неё к стулу — лица не видно. */
+const INTRO_VIEW = { pos: new THREE.Vector3(19, 12.5, 24), look: new THREE.Vector3(3.0, 1.2, 4.5) }
+
+/**
+ * Вход от первого лица (решение Эмиля 22.11: со спины человек смотрится плохо — показываем его меньше).
+ * Камера в глазах, тело спрятано. Взгляд тянется к столу и окну, чтобы кадр не мотало вместе с головой.
+ */
+// между полкой и окном на задней стене: справа и слева от комнаты стен нет — туда смотреть нельзя
+const INTRO_LOOK = new THREE.Vector3(2.2, 3.0, -4.5)
+/** Насколько взгляд тянется к INTRO_LOOK: на ходу и пока садится (при посадке голова крутится сильнее). */
+const INTRO_PULL_WALK = 0.78
+const INTRO_PULL_SIT = 0.85
+/** Угол обзора из глаз шире обычного (обычный — как телеобъектив); на выезде сужается обратно. */
+const INTRO_FOV = 1.6
+/**
+ * Выезд: середина взгляда — точка на задней стене (y — относительно высоты камеры над макушкой).
+ * Взгляд остаётся на столе и окне, не задирается на пустую стену; голова уходит из кадра вниз, пока камера
+ * поднимается, — тогда тело и включается.
+ */
+const INTRO_OUT_MID = new THREE.Vector3(0.2, -6, -4.5)
+/** Опора кривой выезда над глазами: вверх быстрее, чем назад, — камера сначала выходит из головы через макушку. */
+const INTRO_OUT_RISE = new THREE.Vector3(-0.8, 7, 0.5)
+/** Сглаживание глаз, 1/с: позиция на ходу (лёгкая качка остаётся), при посадке, направление взгляда. */
+const INTRO_POS_RATE = 7
+const INTRO_SIT_RATE = 2.6
+const INTRO_DIR_RATE = 3
+/** Сел — камера за столько секунд выходит из головы вверх и назад через левое плечо на экран полки. */
+const INTRO_OUT_DUR = 2.1
+/** Тело включается, только когда камера дальше этого от головы (и голова не в кадре). */
+const INTRO_HEAD_MARGIN = 0.6
+
+const WIDE = HERO3D
+  ? // объёмный мир: виден стол, стена, окно и полка
+    { pos: new THREE.Vector3(0, 6.4, 9.6), look: new THREE.Vector3(0, 0.9, -0.9) }
+  : { pos: new THREE.Vector3(0, 8.6, 6.4), look: new THREE.Vector3(0, 0.3, 0.3) }
 
 /**
  * Сцена фильма. Получает события таймлайна и превращает их в движение.
@@ -71,7 +166,7 @@ export class FilmStage implements Stage {
   readonly hero: SpriteActor
   readonly second: SpriteActor
   /** Текущая анимация каждого актёра: ряд листа, начало, зациклена ли. */
-  private anim: Record<ActorId, { row: HeroRow; t0: number; loop: boolean; fps: number; dur: number }> = {
+  private anim: Record<ActorId, { row: AnimRow; t0: number; loop: boolean; fps: number; dur: number }> = {
     hero: { row: 'idle', t0: 0, loop: true, fps: 6, dur: 1 },
     second: { row: 'idle', t0: 0, loop: true, fps: 6, dur: 1 },
   }
@@ -99,7 +194,21 @@ export class FilmStage implements Stage {
   /** Слова, оторванные от страницы (настоящие чернила). */
   private inkWords = new Map<string, THREE.Mesh>()
   /** Предмет в руках у человечка. */
-  private held: { obj: THREE.Object3D; height: number } | null = null
+  private held: { obj: THREE.Object3D; height: number; width: number; grip: THREE.Vector3 | null; raise?: boolean } | null = null
+  /**
+   * Откуда сцена берёт сценки (объёмный стенд вокруг человечка на каждое слово).
+   * request — заказать заранее (пока открывается книга), get — готовая сценка или null.
+   * Без поставщика или без готовой сценки бит идёт по-старому: один предмет из 3D-библиотеки.
+   */
+  sceneProvider: { request(req: SceneRequest): void; get(quote: string): KitScene | null } | null = null
+  /** Поза человечка после превращения слова — из сценки (по номеру бита). */
+  private sceneActs = new Map<number, HeroAction>()
+  /** Следы уже стоящих сценок на развороте (x0, z0, x1, z1), чтобы новые не налезали. */
+  private footprints: [number, number, number, number][] = []
+  /** Декорации, уже стоящие на развороте (по ref или названию): одно место дня не строится дважды. */
+  private stands = new Map<string, THREE.Object3D>()
+  /** Мелочь на развороте (детали и положенные из рук вещи): старые тают, чтобы не было свалки. */
+  private smalls: THREE.Object3D[] = []
   /** Объёмные эффекты (листья, снег, иней…) в пиксельном слое. */
   private bursts: EffectBurst[] = []
   /** Снимки дня: в режиме записи лежат на странице, в фильме заложены в книгу. */
@@ -110,6 +219,64 @@ export class FilmStage implements Stage {
   private heights = new Map<string, number>()
   /** Наклейки на странице — всегда повёрнуты к камере. */
   private facing: THREE.Object3D[] = []
+  /** Комната вокруг стола: стена, окно, полка-архив, вещи настроения. */
+  readonly world: DeskWorld | null = null
+  /** Человек за столом (мальчик или девочка); лицо в кадр не попадает. */
+  person: Person | null = null
+  /** Режим записи: камера из глаз человека, ручка идёт за курсором. */
+  private writeMode = false
+  private lastTypeAt = -1e9
+  private penTarget = new THREE.Vector3()
+  private penReady = false
+  /** Ручка пишет каждую букву по штрихам шрифта; чернила проступают под кончиком (src/write). */
+  private writer = new PenWriter((ch) => glyphStrokes(ch, this.book.fontFamily))
+  /** Режим записи открыт (даже если человек ещё не загрузился — тогда буквы пишутся «невидимой ручкой»). */
+  private inkMode = false
+  private penWasDown = false
+  /** Наклон к дальней строке: на сколько руки (мировые координаты) подались вперёд. */
+  private lean = new THREE.Vector3()
+  private armsBase: THREE.Vector3 | null = null
+  private armReach = 0
+  /** Человек играет разовое движение (вход, открывает книгу, кладёт фото) — не перебивать. */
+  private personBusy = false
+  private introDone = false
+  /** Книга открывается руками человека в начале записи: 0..1, null — не открывается. */
+  private bookOpening: number | null = null
+  private photoCount = 0
+  /** Время с начала входа человека без узла eyes (камера переезжает со входа на главный экран); null — не идёт. */
+  private introCam: number | null = null
+  /**
+   * Вход от первого лица: eyes — камера в глазах, пока он идёт и садится; out — выходит из головы на экран полки.
+   * pos, fwd — сглаженные глаза и взгляд; pull — тяга взгляда к INTRO_LOOK; body — тело уже включено.
+   */
+  private intro: {
+    phase: 'eyes' | 'out'
+    t: number
+    pos: THREE.Vector3
+    fwd: THREE.Vector3
+    pull: number
+    ready: boolean
+    body: boolean
+    from: { pos: THREE.Vector3; c1: THREE.Vector3; c2: THREE.Vector3; d0: THREE.Vector3; dm: THREE.Vector3; d1: THREE.Vector3 } | null
+  } | null = null
+  private frustum = new THREE.Frustum()
+  private eyesCam = new THREE.Vector3()
+  /** id дня, который сейчас играет: его корешок прячется на полке, пока книга на столе. */
+  private dayId: string | null = null
+  /** Экран полки: книги откликаются на наведение. */
+  private shelfMode = false
+  private hoverId: string | null = null
+  private bookHover = false
+  private bookLift = 0
+  private pulled = new Map<string, number>()
+  private ray = new THREE.Raycaster()
+  /** Книга летит на полку — сцена не двигает её сама. */
+  private shelving = false
+  /** Палитра, время суток и погода дня: из сценария (палитра — из фото дня). */
+  private day: Pick<DayScript, 'palette_hint' | 'time_of_day' | 'weather'> | null = null
+  /** Фильм идёт в реальном времени (не перемотка) — только тогда звучат звуки действий. */
+  private live = false
+  private stepCount = -1
   /** Поворот, который сцена задаёт человечку сама (полароид), или null. */
   private faceYaw: Record<ActorId, number | null> = { hero: null, second: null }
 
@@ -121,6 +288,10 @@ export class FilmStage implements Stage {
     this.second = bank ? bank.makeHero('second') : new SpriteActor(placeholderHero(), 24, 32)
     px.scene.add(this.room.group, this.book.group, this.hero.object, this.second.object)
     if (HERO3D) {
+      // сценки на слова: Haiku собирает стенд (POST /api/scene), пока открывается книга
+      this.sceneProvider = { request: (req) => void makeScene(req), get: (q) => sceneFor(q) }
+      this.world = new DeskWorld(px.scene)
+      this.usePerson('boy')
       for (const id of ['hero', 'second'] as const) {
         const fig = new Hero3D(id === 'hero' ? undefined : SECOND_COLORS)
         px.scene.add(fig.object)
@@ -150,6 +321,8 @@ export class FilmStage implements Stage {
     this.book.setText(input.text)
     this.setMood(input.mood)
     if (this.figures.length) this.tuckPhotos()
+    // фильм идёт внутри книги: человек за столом закрывал бы её на общих планах
+    this.person?.setVisible(false)
   }
 
   handle(e: TimelineEvent) {
@@ -157,6 +330,7 @@ export class FilmStage implements Stage {
       case 'book_open':
         return this.tween(e, (k) => this.book.setOpen(ease(k)))
       case 'book_close':
+        if (this.figures.length) return this.closeBook3D(e)
         this.hero.object.visible = false
         this.second.object.visible = false
         for (const o of this.spawned) o.visible = false
@@ -164,8 +338,10 @@ export class FilmStage implements Stage {
         this.closed = true
         return this.tween(e, (k) => this.book.setOpen(1 - ease(k)))
       case 'page_flip':
+        this.soundAt(e.t, () => sfx.flip())
         return this.tween(e, (k) => (this.shake = Math.sin(k * Math.PI) * 0.02))
       case 'actor_enter': {
+        if (this.figures.length) return this.enter3D(e)
         const a = this.actor(e.actor)
         a.object.visible = true
         const side = e.actor === 'hero' ? -1 : 1
@@ -193,9 +369,12 @@ export class FilmStage implements Stage {
       }
       case 'actor_action': {
         const a = this.actor(e.actor)
-        if (e.actor === 'hero' && (e.action === 'cheer' || e.action === 'sit' || e.action === 'shiver')) this.dropHeld(e)
+        const sceneAct = e.actor === 'hero' ? this.sceneActs.get(e.beat) : undefined
+        if (e.actor === 'hero' && !sceneAct && (e.action === 'cheer' || e.action === 'sit' || e.action === 'shiver')) this.dropHeld(e)
+        if (this.figures.length && e.actor === 'hero' && e.beat === -1 && e.action === 'sit') return this.finale3D(e)
         if (this.bank) {
-          const row = ACTION_ROW[e.action]
+          // после превращения слова поза — из сценки (ест мороженое, держит шарики, сидит за ноутбуком)
+          const row: HeroRow = (sceneAct as HeroRow | undefined) ?? ACTION_ROW[e.action]
           const acting = this.play(e.actor, row, e.t, row !== 'sit', e.dur)
           // прыжок радости нарисован в самих кадрах, двигать спрайт не нужно
           const hop = 0
@@ -287,6 +466,7 @@ export class FilmStage implements Stage {
         return
       }
       case 'staging': {
+        if (this.figures.length) return this.staging3D(e)
         // иней по краям страницы, тёплый свет лампы в центре
         if (e.staging === 'frost_edges_warm_center') this.spawnEffect('frost', new THREE.Vector3(0, this.book.pageY, 0), e.t)
         const rim0 = this.room.rim.intensity
@@ -305,6 +485,7 @@ export class FilmStage implements Stage {
       case 'title_reveal':
         return this.tween(e, (k) => this.book.setTitle(e.title, k > 0.15 ? 1 : 0))
       case 'to_shelf': {
+        if (this.world && this.toShelf3D(e)) return
         const from = this.book.group.position.clone()
         const to = from.clone().add(new THREE.Vector3(0, 0.4, -1.2))
         return this.tween(e, (k) => this.book.group.position.lerpVectors(from, to, ease(k)))
@@ -313,6 +494,7 @@ export class FilmStage implements Stage {
   }
 
   update(time: number, _dt: number) {
+    this.live = _dt > 0 && _dt < 0.25 && time - this.time < 0.3
     this.time = time
     for (const tw of this.tweens) {
       if (tw.finished || time < tw.t0) continue
@@ -334,7 +516,7 @@ export class FilmStage implements Stage {
       for (const id of ['hero', 'second'] as const) {
         const an = this.anim[id]
         const f = Math.max(0, Math.floor((time - an.t0) * an.fps))
-        this.bank.setHeroFrame(this.actor(id), id, an.row, an.loop ? f % HERO_COLS : Math.min(f, HERO_COLS - 1))
+        this.bank.setHeroFrame(this.actor(id), id, spriteRow(an.row), an.loop ? f % HERO_COLS : Math.min(f, HERO_COLS - 1))
       }
     }
     this.room.update(_dt)
@@ -342,10 +524,28 @@ export class FilmStage implements Stage {
     for (const b of this.bursts) b.update(time, this.closed)
     for (const o of this.facing) this.faceCamera(o)
     this.book.blinkCaret(Math.floor(performance.now() / 500) % 2 === 0)
-    this.book.group.rotation.z = this.shake * Math.sin(time * 50)
-    this.book.group.position.y = this.level * 0.03
+    this.world?.update(_dt, time)
+    this.updatePerson(_dt)
+    if (this.world) {
+      // книга под курсором выезжает с полки; остальные стоят ровно
+      const step = Math.min(1, (_dt || 1 / 60) * 10)
+      for (const d of this.world.shelf.days) {
+        const want = this.shelfMode && d.id === this.hoverId ? 0.55 : 0
+        const was = this.pulled.get(d.id) ?? 0
+        if (Math.abs(want - was) < 0.001 && want === 0) continue
+        const k = was + (want - was) * step
+        this.pulled.set(d.id, k)
+        this.world.shelf.pull(d.id, k)
+      }
+    }
+    // закрытая книга на экране полки чуть приподнимается под курсором — её можно открыть
+    this.bookLift += ((this.shelfMode && this.bookHover ? 0.16 : 0) - this.bookLift) * Math.min(1, (_dt || 1 / 60) * 10)
+    if (!this.shelving) {
+      this.book.group.rotation.z = this.shake * Math.sin(time * 50)
+      this.book.group.position.y = this.level * 0.03 + this.bookLift
+    }
     // закрытая книга лежит по центру стола, раскрытая — корешком по центру
-    this.book.group.position.x = (-PAGE_W / 2) * (1 - this.book.openK)
+    if (!this.shelving) this.book.group.position.x = (-PAGE_W / 2) * (1 - this.book.openK)
     this.applyCamera()
     this.hero.faceCamera(this.px.camera)
     this.second.faceCamera(this.px.camera)
@@ -362,16 +562,429 @@ export class FilmStage implements Stage {
   /** Книга раскрыта, камера сверху на разворот, сцена очищена. */
   writeView() {
     this.reset()
+    this.inkMode = true
+    this.writer.reset(this.bookText)
+    this.book.setPlaceholder(WRITE_PLACEHOLDER)
     this.book.setOpen(1)
     this.camPos.set(0, 9.4, 1.9)
     this.camLook.set(0, 0.3, 0.25)
+    const eyes = this.person?.model ? this.person.eyesWorld() : null
+    if (eyes) {
+      // из глаз человека, чуть выше и сзади — чтобы весь разворот и рука с ручкой были в кадре.
+      // Глаза — как сидя: если он ещё шёл (клик на входе), камера сразу там, где окажется голова
+      this.camPos.copy(this.person!.seatedEyes() ?? eyes.pos).add(WRITE_EYE_OFFSET)
+      this.eyesCam.copy(this.camPos)
+      this.camLook.set(0, this.book.pageY, 0.05)
+      this.setFirstPerson(true)
+      this.writeMode = true
+      this.px.fovScale = WRITE_FOV
+      this.px.fit()
+      this.penReady = false
+      this.introDone = true
+      // садится ровно (если ещё шёл) и открывает книгу руками
+      this.person!.playChair('Push_In')
+      if (this.person!.has('Open_Book')) {
+        this.book.setOpen(0)
+        this.bookOpening = 0
+        this.personOnce('Open_Book')
+      }
+    }
     this.applyCamera()
   }
 
   /** Книга закрыта, общий план. */
   idleView() {
+    // фильм могли пропустить: книга дня не долетела — её корешок снова на полке
+    this.dayId = null
+    this.book.setCoverColor(null)
     this.reset()
     this.book.setText('')
+    if (this.world) {
+      // экран полки: полка с днями, лампа, окно и закрытая книга на столе
+      this.camPos.copy(SHELF_VIEW.pos)
+      this.camLook.copy(SHELF_VIEW.look)
+      this.applyCamera()
+      this.shelfMode = true
+      if (!this.introDone) void this.personIntro()
+    }
+  }
+
+  /** Открыли сайт: человек входит, отодвигает стул и садится за стол. Один раз за загрузку. */
+  private async personIntro() {
+    const p = this.person
+    if (!p) return
+    await p.ready
+    if (this.introDone || !this.shelfMode || !p.has('Walk_In')) return
+    this.introDone = true
+    if (p.eyes) {
+      // от первого лица: тело и руки спрятаны, камера ставится в глаза в updatePerson
+      p.setHidden(true)
+      this.px.setFovScale(INTRO_FOV)
+      this.intro = { phase: 'eyes', t: 0, pos: new THREE.Vector3(), fwd: new THREE.Vector3(), pull: INTRO_PULL_WALK, ready: false, body: false, from: null }
+    } else {
+      this.introCam = 0
+      this.camPos.copy(INTRO_VIEW.pos)
+      this.camLook.copy(INTRO_VIEW.look)
+    }
+    this.introPlay(p, 0)
+  }
+
+  /**
+   * Клипы входа с момента s (секунды от начала входа): Walk_In, потом Sit_Down (стул отодвигается);
+   * сел — стул задвинут, камера выходит из глаз. s > 0 — новый человек продолжает вход старого.
+   */
+  private introPlay(p: Person, s: number) {
+    this.personBusy = true
+    const walk = p.clipDuration('Walk_In')
+    const sit = (from: number) => {
+      if (this.person !== p) return
+      p.playChair('Pull_Out', from)
+      this.personClip = 'Sit_Down'
+      p.play('Sit_Down', {
+        fade: from > 0 ? 0 : 0.15,
+        from,
+        onDone: () => {
+          if (this.person !== p || this.personClip !== 'Sit_Down') return
+          p.playChair('Push_In')
+          this.personBusy = false
+          if (this.intro?.phase === 'eyes') this.introOut()
+        },
+      })
+    }
+    if (s < walk) {
+      this.personClip = 'Walk_In'
+      p.play('Walk_In', {
+        fade: 0,
+        from: s,
+        onDone: () => {
+          if (this.person === p && this.personClip === 'Walk_In') sit(0)
+        },
+      })
+    } else sit(s - walk)
+  }
+
+  /** Сколько секунд вход уже идёт (по клипу на человеке) — чтобы новый человек продолжил с того же места. */
+  private introClock(p: Person) {
+    if (this.personClip === 'Walk_In') return p.clipTime()
+    if (this.personClip === 'Sit_Down') return p.clipDuration('Walk_In') + p.clipTime()
+    return null
+  }
+
+  /** Сел: камера выходит из головы вверх, через левое плечо и назад — на экран полки. */
+  private introOut() {
+    const it = this.intro
+    if (!it) return
+    const pos = this.camPos.clone()
+    // сначала вверх над макушкой и чуть влево (через плечо), потом назад к виду полки
+    const c1 = pos.clone().add(INTRO_OUT_RISE)
+    const c2 = SHELF_VIEW.pos.clone().add(new THREE.Vector3(2.2, -0.6, -6.5))
+    // взгляд: со стола → на заднюю стену → на вид полки. Кривая Безье по направлениям проходит через
+    // середину dmid при k = 0.5, поэтому её опорная точка — 2·dmid − (d0 + d1)/2
+    const d0 = this.camLook.clone().sub(pos).normalize()
+    const d1 = SHELF_VIEW.look.clone().sub(SHELF_VIEW.pos).normalize()
+    const mid = new THREE.Vector3(INTRO_OUT_MID.x, c1.y + INTRO_OUT_MID.y, INTRO_OUT_MID.z).sub(c1).normalize()
+    const dm = mid.multiplyScalar(2).addScaledVector(d0.clone().add(d1), -0.5)
+    it.phase = 'out'
+    it.t = 0
+    it.from = { pos, c1, c2, d0, dm, d1 }
+  }
+
+  /** Кончить вход: тело снова видно, обычный угол обзора (запись ставит свой сама). */
+  private introEnd() {
+    if (!this.intro) return
+    this.intro = null
+    this.person?.setHidden(false)
+    if (!this.writeMode) this.px.setFovScale(1)
+  }
+
+  /** Шаг камеры входа от первого лица (после p.update — глаза уже в позе этого кадра). */
+  private updateIntro(p: Person, step: number) {
+    const it = this.intro!
+    if (!this.shelfMode || this.writeMode) return this.introEnd()
+    if (it.phase === 'eyes') {
+      const e = p.eyesWorld()
+      if (!e) return this.introOut()
+      // узел eyes смотрит вдоль −Z (как камера)
+      const fwd = e.dir.negate()
+      const sitting = this.personClip === 'Sit_Down'
+      if (!it.ready) {
+        it.pos.copy(e.pos)
+        it.fwd.copy(fwd)
+        it.ready = true
+      } else {
+        it.pos.lerp(e.pos, 1 - Math.exp(-step * (sitting ? INTRO_SIT_RATE : INTRO_POS_RATE)))
+        it.fwd.lerp(fwd, 1 - Math.exp(-step * INTRO_DIR_RATE)).normalize()
+      }
+      it.pull += ((sitting ? INTRO_PULL_SIT : INTRO_PULL_WALK) - it.pull) * (1 - Math.exp(-step * 2))
+      const toLook = INTRO_LOOK.clone().sub(it.pos).normalize()
+      const view = it.fwd.clone().lerp(toLook, it.pull).normalize()
+      this.camPos.copy(it.pos)
+      this.camLook.copy(it.pos).addScaledVector(view, 10)
+      return
+    }
+    const f = it.from!
+    it.t += step
+    const k = ease(it.t / INTRO_OUT_DUR)
+    // кубическая кривая Безье: глаза → над макушкой → за плечом → вид полки
+    const u = 1 - k
+    this.camPos
+      .copy(f.pos)
+      .multiplyScalar(u * u * u)
+      .addScaledVector(f.c1, 3 * u * u * k)
+      .addScaledVector(f.c2, 3 * u * k * k)
+      .addScaledVector(SHELF_VIEW.pos, k * k * k)
+    // взгляд — квадратичная кривая по направлениям: стол → задняя стена → вид полки
+    const dir = f.d0
+      .clone()
+      .multiplyScalar(u * u)
+      .addScaledVector(f.dm, 2 * u * k)
+      .addScaledVector(f.d1, k * k)
+      .normalize()
+    if (k >= 1) this.camLook.copy(SHELF_VIEW.look)
+    else this.camLook.copy(this.camPos).addScaledVector(dir, 10)
+    // угол обзора сужается в первой половине выезда
+    this.px.setFovScale(INTRO_FOV + (1 - INTRO_FOV) * ease(it.t / (INTRO_OUT_DUR * 0.6)))
+    if (!it.body) {
+      // тело включается, только когда камера вне головы, а голова и руки (кисти, локти, плечи) не в кадре —
+      // иначе волосы или руки «выпрыгнут» в кадр
+      const head = p.headBox()
+      const inside = head ? head.clone().expandByScalar(INTRO_HEAD_MARGIN).containsPoint(this.camPos) : false
+      let seen = false
+      if (head && !inside) {
+        const cam = this.px.camera
+        cam.position.copy(this.camPos)
+        cam.lookAt(this.camLook)
+        cam.updateMatrixWorld()
+        this.frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse))
+        const hand = new THREE.Vector3()
+        seen =
+          (this.frustum.intersectsBox(head) && p.headInView(this.frustum)) ||
+          [p.handL, p.handR, p.forearmL, p.forearmR, p.upperarmL, p.upperarmR].some((h) => !!h && this.frustum.containsPoint(h.getWorldPosition(hand)))
+      }
+      if ((!inside && !seen) || k >= 1) {
+        p.setHidden(false)
+        it.body = true
+      }
+    }
+    if (k >= 1) this.introEnd()
+  }
+
+  /** Вид из глаз: Person прячет голову, волосы и шею. */
+  private setFirstPerson(on: boolean) {
+    this.person?.setFirstPerson(on)
+  }
+
+  /** Человек сел и ничего разового не делает (вход, открывает книгу, кладёт фото). */
+  get personSettled() {
+    return !!this.person?.model && !this.personBusy && !this.intro
+  }
+
+  /** Кто пишет: мальчик или девочка. Меняет человека за столом (скелет и движения у них общие). */
+  setPersonKind(kind: 'boy' | 'girl') {
+    if (this.person?.kind === kind) return
+    this.usePerson(kind)
+  }
+
+  private usePerson(kind: 'boy' | 'girl') {
+    const old = this.person
+    if (old) this.px.scene.remove(old.root)
+    // сменили человека посреди входа от первого лица: новый спрятан и продолжает вход с того же места
+    // (камера остаётся в глазах); на выезде — спрятан, пока камера не выйдет из его головы
+    const it = this.intro
+    const resume = it?.phase === 'eyes' && old?.model ? this.introClock(old) : null
+    const switchedAt = this.time
+    const person = new Person(kind, { shadows: true })
+    if (it && !it.body) person.setHidden(true)
+    this.person = person
+    this.armsBase = null
+    this.armReach = 0
+    this.lean.set(0, 0, 0)
+    this.personClip = ''
+    this.px.scene.add(person.root)
+    void person.ready.then(() => {
+      if (this.person !== person) return
+      if (this.intro?.phase === 'eyes' && resume !== null && person.eyes && person.has('Walk_In')) {
+        // пока грузился, вход шёл бы дальше — продолжаем с учётом этого времени
+        this.introPlay(person, resume + Math.max(0, this.time - switchedAt))
+        return
+      }
+      if (this.intro?.phase === 'eyes') this.introOut()
+      // до входа человек ждёт за кадром, в начале прохода; без клипа входа — сразу сидит
+      if (!this.introDone && person.has('Walk_In')) {
+        person.pose('Walk_In', 0)
+        this.personClip = 'Walk_In'
+        this.personBusy = true
+      } else {
+        person.play('Sit_Idle', { fade: 0 })
+        this.personBusy = false
+      }
+      if (this.writeMode) this.setFirstPerson(true)
+    })
+  }
+
+  /** Разовое движение человека; потом он снова сидит или пишет. */
+  private personOnce(clip: string) {
+    const p = this.person
+    if (!p?.has(clip)) return
+    this.personBusy = true
+    this.personClip = clip
+    p.play(clip, {
+      fade: 0.2,
+      onDone: () => {
+        if (this.personClip === clip) this.personBusy = false
+      },
+    })
+  }
+
+  /** День на полке под точкой экрана (ndc −1..1) или null. Работает только на экране полки. */
+  pickShelf(ndcX: number, ndcY: number): string | null {
+    if (!this.world || !this.shelfMode) return null
+    this.ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.px.camera)
+    let best: { id: string; d: number } | null = null
+    for (const day of this.world.shelf.days) {
+      const root = this.world.shelf.bookOf(day.id)
+      if (!root || !root.visible) continue
+      const hit = this.ray.intersectObject(root, true)[0]
+      if (hit && (!best || hit.distance < best.d)) best = { id: day.id, d: hit.distance }
+    }
+    return best?.id ?? null
+  }
+
+  /**
+   * Человек за столом. В записи: пока печатают — пишет (кончик ручки идёт за курсором),
+   * перестали — рука замирает над строкой; вне записи — просто сидит.
+   */
+  private updatePerson(dt: number) {
+    // чернила под ручкой идут и без человека (не загрузился) — буквы всё равно выводятся
+    if (this.inkMode && this.writer.active && this.writer.update(dt || 1 / 60)) this.book.setInk(this.writer.ink())
+    const p = this.person
+    if (!p?.model) return
+    const typing = this.writeMode && (this.writer.active || performance.now() - this.lastTypeAt < 700)
+    const want = typing ? 'Write' : 'Sit_Idle'
+    if (!this.personBusy && this.personClip !== want && p.has(want)) {
+      p.play(want, { fade: 0.3 })
+      this.personClip = want
+    }
+    p.update(dt || 1 / 60)
+    // вход от первого лица: камера в глазах, потом выходит на экран полки
+    if (this.intro) this.updateIntro(p, Math.min(0.1, dt || 1 / 60))
+    // вход без узла eyes: камера смотрит, как он идёт, и пока он садится — переезжает на главный экран
+    if (this.introCam !== null && this.shelfMode) {
+      this.introCam += dt || 1 / 60
+      const k = ease((this.introCam - 2.6) / 2.2)
+      this.camPos.lerpVectors(INTRO_VIEW.pos, SHELF_VIEW.pos, k)
+      this.camLook.lerpVectors(INTRO_VIEW.look, SHELF_VIEW.look, k)
+      if (k >= 1) this.introCam = null
+    } else if (!this.shelfMode) this.introCam = null
+    // запись: камера движется вместе с глазами, когда он наклоняется к книге
+    if (this.writeMode) {
+      const eyes = p.eyesWorld()
+      if (eyes) {
+        // книгу открывают руки fp_arms, а тело в клипе Open_Book наклоняется к ней: камера за этим наклоном
+        // влетала в поднимающуюся обложку и под ладонь. Пока книга открывается, камера ждёт там, где глаза сидя
+        const hold = this.personBusy && this.personClip === 'Open_Book' ? p.seatedEyes() : null
+        const want = (hold ?? eyes.pos).add(WRITE_EYE_OFFSET)
+        if (this.eyesCam.lengthSq() === 0) this.eyesCam.copy(want)
+        else this.eyesCam.lerp(want, Math.min(1, (dt || 1 / 60) * 6))
+        // тянется к дальней строке — взгляд немного наклоняется следом
+        // только вперёд-назад: боковой сдвиг камеры раскачивает весь разворот
+        this.camPos.copy(this.eyesCam)
+        this.camPos.z += this.lean.z * CAM_LEAN
+      }
+    } else this.eyesCam.set(0, 0, 0)
+    // обложка открывается вместе с руками: с 0.3 по 1.3 с клипа Open_Book
+    if (this.bookOpening !== null) {
+      this.bookOpening += dt || 1 / 60
+      const k = ease((this.bookOpening - 0.3) / 1.0)
+      this.book.setOpen(k)
+      if (k >= 1) this.bookOpening = null
+    }
+    // кости руки — из рук для вида из глаз (fp_arms), когда тело скрыто; Person отдаёт нужные сам
+    const bones = [p.forearmR, p.upperarmR].filter((b): b is THREE.Object3D => !!b)
+    if (!this.writeMode || this.personBusy || !p.penTip || bones.length < 2) return
+    // цель — кончик ручки на штрихе буквы, которую он сейчас выводит (src/write/pen.ts);
+    // ручке нечего писать — она над курсором; пустая страница — ждёт на левой странице под подсказкой, ближе к её правому краю
+    const step = dt || 1 / 60
+    const pen = this.writer.active ? this.writer.pen() : null
+    const at = pen ? this.book.charOrigin(pen.index) : null
+    let goal: THREE.Vector3
+    let down = false
+    if (pen && at) {
+      goal = this.book.group.localToWorld(this.book.texToLocal(at.page, at.x + pen.x * at.size, at.y + pen.y * at.size))
+      down = pen.down
+      goal.y += down ? PEN_DOWN : PEN_LIFT
+    } else {
+      const caret = this.bookText.trim() ? this.book.caretLocal() : null
+      goal = caret
+        ? this.book.group.localToWorld(caret)
+        : this.book.group.localToWorld(this.book.texToLocal(0, TEX_W * 0.8, Math.min(TEX_H - 14, (this.book.placeholderEnd() ?? TEX_H * 0.5) + 46)))
+      goal.y += typing ? PEN_LIFT : 0.12
+    }
+    if (down && !this.penWasDown) sfx.scratch(0.09)
+    this.penWasDown = down
+    if (!this.penReady) {
+      this.penTarget.copy(goal)
+      this.penReady = true
+    } else if (down) this.penTarget.copy(goal)
+    else this.penTarget.lerp(goal, Math.min(1, step * (pen ? 30 : 8)))
+    // наклон: верх страницы дальше, чем достаёт рука от плеча, — руки подаются вперёд, как когда человек тянется к строке
+    const armsRoot = p.firstPerson && p.arms ? p.arms.root : null
+    if (armsRoot?.parent && p.handR) {
+      if (!this.armsBase) this.armsBase = armsRoot.position.clone()
+      const w = (o: THREE.Object3D) => o.getWorldPosition(new THREE.Vector3())
+      if (!this.armReach) this.armReach = (w(bones[1]).distanceTo(w(bones[0])) + w(bones[0]).distanceTo(w(p.handR)) + w(p.handR).distanceTo(w(p.penTip))) * ARM_REACH_K
+      const shoulder = w(bones[1]).sub(this.lean)
+      const to = this.penTarget.clone().sub(shoulder)
+      to.y = 0
+      const need = Math.hypot(to.length(), this.penTarget.y - shoulder.y) - this.armReach
+      const want = need > 0 ? to.normalize().multiplyScalar(need) : new THREE.Vector3()
+      this.lean.lerp(want, Math.min(1, step * 12))
+      const q = armsRoot.parent.getWorldQuaternion(new THREE.Quaternion()).invert()
+      const sc = armsRoot.parent.getWorldScale(new THREE.Vector3())
+      armsRoot.position.copy(this.armsBase).add(this.lean.clone().applyQuaternion(q).divide(sc))
+    }
+    // CCD: предплечье и плечо поворачиваются так, чтобы кончик ручки пришёл в цель
+    p.root.updateMatrixWorld(true)
+    const tip = new THREE.Vector3()
+    const jp = new THREE.Vector3()
+    const qw = new THREE.Quaternion()
+    const qp = new THREE.Quaternion()
+    // кисть доводит последние миллиметры: сначала крупно плечо и предплечье, в конце — немного кисть
+    const chain = p.handR ? [p.handR, ...bones] : bones
+    for (let it = 0; it < 12; it++) {
+      for (const j of it < 8 ? bones : chain) {
+        p.penTip.getWorldPosition(tip)
+        j.getWorldPosition(jp)
+        const a = tip.sub(jp).normalize()
+        const b = this.penTarget.clone().sub(jp).normalize()
+        const d = new THREE.Quaternion().setFromUnitVectors(a, b)
+        // кисть поворачиваем чуть-чуть, иначе ручка ляжет под странным углом
+        if (j === p.handR) d.slerp(new THREE.Quaternion(), 0.65)
+        j.getWorldQuaternion(qw)
+        j.parent!.getWorldQuaternion(qp)
+        j.quaternion.copy(qp.invert().multiply(d.multiply(qw)))
+        j.updateMatrixWorld(true)
+      }
+    }
+  }
+
+  private personClip = ''
+
+  /** Закрытая книга на столе под точкой экрана (только на экране полки). */
+  pickBook(ndcX: number, ndcY: number): boolean {
+    if (!this.shelfMode || !this.book.group.visible) return false
+    this.ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.px.camera)
+    return this.ray.intersectObject(this.book.group, true).length > 0
+  }
+
+  /** Подсветить закрытую книгу на столе: она чуть приподнимается. */
+  setBookHover(on: boolean) {
+    this.bookHover = on
+  }
+
+  /** Подсветить книгу на полке: она выезжает к зрителю. null — убрать. */
+  setShelfHover(id: string | null) {
+    this.hoverId = id
   }
 
   setDraftCaret(pos: number | null) {
@@ -379,12 +992,22 @@ export class FilmStage implements Stage {
   }
 
   setDraftText(text: string) {
+    if (text !== this.bookText) this.lastTypeAt = performance.now()
     this.bookText = text
+    // в записи новые буквы пишет ручка; вне записи текст появляется сразу
+    if (this.inkMode) {
+      this.writer.setText(text)
+      this.writer.update(0)
+      this.book.setInk(this.writer.ink(), false)
+    } else this.writer.reset(text)
     this.book.setText(text)
   }
 
   /** Полароиды на правой странице. Остаются на время фильма; пустой массив убирает их. */
   setPhotos(images: (HTMLImageElement | HTMLCanvasElement)[]) {
+    // в записи человек кладёт каждое новое фото рукой
+    if (this.writeMode && images.length > this.photoCount && !this.personBusy) this.personOnce('Place_Photo')
+    this.photoCount = images.length
     this.photoImages = images.slice(0, 5)
     for (const p of this.polaroids) this.book.group.remove(p)
     this.polaroids = []
@@ -472,8 +1095,42 @@ export class FilmStage implements Stage {
     this.goal = { hero: null, second: null }
     this.inkWords.clear()
     this.held = null
+    this.sceneActs.clear()
+    this.footprints = []
+    this.stands.clear()
+    this.smalls = []
     this.bursts = []
     this.facing = []
+    this.shelving = false
+    this.writeMode = false
+    this.inkMode = false
+    if (this.px.fovScale !== 1) {
+      this.px.fovScale = 1
+      this.px.fit()
+    }
+    if (this.armsBase && this.person?.arms) this.person.arms.root.position.copy(this.armsBase)
+    this.lean.set(0, 0, 0)
+    this.writer.reset(this.bookText)
+    this.book.setInk(null, false)
+    this.book.setPlaceholder(null, false)
+    this.bookOpening = null
+    this.setFirstPerson(false)
+    this.person?.setVisible(true)
+    // вход от первого лица прерван (открыли книгу или день с полки) — тело снова видно
+    this.introEnd()
+    this.introCam = null
+    this.shelfMode = false
+    this.hoverId = null
+    this.bookHover = false
+    this.book.group.visible = true
+    this.book.group.quaternion.identity()
+    if (this.world) {
+      for (const d of this.world.shelf.days) {
+        const b = this.world.shelf.bookOf(d.id)
+        // книга дня лежит на столе — на полке её место пустое
+        if (b) b.visible = d.id !== this.dayId
+      }
+    }
     this.bob = { hero: 0, second: 0 }
     this.shake = 0
     this.camPos.copy(WIDE.pos)
@@ -584,7 +1241,14 @@ export class FilmStage implements Stage {
       o.position.copy(p)
       o.rotation.y = f.yaw
       f.last.copy(p)
-      f.fig.update(time, dt, f.walk, (f.dist / 0.6) * Math.PI * 2)
+      const phase = (f.dist / 0.6) * Math.PI * 2
+      f.fig.update(time, dt, f.walk, phase)
+      // шаги по бумаге: щелчок на каждом касании ноги
+      if (f.id === 'hero') {
+        const n = Math.floor(phase / Math.PI)
+        if (n !== this.stepCount && this.stepCount >= 0 && this.live && f.walk > 0.5 && o.visible) sfx.step()
+        this.stepCount = n
+      }
       if (f.id === 'hero') {
         this.focus.copy(p).add(new THREE.Vector3(0, 0.6, 0))
         this.followHeld(f.fig, f.yaw)
@@ -594,19 +1258,26 @@ export class FilmStage implements Stage {
 
   /** Предмет в руках: кружка — в правой руке, когда пьёт, остальное — перед грудью. */
   private followHeld(fig: Hero3D, yaw: number) {
+    fig.raiseR += ((this.held?.raise ? 1 : 0) - fig.raiseR) * 0.2
     if (!this.held) return
-    const o = this.held.obj
+    const h = this.held
+    const o = h.obj
     o.visible = fig.object.visible && o.visible
-    const drinking = this.anim.hero.row === 'drink'
-    if (drinking) {
-      // глоток: кружка у рта, перед лицом (в координатах головы: лицо смотрит на +Z)
-      fig.head.localToWorld(o.position.set(1.5, 3.0, 9))
-      o.position.y -= this.held.height * 0.5
-    } else {
+    const row = this.anim.hero.row
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0))
+    if (row === 'carry') {
+      // двумя руками перед собой
       fig.chest.getWorldPosition(o.position)
-      o.position.y -= this.held.height * 0.5
+      o.position.y -= h.height * 0.5
+    } else {
+      // в правой руке: ладонь — в точке хвата предмета (по умолчанию треть высоты от низа)
+      fig.hand.R.getWorldPosition(o.position)
+      const grip = h.grip ? h.grip.clone().multiplyScalar(KIT_UNIT) : new THREE.Vector3(0, h.height * 0.33, 0)
+      o.position.sub(grip.applyQuaternion(q))
+      // у рта предмет чуть в сторону от лица, чтобы лицо было видно
+      if (row === 'drink' || row === 'shake') o.position.add(new THREE.Vector3(h.width * 0.45 + 0.06, 0, 0).applyQuaternion(q))
     }
-    o.rotation.set(0, yaw, 0)
+    o.quaternion.copy(q)
   }
 
   /** Поставить предмет из рук на страницу перед человечком. */
@@ -615,10 +1286,18 @@ export class FilmStage implements Stage {
     if (!held) return
     this.held = null
     const o = held.obj
+    this.addSmall(o, e.t + 0.3)
     const from = o.position.clone()
     const to = from.clone()
     to.y = this.book.pageY
     this.tween({ t: e.t, dur: 0.25 }, (k) => o.position.lerpVectors(from, to, k * k))
+  }
+
+  /** Звук в момент t фильма — только при обычном просмотре, при перемотке молчит. */
+  private soundAt(t: number, play: () => void) {
+    this.tween({ t, dur: 0.001 }, () => {
+      if (this.live && Math.abs(this.time - t) < 0.3) play()
+    })
   }
 
   /** Повернуть наклейку лицом к камере (только вокруг вертикали). */
@@ -631,11 +1310,252 @@ export class FilmStage implements Stage {
     return this.figures.find((f) => f.id === id)!
   }
 
+  /** Выход: человечек выбирается из щели между страницами, перепрыгивает на страницу и машет. */
+  private enter3D(e: Extract<TimelineEvent, { type: 'actor_enter' }>) {
+    const a = this.actor(e.actor)
+    a.object.visible = true
+    const side = e.actor === 'hero' ? -1 : 1
+    const y = this.book.pageY
+    const gap = new THREE.Vector3(0, y - 1.25, e.actor === 'hero' ? 0.35 : 0.1)
+    const edge = new THREE.Vector3(side * 0.08, y, gap.z)
+    const land = new THREE.Vector3(side * 0.55, y, gap.z + 0.1)
+    const D = e.dur
+    const at = (k: number) => e.t + k * D
+    this.faceYaw[e.actor] = 0
+    this.play(e.actor, 'climb', e.t, true, 0.62 * D)
+    this.tween({ t: e.t, dur: 0.55 * D }, (k) => {
+      // подтягивается рывками
+      const pull = ease(k) + 0.04 * Math.sin(k * Math.PI * 6) * (1 - k)
+      a.object.position.lerpVectors(gap, edge, pull)
+    })
+    this.tween({ t: at(0.55), dur: 0.2 * D }, (k) => {
+      a.object.position.lerpVectors(edge, land, ease(k))
+      a.object.position.y += Math.sin(k * Math.PI) * 0.18
+    })
+    this.tween({ t: at(0.62), dur: 0.001 }, () => this.play(e.actor, 'wave', at(0.62), true, 0.38 * D))
+    this.tween({ t: at(0.999), dur: 0.001 }, () => {
+      this.play(e.actor, 'idle', at(1), true)
+      this.faceYaw[e.actor] = null
+    })
+  }
+
+  /** Финал: человечек садится на край правой страницы лицом к камере и болтает ногами. */
+  private finale3D(e: Extract<TimelineEvent, { type: 'actor_action' }>) {
+    const a = this.hero.object
+    const from = a.position.clone()
+    const x = Math.min(PAGE_W - 0.45, Math.max(0.7, from.x))
+    const to = new THREE.Vector3(x, this.book.pageY, PAGE_H / 2 - 0.14)
+    const walk = Math.min(1.1, Math.max(0.45, from.distanceTo(to) / 1.6))
+    this.goal.hero = null
+    this.play('hero', 'walk', e.t, true, walk)
+    this.tween({ t: e.t, dur: walk }, (k) => a.position.lerpVectors(from, to, ease(k)))
+    this.tween({ t: e.t + walk, dur: 0.001 }, () => {
+      this.faceYaw.hero = 0
+      this.play('hero', 'dangle', e.t + walk, true, 4)
+    })
+    // камера: спереди на край страницы, где он сидит (на этом отрезке хореограф камеру не ставит)
+    const cam0 = this.camPos.clone()
+    const look0 = this.camLook.clone()
+    const camTo = to.clone().add(new THREE.Vector3(0.2, 0.9, 2.5))
+    const lookTo = to.clone().add(new THREE.Vector3(0, 0.3, -0.25))
+    this.tween({ t: e.t, dur: e.dur }, (k) => {
+      const a = ease(k / Math.min(1, (walk + 0.4) / e.dur))
+      this.camPos.lerpVectors(cam0, camTo, a)
+      this.camLook.lerpVectors(look0, lookTo, a)
+    })
+  }
+
+  /**
+   * Книга закрывается: человечек машет и ныряет обратно в книгу, наклейки складываются
+   * в страницу, как в книжке-раскладушке, снимки уезжают обратно внутрь.
+   */
+  private closeBook3D(e: Extract<TimelineEvent, { type: 'book_close' }>) {
+    this.dropHeld(e)
+    const heroObj = this.hero.object
+    const secondObj = this.second.object
+    const h0 = heroObj.position.clone()
+    const s0 = secondObj.position.clone()
+    this.play('hero', 'wave', e.t, true, e.dur)
+    this.faceYaw.hero = 0
+    const items = this.spawned.filter((o) => o.visible && !(o as THREE.InstancedMesh).isInstancedMesh)
+    const scales = items.map((o) => o.scale.clone())
+    const pols = this.tucked.map((p) => ({ o: p.object, p0: p.object.position.clone(), q0: p.object.quaternion.clone(), p1: p.object.userData.tuckPos as THREE.Vector3, q1: p.object.userData.tuckQ as THREE.Quaternion }))
+    this.tween(e, (k) => {
+      // наклейки и слова складываются
+      const f = 1 - ease((k - 0.05) / 0.4)
+      items.forEach((o, i) => {
+        o.scale.set(scales[i].x, Math.max(0.001, scales[i].y * f), scales[i].z)
+        if (f <= 0.001) o.visible = false
+      })
+      // листья, снег и иней гаснут, когда страницы сходятся
+      if (k > 0.3) this.closed = true
+      // человечки ныряют в книгу
+      const dive = ease((k - 0.2) / 0.3)
+      heroObj.position.copy(h0).setY(h0.y - 1.3 * dive)
+      secondObj.position.copy(s0).setY(s0.y - 1.3 * dive)
+      if (dive >= 1) {
+        heroObj.visible = false
+        secondObj.visible = false
+      }
+      // снимки возвращаются в книгу
+      const back = ease(k / 0.7)
+      for (const p of pols) {
+        if (!p.p1) continue
+        p.o.position.lerpVectors(p.p0, p.p1, back)
+        p.o.quaternion.slerpQuaternions(p.q0, p.q1, back)
+      }
+      this.book.setOpen(1 - ease(k))
+    }, () => {
+      this.closed = true
+      for (const o of this.spawned) o.visible = false
+      for (const p of this.polaroids) p.visible = false
+    })
+    this.soundAt(e.t + e.dur * 0.95, () => sfx.thump())
+  }
+
+  /**
+   * Противоречие: два состояния в одном кадре. Камера на это время — у сцены:
+   * сверху на человечка, чтобы видеть и центр, и края разворота.
+   */
+  private staging3D(e: Extract<TimelineEvent, { type: 'staging' }>) {
+    const fig = this.figure('hero')
+    const hero = this.hero.object.position.clone()
+    const y = this.book.pageY + 0.004
+    const rand = rngFrom(`${e.staging}:${e.t}`)
+    const add = (o: THREE.Object3D) => {
+      this.px.scene.add(o)
+      this.spawned.push(o)
+      return o
+    }
+    const lamp0 = this.room.lamp.intensity
+    const lampC = this.room.lamp.color.clone()
+    const rim0 = this.room.rim.intensity
+    // камера: сверху на человечка, края разворота в кадре
+    const cam0 = this.camPos.clone()
+    const look0 = this.camLook.clone()
+    const high = e.staging === 'crowd_edges_alone_center'
+    const side = e.staging === 'slow_walk_bright_light'
+    const camTo = hero.clone().add(side ? new THREE.Vector3(1.9, 1.35, 2.3) : new THREE.Vector3(0.25, high ? 4.4 : 3.3, high ? 3.6 : 3.2))
+    const lookTo = hero.clone().add(new THREE.Vector3(0, 0.25, 0))
+    const hold = e.dur + 1.2
+    this.tween({ t: e.t, dur: hold }, (k) => {
+      const a = ease(k / 0.25)
+      this.camPos.lerpVectors(cam0, camTo, a)
+      this.camLook.lerpVectors(look0, lookTo, a)
+    })
+    // свет держится чуть дольше самого отрезка, потом возвращается
+    const fade = (k: number) => Math.min(ease(k / 0.2), 1 - ease((k - 0.75) / 0.25))
+
+    if (e.staging === 'frost_edges_warm_center') {
+      // холодно, но уютно: иней ползёт с краёв, в центре тёплое пятно лампы
+      this.spawnEffect('frost', new THREE.Vector3(0, this.book.pageY, 0), e.t)
+      const frost = add(frostEdges(PAGE_W * 2, PAGE_H, rand)) as THREE.Mesh
+      frost.position.set(0, y, 0)
+      const pool = add(warmPool(1.1)) as THREE.Mesh
+      pool.position.set(hero.x, y + 0.001, hero.z)
+      this.tween({ t: e.t, dur: hold + 4 }, (k) => {
+        const u = k * (hold + 4)
+        ;(frost.material as THREE.MeshBasicMaterial).opacity = ease(u / 1.6) * (u > hold ? 0.75 : 1)
+        ;(pool.material as THREE.MeshBasicMaterial).opacity = ease(u / 0.8) * (1 - ease((u - hold) / 4))
+        this.room.lamp.intensity = lamp0 * (1 + 0.5 * fade(u / hold))
+        this.room.rim.intensity = rim0 + 1.1 * fade(u / hold)
+        this.room.rim.color.set(PALETTE.ice)
+      })
+      return
+    }
+
+    if (e.staging === 'crowd_edges_alone_center') {
+      // шумно, но одиноко: толпа силуэтов по краям, человечек сидит один в пустом круге света
+      const crowd = new Crowd(new THREE.Vector3(hero.x, this.book.pageY, hero.z), { x0: -PAGE_W * 0.97, x1: PAGE_W * 0.97, z0: -PAGE_H * 0.48, z1: PAGE_H * 0.48 }, rand)
+      add(crowd.mesh)
+      const pool = add(warmPool(0.85, 'rgba(236, 240, 255,')) as THREE.Mesh
+      pool.position.set(hero.x, y + 0.001, hero.z)
+      this.play('hero', 'sit', e.t + 0.3, false, 1.5)
+      this.tween({ t: e.t, dur: hold }, (k) => {
+        const u = k * hold
+        crowd.update(Math.min(1, u / 1.0) * (1 - ease((u - e.dur) / 1.0)), e.t + u)
+        ;(pool.material as THREE.MeshBasicMaterial).opacity = fade(k)
+        this.room.lamp.intensity = lamp0 * (1 - 0.45 * fade(k))
+      }, () => (crowd.mesh.visible = false))
+      return
+    }
+
+    // устал, но доволен: медленный усталый шаг при ярком тёплом свете
+    const from = hero.clone()
+    const to = hero.clone().add(new THREE.Vector3(hero.x < 0 ? 0.7 : -0.7, 0, 0.15))
+    const pool = add(warmPool(1.6, 'rgba(255, 214, 120,')) as THREE.Mesh
+    pool.position.set((from.x + to.x) / 2, y + 0.001, hero.z)
+    this.play('hero', 'walk', e.t, true, e.dur)
+    this.tween(e, (k) => this.hero.object.position.lerpVectors(from, to, k), () => this.play('hero', 'idle', e.t + e.dur, true))
+    this.tween({ t: e.t, dur: hold }, (k) => {
+      fig.fig.tired = fade(k)
+      ;(pool.material as THREE.MeshBasicMaterial).opacity = fade(k)
+      this.room.lamp.intensity = lamp0 * (1 + 0.8 * fade(k))
+      this.room.lamp.color.copy(lampC).lerp(new THREE.Color(PALETTE.yellow), fade(k))
+    }, () => {
+      fig.fig.tired = 0
+      this.room.lamp.color.copy(lampC)
+    })
+  }
+
+  /**
+   * Книга дня встаёт на своё место на полке: взлетает со стола, разворачивается корешком
+   * наружу и въезжает в ячейку; камера смотрит на полку. false — места на полке нет.
+   */
+  private toShelf3D(e: Extract<TimelineEvent, { type: 'to_shelf' }>): boolean {
+    const spine = this.dayId ? this.world?.shelf.bookOf(this.dayId) : null
+    if (!spine) return false
+    spine.visible = false
+    const g = this.book.group
+    const center = new THREE.Box3().setFromObject(spine).getCenter(new THREE.Vector3())
+    const slotQ = spine.getWorldQuaternion(new THREE.Quaternion())
+    // закрытая книга: x — от корешка к обрезу, y — толщина, z — длина; на полке корешок смотрит на +z
+    const basis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0))
+    const q1 = slotQ.clone().multiply(new THREE.Quaternion().setFromRotationMatrix(basis))
+    const p1 = center.clone().sub(new THREE.Vector3(PAGE_W / 2, 0.2, 0).applyQuaternion(q1))
+    let p0: THREE.Vector3 | null = null
+    let q0: THREE.Quaternion | null = null
+    const cam0 = this.camPos.clone()
+    const look0 = this.camLook.clone()
+    // слева от места за столом: камера не проходит через голову человека
+    const camTo = center.clone().add(new THREE.Vector3(-1.5, 1.6, 9.5))
+    const lookTo = center.clone().add(new THREE.Vector3(0, 1.1, 0))
+    this.tween(
+      e,
+      (k) => {
+        if (!p0) {
+          this.shelving = true
+          p0 = g.position.clone()
+          q0 = g.quaternion.clone()
+        }
+        const a = ease(k)
+        g.position.lerpVectors(p0, p1, a)
+        g.position.y += Math.sin(a * Math.PI) * 1.6
+        g.quaternion.slerpQuaternions(q0!, q1, ease(k * 1.4))
+        this.camPos.lerpVectors(cam0, camTo, ease(k * 1.3))
+        this.camLook.lerpVectors(look0, lookTo, ease(k * 1.3))
+      },
+      () => {
+        g.visible = false
+        spine.visible = true
+        this.soundAt(e.t + e.dur, () => sfx.thump())
+      },
+    )
+    return true
+  }
+
   /** Заранее растрировать картинки-предметы дня, чтобы к своему биту они были готовы. */
-  preload(timeline: Timeline) {
+  preload(timeline: Timeline, dayText?: string) {
     void prepareSticker('crystal')
+    // сценки прошлого дня с той же цитатой не должны попасть в этот (кэш на диске их вернёт, если день тот же)
+    if (this.sceneProvider) forgetScenes()
     for (const e of timeline.events) {
       if (e.type !== 'word_transform') continue
+      if (this.sceneProvider && e.result.kind !== 'effect' && e.result.kind !== 'person') {
+        const r = e.result as { id?: string; name?: string }
+        // текст ЭТОГО дня (bookText ещё прошлый: prepare идёт после preload)
+        this.sceneProvider.request({ quote: e.quote, day: (dayText ?? this.bookText).trim().slice(0, 600), hint: r.name ?? r.id })
+      }
       const r = e.result as { kind: string; id?: string; name?: string; hint?: string; tags?: string[] }
       if (r.kind === 'make' && r.id && !this.made.has(r.id)) {
         // дорисовка идёт, пока открывается книга; не успеет к биту — встанет похожий предмет
@@ -683,6 +1603,8 @@ export class FilmStage implements Stage {
    * у дальнего края торчат только белые нижние поля.
    */
   private tuckPhotos() {
+    // первое фото дня — ещё и в рамке на столе (если рамка выпала дню)
+    this.world?.setPhoto((this.photoImages[0] as TexImageSource | undefined) ?? null)
     for (const p of this.polaroids) p.visible = false
     for (const p of this.tucked) this.book.group.remove(p.object)
     this.tucked = this.photoImages.map((img, i) => {
@@ -695,6 +1617,8 @@ export class FilmStage implements Stage {
       o.position.set(x, this.book.surfaceY - 0.045 - i * 0.004, -PAGE_H / 2 - out + pol.height / 2)
       if (i > 0) o.rotation.z += (i % 2 ? 0.12 : -0.1)
       pol.setDevelop(0)
+      o.userData.tuckPos = o.position.clone()
+      o.userData.tuckQ = o.quaternion.clone()
       this.book.group.add(o)
       return pol
     })
@@ -752,6 +1676,9 @@ export class FilmStage implements Stage {
       o.quaternion.copy(standQ).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(w * 0.05, 0, w * 0.07)))
     })
     this.tween({ t: at(0.6), dur: 0.32 * D }, (k) => pol.setDevelop(ease(k)))
+    for (const v of [0.2, 0.413, 0.627]) this.soundAt(at(0.14) + v * 0.36 * D, () => sfx.slide(0.3))
+    this.soundAt(at(0.6), () => sfx.shake(7, 0.13))
+    this.soundAt(at(0.9), () => sfx.chime())
     // камера: сбоку на рывки, отъезд на вставший снимок, через плечо — въезд в снимок
     const cam0 = this.camPos.clone()
     const look0 = this.camLook.clone()
@@ -798,6 +1725,7 @@ export class FilmStage implements Stage {
         o.quaternion.slerpQuaternions(q0, q1, a)
       })
       this.tween({ t: t0 + 0.5, dur: 1.2 }, (k) => pol.setDevelop(ease(k)))
+      this.soundAt(t0, () => sfx.slide(0.35))
     })
   }
 
@@ -827,6 +1755,7 @@ export class FilmStage implements Stage {
     this.spawned.push(word)
     this.inkWords.set(e.quote, word)
     this.play('hero', 'carry', e.t, true, e.dur)
+    this.soundAt(e.t, () => sfx.peel(Math.min(0.6, e.dur)))
     const fig = this.figure('hero').fig
     const flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0))
     const up = new THREE.Quaternion()
@@ -848,7 +1777,10 @@ export class FilmStage implements Stage {
   }
 
   /** Буквы рассыпаются на пиксельные кубики, кубики собираются в предмет. */
-  private wordTransform3D(e: Extract<TimelineEvent, { type: 'word_transform' }>) {
+  private wordTransform3D(e: Extract<TimelineEvent, { type: 'word_transform' }>): void {
+    const kind = e.result.kind
+    const scene = kind !== 'effect' && kind !== 'person' && kind !== 'crystal' ? this.sceneProvider?.get(e.quote) ?? null : null
+    if (scene && scene.objects.length) return this.sceneTransform(e, scene)
     const word = this.inkWords.get(e.quote) ?? null
     const rand = rngFrom(`${e.quote}:${e.t}`)
     const model = this.kitFor(e.result, e.quote)
@@ -868,7 +1800,8 @@ export class FilmStage implements Stage {
     let to: { p: THREE.Vector3; c: PaletteName | THREE.Color }[]
     let obj: THREE.Object3D | null = null
     // картинка: из библиотеки, дорисованная или кристалл, если не успела
-    let pic = this.pictureForResult(e.result, e.quote)
+    // решение 21.11: предметы в фильме объёмные (сценки и 3D-библиотека), наклейки — только если включены
+    let pic = USE_STICKERS ? this.pictureForResult(e.result, e.quote) : null
     if (!pic && model && (e.result as { kind: string }).kind === 'make') pic = pictureFor('crystal')
     if (pic && !stickerCanvas(pic.id)) pic = stickerCanvas('crystal') ? pictureFor('crystal') : null
     const art = pic ? stickerCanvas(pic.id) : null
@@ -884,7 +1817,7 @@ export class FilmStage implements Stage {
       } else {
         fig.chest.getWorldPosition(obj.position)
         obj.position.y -= height / 2
-        this.held = { obj, height }
+        this.held = { obj, height, width: height * 0.6, grip: null }
         // в руках тень от самого человечка закрывала бы картинку
         st.mesh.receiveShadow = false
       }
@@ -913,7 +1846,7 @@ export class FilmStage implements Stage {
       } else {
         fig.chest.getWorldPosition(obj.position)
         obj.position.y -= height / 2
-        this.held = { obj, height }
+        this.held = { obj, height, width: height * 0.6, grip: null }
       }
       obj.visible = false
       this.px.scene.add(obj)
@@ -936,6 +1869,12 @@ export class FilmStage implements Stage {
       to = from.map((p) => ({ p: p.clone().add(new THREE.Vector3(rand() - 0.5, rand() * 0.8, rand() - 0.5).multiplyScalar(1.4)), c: colors[Math.floor(rand() * colors.length)] }))
       if (e.result.kind === 'effect') this.spawnEffect(e.result.id, c, e.t + e.dur / 2)
     }
+    this.soundAt(e.t, () => sfx.cubes(e.dur * 0.7))
+    // вещь на столе отзывается на слово: будильник звенит на «часах», телефон вибрирует, домбра звучит
+    const deskEcho = DESK_ECHO[(e.result as { id?: string }).id ?? '']
+    if (deskEcho && this.world) this.soundAt(e.t + e.dur * 0.75, () => void this.world!.set.trigger(deskEcho))
+    if (obj) this.soundAt(e.t + e.dur * 0.72, () => sfx.pop())
+    if (e.result.kind === 'effect' && (e.result.id === 'sparkles' || e.result.id === 'snow')) this.soundAt(e.t + e.dur * 0.5, () => sfx.sparkle())
     const swarm = new CubeSwarm(from, to, 1.4 * KIT_UNIT, rand)
     this.px.scene.add(swarm.mesh)
     this.spawned.push(swarm.mesh)
@@ -957,7 +1896,150 @@ export class FilmStage implements Stage {
     )
   }
 
-  private play(id: ActorId, row: HeroRow, t0: number, loop: boolean, dur = 1) {
+  /**
+   * Сценка: буквы рассыпаются на кубики и собираются в несколько предметов сразу —
+   * декорация встаёт за человечком, деталь рядом, предмет прыгает в руку. Поза — из сценки.
+   */
+  private sceneTransform(e: Extract<TimelineEvent, { type: 'word_transform' }>, scene: KitScene): void {
+    const word = this.inkWords.get(e.quote) ?? null
+    const rand = rngFrom(`${e.quote}:${e.t}:scene`)
+    const fig = this.figure('hero').fig
+    const H = this.hero.object.position.clone()
+    const y = this.book.pageY
+    // откуда летят кубики
+    let from: THREE.Vector3[] = []
+    if (word) {
+      word.updateMatrixWorld(true)
+      const g = word.geometry as THREE.PlaneGeometry
+      from = letterPoints(word.userData.canvas, g.parameters.width, g.parameters.height).map((v) => new THREE.Vector3(v.x, v.y, 0).applyMatrix4(word.matrixWorld))
+    }
+    if (from.length < 20) {
+      const c = fig.chest.getWorldPosition(new THREE.Vector3())
+      from = from.concat(Array.from({ length: 60 }, () => c.clone().add(new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(0.3))))
+    }
+    // место должно читаться как место: декорация не ниже человечка; вещь в руке — заметная, но не больше головы
+    const ROLE_H: Record<SceneObject['role'], [number, number]> = { hand: [9, 14], stand: [34, 60], detail: [7, 18] }
+    const placed: { obj: THREE.Object3D; role: SceneObject['role']; appear: number }[] = []
+    let hasHand = false
+    for (const so of scene.objects.slice(0, 3)) {
+      // только объёмные предметы: у некоторых id есть двойник-картинка без фигур
+      const lib = so.ref ? sceneRef(so.ref) ?? kitById(so.ref) : undefined
+      const model = lib && lib.parts.length ? lib : so.model
+      if (!model || !model.parts?.length) continue
+      if (so.role === 'hand' && hasHand) continue
+      // то же место дня уже стоит (весь день за рабочим столом) — второй стол не строим
+      const standKey = so.ref ?? so.ru
+      if (so.role === 'stand' && this.stands.has(standKey)) continue
+      const obj = buildKit(model, toonFor)
+      toPixelLayer(obj)
+      // размер по роли: предмет в руке не больше головы, декорация не меньше человечка наполовину
+      const box = kitBounds(model)
+      const size = box.getSize(new THREE.Vector3())
+      const [lo, hi] = ROLE_H[so.role]
+      const k = size.y > hi ? hi / size.y : size.y < lo ? lo / size.y : 1
+      obj.scale.setScalar(k)
+      const hgt = size.y * k * KIT_UNIT
+      const wid = Math.max(size.x, size.z) * k * KIT_UNIT
+      if (so.role === 'hand') {
+        hasHand = true
+        const grip = (model as { grip?: [number, number, number] }).grip
+        // зонт держат над головой
+        this.held = { obj, height: hgt, width: wid, grip: grip ? new THREE.Vector3(...grip).multiplyScalar(k) : null, raise: model.id === 'umbrella' }
+        fig.chest.getWorldPosition(obj.position)
+      } else {
+        // высокие и узкие декорации (дерево, фонарь) — сбоку, иначе крона торчит над головой, как шапка
+        const tall = so.role === 'stand' && size.y > Math.max(size.x, size.z) * 1.5
+        const side = tall && (so.side ?? 'back') === 'back' ? (rand() < 0.5 ? 'left' : 'right') : so.side ?? (so.role === 'stand' ? 'back' : rand() < 0.5 ? 'right' : 'left')
+        const dx = side === 'left' ? -1 : side === 'right' ? 1 : 0
+        const dz = side === 'back' ? -1 : side === 'front' ? 1 : 0
+        const gap = so.role === 'stand' ? 0.42 : 0.3
+        const at = new THREE.Vector3(H.x + dx * (gap + wid / 2), y, H.z + dz * (gap + (size.z * k * KIT_UNIT) / 2))
+        if (so.role === 'stand' && side === 'back') at.x += (rand() - 0.5) * 0.3
+        this.placeFree(at, wid, size.z * k * KIT_UNIT)
+        obj.position.copy(at)
+        // декорация повёрнута к камере лицом, деталь — чуть наискосок
+        const cam = this.px.camera.position
+        obj.rotation.y = Math.atan2(cam.x - at.x, cam.z - at.z) * (so.role === 'stand' ? 0.6 : 0.3) + (rand() - 0.5) * 0.2
+      }
+      obj.visible = false
+      this.px.scene.add(obj)
+      this.spawned.push(obj)
+      if (so.role === 'stand') this.stands.set(standKey, obj)
+      if (so.role === 'detail') this.addSmall(obj, e.t + e.dur)
+      placed.push({ obj, role: so.role, appear: so.role === 'stand' ? 0.5 : so.role === 'detail' ? 0.62 : 0.74 })
+      // живые подсказки предмета
+      for (const fx of model.fx ?? []) {
+        const kind = fx.kind === 'steam' || fx.kind === 'smoke' ? 'steam' : fx.kind === 'sparkle' || fx.kind === 'glow' ? 'sparkles' : null
+        if (!kind) continue
+        const anchor = new THREE.Object3D()
+        anchor.position.set(...(fx.at ?? [0, 10, 0]))
+        obj.children[0].add(anchor)
+        this.spawnEffect(kind, anchor, e.t + e.dur * 0.85)
+      }
+    }
+    if (!placed.length) {
+      // сценка пустая (предметы не собрались) — обычный путь: один предмет
+      return this.wordTransform3D({ ...e, result: { kind: 'crystal', id: 'crystal' } })
+    }
+    this.sceneActs.set(e.beat, scene.action as HeroAction)
+    // кубики делятся между предметами по их величине
+    placed.forEach((p) => p.obj.updateMatrixWorld(true))
+    const to: { p: THREE.Vector3; c: PaletteName | THREE.Color }[] = []
+    const weights = placed.map((p) => (p.role === 'stand' ? 3 : p.role === 'detail' ? 1 : 1.5))
+    const wsum = weights.reduce((a, b) => a + b, 0)
+    placed.forEach((p, i) => {
+      const n = Math.max(8, Math.round((from.length * weights[i]) / wsum))
+      to.push(...objectPoints(p.obj, n, rand))
+    })
+    while (from.length < to.length) from.push(from[Math.floor(rand() * from.length)].clone())
+    const swarm = new CubeSwarm(from, to, 1.4 * KIT_UNIT, rand)
+    this.px.scene.add(swarm.mesh)
+    this.spawned.push(swarm.mesh)
+    this.soundAt(e.t, () => sfx.cubes(e.dur * 0.7))
+    placed.forEach((p) => this.soundAt(e.t + e.dur * p.appear, () => sfx.pop()))
+    const base = placed.map((p) => p.obj.scale.x)
+    return this.tween(
+      e,
+      (k) => {
+        if (word) {
+          word.visible = k < 0.1
+          word.rotation.z = Math.sin(k * 90) * 0.06
+        }
+        swarm.update(k)
+        placed.forEach((p, i) => {
+          const a = clamp01((k - p.appear) / (1 - p.appear))
+          p.obj.visible = k > p.appear
+          p.obj.scale.setScalar(base[i] * (k > p.appear ? 0.85 + 0.15 * ease(a) + 0.1 * Math.sin(ease(a) * Math.PI) : 0.001))
+        })
+      },
+      () => (swarm.mesh.visible = false),
+    )
+  }
+
+  /** Добавить мелочь на разворот; если её больше пяти — самая старая тает. */
+  private addSmall(o: THREE.Object3D, t: number) {
+    this.smalls.push(o)
+    if (this.smalls.length <= 5) return
+    const old = this.smalls.shift()!
+    const s0 = old.scale.x
+    this.tween({ t, dur: 0.5 }, (k) => {
+      old.scale.setScalar(Math.max(0.001, s0 * (1 - ease(k))))
+      if (k >= 1) old.visible = false
+    })
+  }
+
+  /** Сдвинуть точку вдоль x, чтобы след (ширина w, глубина d) не налез на уже стоящие сценки и остался на развороте. */
+  private placeFree(at: THREE.Vector3, w: number, d: number) {
+    const over = (x: number) => this.footprints.some(([x0, z0, x1, z1]) => x + w / 2 > x0 && x - w / 2 < x1 && at.z + d / 2 > z0 && at.z - d / 2 < z1)
+    const lim = PAGE_W - w / 2 - 0.1
+    let x = at.x
+    for (let i = 0; i < 12 && over(x); i++) x = at.x + (i % 2 ? -1 : 1) * Math.ceil((i + 1) / 2) * (w * 0.6 + 0.2)
+    at.x = Math.max(-lim, Math.min(lim, x))
+    at.z = Math.max(-PAGE_H / 2 + d / 2, Math.min(PAGE_H / 2 - 0.2, at.z))
+    this.footprints.push([at.x - w / 2, at.z - d / 2, at.x + w / 2, at.z + d / 2])
+  }
+
+  private play(id: ActorId, row: AnimRow, t0: number, loop: boolean, dur = 1) {
     const an = { row, t0, loop, fps: row === 'walk' ? this.fps + 4 : this.fps, dur }
     this.anim[id] = an
     return an
@@ -974,6 +2056,72 @@ export class FilmStage implements Stage {
     this.room.rim.color.set(PALETTE.greyBlue)
     this.room.rim.intensity = 0.7
     this.room.lamp.intensity = 60
+    this.applyDay()
+  }
+
+  /** Запомнить палитру, время суток и погоду дня; применяются при подготовке фильма. */
+  dress(script: DayScript, seed = 1, dayId: string | null = null) {
+    this.day = { palette_hint: script.palette_hint ?? [], time_of_day: script.time_of_day, weather: script.weather }
+    void this.world?.dress(script, seed)
+    this.dayId = dayId
+    // обложка книги дня — того же цвета, что её корешок на полке
+    if (this.world) this.book.setCoverColor(coverColorFor(script, dayId ?? ''))
+  }
+
+  /** Какой день играет (id из хранилища) — для его места на полке. */
+  setDayId(id: string | null) {
+    this.dayId = id
+  }
+
+  /** Дни на полке, старые первыми. */
+  setShelf(days: ShelfDay[]) {
+    void this.world?.placeDays(days)
+  }
+
+  /**
+   * Палитра из фото красит свет: самый тёплый цвет — лампу, самый холодный — контровой свет
+   * из окна, среднее — рассеянный. Время суток меняет силу света, погода — осадки на развороте.
+   */
+  private applyDay() {
+    const d = this.day
+    if (!d) return
+    const lamp = this.room.lamp
+    const rim = this.room.rim
+    const amb = this.room.ambient
+    const cols = d.palette_hint.map((n) => DAY_COLORS[n]).filter((c): c is number => c !== undefined).map((c) => new THREE.Color(c))
+    if (cols.length) {
+      const byWarmth = [...cols].sort((a, b) => b.r - b.b - (a.r - a.b))
+      const avg = cols.reduce((acc, c) => acc.add(c), new THREE.Color(0, 0, 0)).multiplyScalar(1 / cols.length)
+      lamp.color.lerp(byWarmth[0], 0.4)
+      rim.color.lerp(byWarmth[byWarmth.length - 1], 0.55)
+      amb.color.lerp(avg, 0.35)
+    }
+    switch (d.time_of_day) {
+      case 'morning':
+        amb.intensity *= 1.15
+        lamp.intensity *= 0.75
+        rim.intensity *= 1.5
+        rim.color.lerp(new THREE.Color(PALETTE.frost), 0.3)
+        break
+      case 'day':
+        amb.intensity *= 1.3
+        lamp.intensity *= 0.65
+        rim.intensity *= 1.6
+        break
+      case 'evening':
+        lamp.intensity *= 1.1
+        amb.intensity *= 0.9
+        amb.color.lerp(new THREE.Color(PALETTE.mauve), 0.2)
+        break
+      case 'night':
+        lamp.intensity *= 1.2
+        amb.intensity *= 0.55
+        amb.color.lerp(new THREE.Color(PALETTE.navy), 0.4)
+        rim.intensity *= 0.7
+        break
+    }
+    // погода дня: дождь или снег тихо идут над разворотом с первых секунд
+    if (this.figures.length && (d.weather === 'rain' || d.weather === 'snow')) this.spawnEffect(d.weather, new THREE.Vector3(0, this.book.pageY, 0), 3.2)
   }
 
   private actor(id: ActorId) {
@@ -1008,7 +2156,10 @@ export class FilmStage implements Stage {
   }
 
   private cameraShot(e: { t: number; dur: number }, shot: CameraId, targetQuote: string | null) {
-    const target = (targetQuote && this.quotePos(targetQuote)) || new THREE.Vector3(-PAGE_W / 2, this.book.pageY, 0)
+    // без слова: у объёмного человечка — щель между страницами, откуда он выходит
+    const target =
+      (targetQuote && this.quotePos(targetQuote)) ||
+      (this.figures.length ? new THREE.Vector3(-0.7, this.book.pageY, 0.35) : new THREE.Vector3(-PAGE_W / 2, this.book.pageY, 0))
     const fromPos = this.camPos.clone()
     const fromLook = this.camLook.clone()
     const fig = this.figures.length > 0

@@ -1,6 +1,7 @@
 // Закладка «Почему так» после фильма: название, три причины, действия.
 import type { DayScript } from '../types/script'
 import { spineColor } from './checks'
+import { CardButton, Clip, FlagButton, Icon, PinNote, Sheet, Sprig, Squiggle, Tassel, TagButton } from './paper'
 
 interface Props {
   script: DayScript
@@ -22,29 +23,48 @@ interface Props {
 export function Bookmark(p: Props) {
   return (
     <aside className="bookmark" style={{ ['--ribbon' as string]: spineColor(p.script.mood) }} aria-label="Почему так">
-      <div className="ribbon-top" />
-      <h1 className="bm-title">{p.script.title}</h1>
-      <h2 className="bm-head">Почему так</h2>
-      <ul className="bm-why">
-        {p.script.why.map((w, i) => (
-          <li key={i}>{w}</li>
-        ))}
-      </ul>
-      {p.source === 'fallback' && <div className="small">сценарий собран без сети, по словарю</div>}
-      <div className="bm-actions">
-        {p.canSave && (
-          <button className="link" onClick={p.onSave} disabled={p.saved}>
-            {p.saved ? 'сохранено ✓' : 'Сохранить'}
-          </button>
-        )}
-        <button className="link" onClick={p.onDownload}>Скачать папку дня</button>
-        <button className="link" onClick={p.onReplay}>Ещё раз</button>
-        {p.canDelete && <button className="link danger" onClick={p.onDelete}>Удалить</button>}
-        {p.onEdit && <button className="link" onClick={p.onEdit}>Править запись</button>}
-        <button className="link" onClick={p.onShelf}>На полку</button>
-        <button className="link" onClick={p.onNew}>Новый день</button>
+      <div className="bm-paper">
+        <Sheet shape="bookmark" edge="soft" w={300} h={640} seed="bookmark" />
+        <span className="bm-dash" aria-hidden />
+        <Clip className="bm-clip" />
+        <Tassel className="bm-tassel" />
+        <div className="bm-content">
+          <h1 className="bm-title">{p.script.title}</h1>
+          <h2 className="bm-head">
+            Почему так
+            <Squiggle w={110} />
+          </h2>
+          <ul className="bm-why">
+            {p.script.why.map((w, i) => (
+              <li key={i}>
+                <Icon name="check" size={16} className="bm-check" />
+                <span>{w}</span>
+              </li>
+            ))}
+          </ul>
+          {p.source === 'fallback' && <div className="bm-note">сценарий собран без сети, по словарю</div>}
+          <div className="bm-cards">
+            <CardButton icon="replay" label="Ещё раз" tape={0} onClick={p.onReplay} />
+            <CardButton icon="download" label="Скачать" tape={1} onClick={p.onDownload} ariaLabel="Скачать папку дня" />
+            {p.canDelete && <CardButton icon="trash" label="Удалить" tape={2} onClick={p.onDelete} className="danger" />}
+            {p.onEdit && <CardButton icon="pencil" label="Править" tape={3} onClick={p.onEdit} ariaLabel="Править запись" />}
+            {p.canSave && (
+              <CardButton icon={p.saved ? 'check' : 'save'} label={p.saved ? 'Сохранено' : 'Сохранить'} tape={4} onClick={p.onSave} disabled={p.saved} />
+            )}
+          </div>
+          <div className="bm-nav">
+            <FlagButton onClick={p.onShelf} seed="bm-shelf">← На полку</FlagButton>
+            <TagButton small onClick={p.onNew} seed="bm-new">Новый день</TagButton>
+          </div>
+          <Sprig size={40} className="bm-sprig a" />
+          <Sprig size={30} flip className="bm-sprig b" />
+        </div>
       </div>
-      {p.status && <div className="small status">{p.status}</div>}
+      {p.status && (
+        <PinNote className="bm-status" seed="bm-status">
+          {p.status}
+        </PinNote>
+      )}
     </aside>
   )
 }

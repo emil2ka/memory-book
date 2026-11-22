@@ -31,7 +31,10 @@ interface Meta2D extends Omit<KitModel, 'parts'> {
   cat: Category
   pack: string
 }
-const PICTURE_ONLY = meta2d as unknown as Meta2D[]
+// у кого уже есть 3D-фигуры (сценки, assets/kit/src/pack5+), запись «только картинка» не нужна:
+// предмет с фигурами важнее, картинка по тому же id остаётся в assets/kit2d
+const IDS_3D = new Set(CATEGORIES.flatMap((c) => (FILES[c] as KitModel[]).map((m) => m.id)))
+const PICTURE_ONLY = (meta2d as unknown as Meta2D[]).filter((m) => !IDS_3D.has(m.id))
 
 /** Все предметы библиотеки: 3D-кит (assets/kit) + только картинки (assets/kit2d/meta.json). */
 export const KIT_LIBRARY: readonly KitModel[] = [

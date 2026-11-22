@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { PALETTE, css } from './palette'
 import { HD, pixelTexture } from './PixelStage'
 import { poseClip, type Model } from './models'
+import type { InkState } from '../write/pen'
 
 /** Размер одной страницы в единицах мира. */
 export const PAGE_W = 3.2
@@ -13,7 +14,8 @@ const PAGE_Y = 0.285
 /** В пробе HD страницы рисуются в 4 раза подробнее и рукописным шрифтом. */
 export const SS = HD ? 4 : 1
 /** Рукописный шрифт уже и ниже моноширинного, поэтому кегли крупнее, а строки плотнее. */
-const FONT_SIZES = HD ? [24, 21, 18, 16, 14, 12, 10] : [16, 14, 12, 10, 8, 7]
+// крупнее 18 короткий текст выглядит плакатом и раньше времени уходит на правую страницу
+const FONT_SIZES = HD ? [18, 16, 14, 12, 10] : [16, 14, 12, 10, 8, 7]
 const LH = HD ? 1.12 : 1.35
 export const HAND_FONT = 'Caveat'
 const MARGIN = 12
@@ -58,6 +60,13 @@ export class Book {
   private boxes: THREE.Object3D[] = []
   private titlePlate: THREE.Mesh | null = null
   private caretPos: number | null = null
+  /** Чернила под ручкой (запись): буквы с upTo и дальше ещё не написаны, upTo проявляется по пройденным точкам. */
+  private ink: InkState | null = null
+  private inkPage: 0 | 1 | null = null
+  /** Бледная подсказка на пустой левой странице (только в записи); рисуется в текстуре, поэтому всегда в перспективе листа. */
+  private placeholder: string | null = null
+  /** Базовая линия последней строки подсказки на текстуре (для места, где ждёт ручка). */
+  private placeholderEndY: number | null = null
   private caretOn = true
   private fontPx = 14
   fontFamily = 'monospace'
@@ -117,8 +126,27 @@ export class Book {
   }
 
   /** Заменить коробки настоящей моделью. Текст рисуется на материалах page_left и page_right. */
+  /** Цвет обложки книги дня (материал cover_leather); null — исходный кирпичный. */
+  private coverColor: THREE.Color | null = null
+  private coverMats: THREE.MeshStandardMaterial[] = []
+  private coverBase: THREE.Color | null = null
+
+  setCoverColor(c: THREE.Color | null) {
+    this.coverColor = c
+    for (const m of this.coverMats) m.color.copy(c ?? this.coverBase ?? m.color)
+  }
+
   useModel(model: Model) {
     this.model = model
+    model.root.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        if (m.name === 'cover_leather' && !this.coverMats.includes(m as THREE.MeshStandardMaterial)) this.coverMats.push(m as THREE.MeshStandardMaterial)
+      }
+    })
+    this.coverBase = this.coverMats[0]?.color.clone() ?? null
+    if (this.coverColor) this.setCoverColor(this.coverColor)
     if (HD) model.root.traverse((o) => ((o.castShadow = true), (o.receiveShadow = true)))
     for (const b of this.boxes) b.visible = false
     this.group.add(model.root)
@@ -189,16 +217,24 @@ export class Book {
     this.hidden.clear()
     const ctx = this.canvases[0].getContext('2d')!
     const tokens = [...text.matchAll(/\S+/g)]
-    // размер шрифта подбирается так, чтобы текст поместился на разворот
-    for (const px of FONT_SIZES) {
-      this.fontPx = px
-      if (this.layout(ctx, tokens)) break
+    // сначала всё на левой странице (правая — место для фото); на правую — только если левая полна
+    const fit = () => {
+      for (const twoPages of this.textOnRightPage ? [false, true] : [false]) {
+        for (const px of FONT_SIZES) {
+          this.fontPx = px
+          if (this.layout(ctx, tokens, twoPages, false)) return
+        }
+      }
+      // не влезло даже мелко: самым мелким, лишнее обрезается
+      this.fontPx = FONT_SIZES[FONT_SIZES.length - 1]
+      this.layout(ctx, tokens, this.textOnRightPage, true)
     }
+    fit()
     this.redraw()
     return this.words
   }
 
-  private layout(ctx: CanvasRenderingContext2D, tokens: RegExpMatchArray[]): boolean {
+  private layout(ctx: CanvasRenderingContext2D, tokens: RegExpMatchArray[], twoPages: boolean, force: boolean): boolean {
     ctx.font = `${this.fontPx}px ${this.fontFamily}`
     const lh = Math.round(this.fontPx * LH)
     const maxW = TEX_W - MARGIN * 2
@@ -214,7 +250,10 @@ export class Book {
         x = MARGIN
         y += lh
         if (y > TEX_H - MARGIN) {
-          if (page === 1 || !this.textOnRightPage) return false
+          if (page === 1 || !twoPages) {
+            if (!force) return false
+            break
+          }
           page = 1
           y = MARGIN + lh
         }
@@ -253,6 +292,60 @@ export class Book {
     const inside = Math.min(pos - prev.start, prev.word.length)
     const x = prev.x + Math.ceil(ctx.measureText(prev.word.slice(0, inside)).width) + (pos > prev.end ? Math.ceil(ctx.measureText(' ').width) : 0)
     return { page: prev.page, x, y: prev.y }
+  }
+
+  /**
+   * Где сейчас курсор записи — в координатах книги, на поверхности страницы (у нижней линии строки).
+   * Сюда ведёт кончик ручки человека, который пишет. null — курсора нет.
+   */
+  caretLocal(): THREE.Vector3 | null {
+    const ctx = this.canvases[0].getContext('2d')!
+    ctx.font = `${this.fontPx}px ${this.fontFamily}`
+    const c = this.caretBox(ctx)
+    if (!c) return null
+    const u = c.x / TEX_W
+    const v = (c.y + this.fontPx) / TEX_H
+    return new THREE.Vector3((c.page === 0 ? -PAGE_W : 0) + u * PAGE_W, this.surfaceY, -PAGE_H / 2 + v * PAGE_H)
+  }
+
+  /**
+   * Чернила под ручкой (src/write/pen.ts). null — весь текст на бумаге. redraw=false — только запомнить
+   * (следующий setText перерисует), чтобы на нажатие клавиши страница не рисовалась дважды.
+   * Пока буква пишется, перерисовывается только её страница.
+   */
+  setInk(ink: InkState | null, redraw = true) {
+    const was = this.inkPage
+    this.ink = ink
+    const at = ink ? this.charOrigin(ink.upTo) : null
+    this.inkPage = at ? at.page : null
+    if (!redraw) return
+    this.redraw(was !== null && was === this.inkPage ? this.inkPage : undefined)
+  }
+
+  /** Подсказка на пустой левой странице: null — убрать. Абзацы — через \n. */
+  setPlaceholder(text: string | null, redraw = true) {
+    if (text === this.placeholder) return
+    this.placeholder = text
+    if (redraw) this.redraw(0)
+  }
+
+  /** Базовая линия последней строки подсказки на текстуре левой страницы; null — подсказки нет. */
+  placeholderEnd(): number | null {
+    return this.placeholder && !this.text.trim() ? this.placeholderEndY : null
+  }
+
+  /** Где начинается буква index исходного текста: точка fillText на текстуре страницы (x, базовая линия y) и кегль. */
+  charOrigin(index: number): { page: 0 | 1; x: number; y: number; size: number } | null {
+    const w = this.words.find((b) => index >= b.start && index < b.end)
+    if (!w) return null
+    const ctx = this.canvases[0].getContext('2d')!
+    ctx.font = `${this.fontPx}px ${this.fontFamily}`
+    return { page: w.page, x: w.x + ctx.measureText(w.word.slice(0, index - w.start)).width, y: w.y + this.fontPx, size: this.fontPx }
+  }
+
+  /** Точка текстуры страницы → координаты книги на поверхности этой страницы. */
+  texToLocal(page: 0 | 1, x: number, y: number): THREE.Vector3 {
+    return new THREE.Vector3((page === 0 ? -PAGE_W : 0) + (x / TEX_W) * PAGE_W, this.surfaceY, -PAGE_H / 2 + (y / TEX_H) * PAGE_H)
   }
 
   /** Переразложить текущий текст (например, после загрузки шрифта), сохранив вытянутые слова. */
@@ -339,9 +432,10 @@ export class Book {
     return c
   }
 
-  private redraw() {
+  private redraw(only?: 0 | 1) {
     const lh = Math.round(this.fontPx * LH)
     this.canvases.forEach((canvas, page) => {
+      if (only !== undefined && page !== only) return
       const ctx = canvas.getContext('2d')!
       ctx.fillStyle = css(PALETTE.paper)
       ctx.fillRect(0, 0, TEX_W, TEX_H)
@@ -354,10 +448,59 @@ export class Book {
         if (w.page !== page) continue
         // вытянутое слово оставляет бледный оттиск на бумаге
         ctx.globalAlpha = this.hidden.has(w.index) ? 0.14 : 1
-        ctx.fillText(w.word, w.x, w.y + this.fontPx)
+        const base = w.y + this.fontPx
+        const upTo = this.ink ? this.ink.upTo : Infinity
+        if (w.end <= upTo) ctx.fillText(w.word, w.x, base)
+        else if (upTo > w.start) ctx.fillText(w.word.slice(0, upTo - w.start), w.x, base)
+        // буква под ручкой: чернила только там, где кончик уже прошёл
+        const part = this.ink?.partial
+        if (part && part.pts.length && part.index >= w.start && part.index < w.end) {
+          const k = part.index - w.start
+          const x = w.x + ctx.measureText(w.word.slice(0, k)).width
+          const r = part.r * this.fontPx
+          ctx.save()
+          ctx.beginPath()
+          for (const [px, py] of part.pts) {
+            const cx = x + px * this.fontPx
+            const cy = base + py * this.fontPx
+            ctx.moveTo(cx + r, cy)
+            ctx.arc(cx, cy, r, 0, Math.PI * 2)
+          }
+          ctx.clip()
+          ctx.fillText(w.word[k], x, base)
+          ctx.restore()
+        }
       }
       ctx.globalAlpha = 1
-      const caret = this.caretOn ? this.caretBox(ctx) : null
+      // пустая страница в записи: бледная подсказка тем же почерком и по тем же строкам, что и текст
+      if (page === 0) this.placeholderEndY = null
+      if (page === 0 && this.placeholder && !this.text.trim()) {
+        const maxW = TEX_W - MARGIN * 2
+        let line = 0
+        const put = (s: string) => {
+          ctx.fillText(s, MARGIN, MARGIN + lh * (line + 1))
+          this.placeholderEndY = MARGIN + lh * (line + 1)
+          line++
+        }
+        // на телефоне кегль мелкий, а свет тёплый: бледнее 0.55 подсказка не читается
+        ctx.globalAlpha = 0.58
+        ctx.fillStyle = css(PALETTE.brown)
+        for (const para of this.placeholder.split('\n')) {
+          let cur = ''
+          for (const word of para.split(/\s+/).filter(Boolean)) {
+            const next = cur ? `${cur} ${word}` : word
+            if (cur && ctx.measureText(next).width > maxW) {
+              put(cur)
+              cur = word
+            } else cur = next
+          }
+          if (cur) put(cur)
+        }
+        ctx.globalAlpha = 1
+        ctx.fillStyle = css(PALETTE.navy)
+      }
+      // пока ручка пишет, курсора нет — его место занимает кончик ручки
+      const caret = this.caretOn && !this.ink ? this.caretBox(ctx) : null
       if (caret && caret.page === page) ctx.fillRect(Math.min(caret.x, TEX_W - 4), caret.y + 1, 1, this.fontPx + 2)
       this.textures[page].needsUpdate = true
     })

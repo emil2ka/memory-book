@@ -10,3 +10,4 @@ assets/_raw
 tools/.venv
 __pycache__
 *.pyc
+submission/video

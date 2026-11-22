@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 import { snapshotPlugin } from './tools/snapshot-plugin'
 
 /**
- * Локальные POST /api/direct и /api/make под `npm run dev`: те же обработчики, что на Vercel (api/*.ts).
+ * Локальные POST /api/direct, /api/make и /api/scene под `npm run dev`: те же обработчики, что на Vercel (api/*.ts).
  * .env читается только на сервере (переменные без префикса VITE_ в клиент не попадают).
  */
 function readDotEnv(root: string): Record<string, string> {
@@ -30,13 +30,14 @@ function directorApi(): Plugin {
       // .env проекта важнее окружения оболочки (там может быть чужой ключ), поэтому читаем файл сами:
       // loadEnv отдаёт приоритет process.env.
       const env = readDotEnv(server.config.root)
-      for (const k of ['ANTHROPIC_API_KEY', 'DIRECTOR_MODEL', 'DIRECTOR_EFFORT', 'DIRECTOR_BASE_URL', 'MAKE_MODEL']) {
+      for (const k of ['ANTHROPIC_API_KEY', 'DIRECTOR_MODEL', 'DIRECTOR_EFFORT', 'DIRECTOR_BASE_URL', 'MAKE_MODEL', 'SCENE_MODEL', 'SCENE_EFFORT']) {
         if (env[k]) process.env[k] = env[k]
       }
       // одна обвязка на все серверные функции: тело JSON → handler из api/*.ts → ответ
       const routes: Record<string, [string, string]> = {
         '/api/direct': ['/api/direct.ts', 'handleDirect'],
         '/api/make': ['/api/make.ts', 'handleMake'],
+        '/api/scene': ['/api/scene.ts', 'handleScene'],
       }
       for (const [path, [file, handler]] of Object.entries(routes)) {
         server.middlewares.use(path, async (req, res) => {

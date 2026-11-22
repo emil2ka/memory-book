@@ -174,4 +174,18 @@ describe('validateKit', () => {
     expect(e.max[0]).toBeCloseTo(1)
     expect(e.max[1]).toBeCloseTo(5)
   })
+
+  it('grip и scene: необязательные, сохраняются; detail проверяется по высоте 6–20', () => {
+    const r = validateKit({ ...clone(cocoa), grip: [0, 4.2, 0], scene: 'hand' })
+    expect(r.ok).toBe(true)
+    expect(r.model!.grip).toEqual([0, 4, 0])
+    expect(r.model!.scene).toBe('hand')
+    const away = validateKit({ ...clone(cocoa), grip: [40, 4, 0] })
+    expect(away.ok).toBe(true)
+    expect(away.model!.grip).toBeUndefined()
+    const ball = { id: 'ball', ru: 'мяч', stems: ['мяч'], tags: [], hold: 'ground', parts: [{ s: 'sph', p: [0, 4, 0], d: [8, 8, 8], c: 'brick' }] }
+    expect(validateKit(ball).ok).toBe(false)
+    expect(validateKit({ ...ball, scene: 'detail' }).ok).toBe(true)
+    expect(validateKit({ ...ball, scene: 'boss' }).model?.scene).toBeUndefined()
+  })
 })

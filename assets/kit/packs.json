@@ -120,5 +120,39 @@
   "palm",
   "birch",
   "crystal"
+ ],
+ "pack5": [
+  "balloon",
+  "ice_cream_kiosk",
+  "market_stall",
+  "kitchen_table",
+  "window_sill",
+  "sofa",
+  "bed",
+  "entrance_door",
+  "bus_stop",
+  "swing"
+ ],
+ "pack6": [
+  "slide",
+  "football_goal",
+  "school_board",
+  "school_desk",
+  "cafe_counter",
+  "fountain",
+  "new_year_tree",
+  "bonfire",
+  "big_tent",
+  "boat"
+ ],
+ "pack7": [
+  "dastarkhan_feast",
+  "trash_bin",
+  "cat_sleeping",
+  "puddle",
+  "snowdrift",
+  "leaf_pile",
+  "book_stack",
+  "balloon_bunch"
  ]
 }

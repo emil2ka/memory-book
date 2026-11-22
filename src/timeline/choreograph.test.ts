@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Beat, DayScript } from '../types/script'
 import type { TimelineEvent } from '../types/timeline'
-import { choreograph, computePace } from './choreograph'
+import { choreograph, computePace, keptBeats } from './choreograph'
 import day1 from './samples/day1.json'
 import day2 from './samples/day2.json'
 import day3 from './samples/day3.json'
@@ -88,8 +88,8 @@ describe('choreograph', () => {
       expect(staging).toHaveLength(1)
       const hold = cams.find((c) => c.t === staging[0].t && c.shot === 'hold')!
       expect(hold).toBeTruthy()
-      expect(hold.dur).toBeGreaterThanOrEqual(2)
-      expect(hold.dur).toBeLessThanOrEqual(3)
+      expect(hold.dur).toBeGreaterThanOrEqual(3.5)
+      expect(hold.dur).toBeLessThanOrEqual(4)
     } else expect(staging).toHaveLength(0)
     // вступление и финал
     const types = tl.events.map((e) => e.type)
@@ -159,6 +159,34 @@ describe('choreograph', () => {
   })
 })
 
+describe('финал и противоречие', () => {
+  it('финал: sit 3.2 с без camera внутри, затем book_close и pull_out, длина ≤ 60', () => {
+    for (const s of samples)
+      for (const photoCount of [0, 3]) {
+        const tl = choreograph(s, { seed: 2, photoCount })
+        expect(tl.duration).toBeLessThanOrEqual(60.5)
+        const sit = tl.events.filter((e) => e.type === 'actor_action' && e.beat === -1).pop()!
+        expect(sit.dur).toBeCloseTo(3.2, 5)
+        const inside = tl.events.filter((e) => e.type === 'camera' && e.t > sit.t + 1e-6 && e.t < sit.t + sit.dur - 1e-6)
+        expect(inside).toEqual([])
+        const close = tl.events.find((e) => e.type === 'book_close')!
+        const pull = tl.events.find((e) => e.type === 'camera' && e.shot === 'pull_out')!
+        expect(close.t).toBeCloseTo(sit.t + 3.2, 5)
+        expect(pull.t).toBeCloseTo(sit.t + 3.2, 5)
+        expect(tl.events.find((e) => e.type === 'title_reveal')!.t).toBeCloseTo(sit.t + 4.8, 5)
+        expect(tl.events.find((e) => e.type === 'to_shelf')!.t).toBeCloseTo(sit.t + 7.4, 5)
+      }
+  })
+
+  it('противоречие длится 3.5–4 с', () => {
+    for (const s of samples.filter((x) => x.contradiction)) {
+      const st = choreograph(s, { seed: 2 }).events.find((e) => e.type === 'staging')!
+      expect(st.dur).toBeGreaterThanOrEqual(3.5)
+      expect(st.dur).toBeLessThanOrEqual(4)
+    }
+  })
+})
+
 describe('L7: полароид, облёт, камера', () => {
   const days = samples
 
@@ -220,5 +248,49 @@ describe('L7: полароид, облёт, камера', () => {
       const mid = tl.events.filter((e) => e.type === 'camera' && e.shot === 'wide' && e.beat > 0) as Extract<TimelineEvent, { type: 'camera' }>[]
       for (const c of mid) expect(tl.events.some((e) => e.type === 'photo_fan' && Math.abs(e.t - c.t) < 1e-6)).toBe(true)
     }
+  })
+})
+
+describe('отсев битов при фото', () => {
+  const mk = (quote: string, result: Beat['result']): Beat => ({ quote, action: 'pull', result, camera: 'push_in', effect: null })
+  const beats: Beat[] = [
+    mk('парк', { kind: 'kit', id: 'tree' }),
+    mk('листья', { kind: 'effect', id: 'leaves' }),
+    mk('мы', { kind: 'person', id: 'second_person' }),
+    mk('горячее какао', { kind: 'kit', id: 'cocoa' }),
+    mk('чай', { kind: 'kit', id: 'tea' }),
+    mk('снег', { kind: 'effect', id: 'snow' }),
+    mk('фонари', { kind: 'kit', id: 'lamp_post' }),
+  ]
+
+  it('без фото или при ≤ 5 битах — все', () => {
+    expect(keptBeats(beats, 0, [])).toHaveLength(7)
+    expect(keptBeats(beats.slice(0, 5), 3, [])).toHaveLength(5)
+  })
+
+  it('с фото — 5: сначала эффекты, защищённые остаются', () => {
+    const k = keptBeats(beats, 2, [3])
+    expect(k).toHaveLength(5)
+    expect(k).not.toContain(1)
+    expect(k).not.toContain(5)
+    expect(k).toContain(2) // person
+    expect(k).toContain(3) // облёт
+  })
+
+  it('потом повтор вида предмета, потом самое короткое слово', () => {
+    const noFx = beats.filter((b) => b.result.kind !== 'effect').concat([mk('кофе', { kind: 'kit', id: 'coffee' }), mk('ноутбук горячий', { kind: 'kit', id: 'laptop' })])
+    // напитки: cocoa, tea, coffee — один вид; уходит самый короткий из них
+    const k = keptBeats(noFx, 1, [])
+    expect(k).toHaveLength(5)
+    expect(k.map((i) => noFx[i].quote)).not.toContain('чай')
+  })
+
+  it('в таймлайне 5 битов, сценарий не трогается', () => {
+    const day = { ...samples[0], beats: [...samples[0].beats] }
+    const before = JSON.stringify(day.beats)
+    const tl = choreograph(day, { seed: 1, photoCount: 3 })
+    const used = new Set(tl.events.filter((e) => e.type === 'word_transform').map((e) => e.beat))
+    expect(used.size).toBe(Math.min(5, day.beats.length))
+    expect(JSON.stringify(day.beats)).toBe(before)
   })
 })

@@ -164,6 +164,8 @@ void main() {
 export class PixelLayer {
   /** Пикселей слоя на единицу мира в точке фокуса. */
   density = 40
+  /** Слой не грубее: столько строк пикселей на высоту кадра минимум (иначе вблизи всё превращается в крупные квадраты). */
+  minRows = 130
   /** Фиксированная высота слоя в пикселях вместо плотности (для сравнения), 0 — выключено. */
   fixedHeight = 0
   /** Точка, по которой считается плотность; по умолчанию — куда смотрит камера. */
@@ -260,7 +262,7 @@ export class PixelLayer {
       camera.getWorldDirection(this.fwd)
       const target = this.focus ?? this.tmp.copy(camera.position).addScaledVector(this.fwd, 10)
       const dist = Math.max(0.5, this.tmp.copy(target).sub(camera.position).dot(this.fwd))
-      lowH = this.density * 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
+      lowH = Math.max(this.minRows, this.density * 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)))
     }
     const f = Math.max(2, H / Math.max(16, lowH))
     this.f = f

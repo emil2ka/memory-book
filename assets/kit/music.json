@@ -10,7 +10,7 @@
     {"s":"box","p":[2,9,0],"d":[7,1.5,1.5],"c":"slateDark","r":[0,0,8]},
     {"s":"box","p":[1.5,12,1],"d":[4,0.5,0.5],"c":"greyBlue","r":[0,0,8]}
   ]},
-  {"id":"guitar","ru":"гитара","kk":"гитара","en":"guitar","stems":["гитар","guitar"],"tags":["music","friends","evening"],"hold":"both","fx":[{"kind":"notes","at":[4,10,0]}],"by":"library","parts":[
+  {"id":"guitar","ru":"гитара","kk":"гитара","en":"guitar","stems":["гитар","guitar"],"tags":["music","friends","evening"],"hold":"both","grip":[0,12,0.5],"scene":"hand","fx":[{"kind":"notes","at":[4,10,0]}],"by":"library","parts":[
     {"s":"sph","p":[0,3.5,0],"d":[8.5,7,3],"c":"woodLight","n":"body"},
     {"s":"sph","p":[0,7.5,0],"d":[6.5,5,3],"c":"woodLight"},
     {"s":"sph","p":[0,3.5,-0.5],"d":[9,7.5,2.5],"c":"wood"},

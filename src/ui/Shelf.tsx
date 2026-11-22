@@ -1,10 +1,12 @@
-// Полка-архив: корешки книг с датой и названием; цвет — от настроения, толщина — от длины записи.
+// Полка-архив теперь в 3D-мире (книги кликаются в сцене: world.onShelfPick).
+// Здесь — список дней для клавиатуры и экранных дикторов: не виден, пока не получит фокус (Tab),
+// тогда появляется аккуратным списком в левом верхнем углу.
 import type { StoredDay } from '../store'
-import { spineColor, spineWidth } from './checks'
+import { spineColor } from './checks'
 
 interface Props {
   days: StoredDay[]
-  /** спрятать (плавно), пока идёт фильм */
+  /** спрятать совсем (идёт фильм, запись) */
   hidden?: boolean
   onOpen: (day: StoredDay) => void
   onNew: () => void
@@ -16,27 +18,24 @@ const shortDate = (d: string) => {
 }
 
 export function Shelf({ days, hidden, onOpen, onNew }: Props) {
+  if (hidden) return null
   return (
-    <nav className={`shelf${hidden ? ' hidden' : ''}`} aria-label="Полка дней" aria-hidden={hidden || undefined}>
-      <div className="spines">
-        {days.map((d, i) => (
-          <button
-            key={d.id}
-            className="spine"
-            style={{ background: spineColor(d.script.mood), width: spineWidth(d.text.length), height: 118 + ((i * 37) % 4) * 8 }}
-            onClick={() => onOpen(d)}
-            title={`${d.date} — ${d.script.title}`}
-          >
-            <span className="spine-title">{d.script.title}</span>
-            <span className="spine-date">{shortDate(d.date)}</span>
-          </button>
+    <nav className="shelf-keys" aria-label="Полка дней">
+      <div className="shelf-keys-head small">полка · Enter открывает день</div>
+      <ul>
+        {days.map((d) => (
+          <li key={d.id}>
+            <button className="link" onClick={() => onOpen(d)} style={{ borderBottomColor: spineColor(d.script.mood) }}>
+              {shortDate(d.date)} — {d.script.title}
+            </button>
+          </li>
         ))}
-        <button className="spine new" onClick={onNew} title="Новый день">
-          <span className="spine-title">новый день</span>
-          <span className="spine-date">+</span>
-        </button>
-      </div>
-      <div className="plank" />
+        <li>
+          <button className="link" onClick={onNew}>
+            + новый день
+          </button>
+        </li>
+      </ul>
     </nav>
   )
 }

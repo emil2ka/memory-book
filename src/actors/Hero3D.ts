@@ -38,7 +38,7 @@ export const SECOND_COLORS: HeroColors = {
 }
 
 /** Что делает человечек. Ходьба накладывается на любое действие, если он движется. */
-export type HeroAction = 'idle' | 'walk' | 'pull' | 'shake' | 'carry' | 'drink' | 'sit' | 'shiver' | 'cheer'
+export type HeroAction = 'idle' | 'walk' | 'pull' | 'shake' | 'carry' | 'drink' | 'sit' | 'shiver' | 'cheer' | 'climb' | 'wave' | 'dangle'
 
 type Eyes = 'open' | 'closed' | 'happy' | 'strain'
 type V3 = [number, number, number]
@@ -264,6 +264,52 @@ const ACTIONS: Record<HeroAction, (t: number, dur: number) => { pose: Pose; arms
     p.eyes = 'strain'
     return { pose: p, arms: false }
   },
+  climb(t, dur) {
+    // выбирается из щели: руки цепляются за край над головой, ноги болтаются; потом колено на край
+    const u = t / Math.max(0.1, dur)
+    const p = rest()
+    const kick = Math.sin(t * 11)
+    const hang = 1 - span(u, 0.55, 0.8)
+    p.armL = [lerp(-0.9, -2.5, hang), 0, lerp(-0.18, -0.45, hang)]
+    p.armR = [lerp(-0.9, -2.5, hang), 0, lerp(0.18, 0.45, hang)]
+    p.foreL = p.foreR = -0.45
+    p.thighL = [lerp(-1.25, -0.35 + 0.3 * kick, hang), 0, 0]
+    p.thighR = [lerp(0.1, -0.35 - 0.3 * kick, hang), 0, 0]
+    p.shinL = lerp(1.3, 0.6, hang)
+    p.shinR = lerp(0.2, 0.6, hang)
+    p.torso[0] = 0.18 * hang + 0.3 * (1 - hang) * Math.sin(u * Math.PI)
+    p.eyes = hang > 0.5 ? 'strain' : 'open'
+    return { pose: p, arms: false }
+  },
+  wave(t) {
+    const p = rest()
+    breathe(p, t)
+    const w = Math.sin(t * 9)
+    p.armR = [-0.35, 0, 2.35 + 0.28 * w]
+    p.foreR = -0.35
+    p.head[2] = -0.06
+    p.eyes = 'happy'
+    p.mouth = 1
+    return { pose: p, arms: false }
+  },
+  dangle(t) {
+    // сидит на краю страницы: бёдра на бумаге, голени свисают за край и болтаются
+    const p = rest()
+    const s = ease(t / 0.5)
+    p.hip[1] = -7.2 * s
+    p.thighL = [-1.5 * s, 0, -0.06 * s]
+    p.thighR = [-1.5 * s, 0, 0.06 * s]
+    p.shinL = (1.45 + 0.35 * Math.sin(t * 4.2)) * s
+    p.shinR = (1.45 + 0.35 * Math.sin(t * 4.2 + 2.2)) * s
+    p.torso[0] = -0.08 * s
+    p.armL = [0.35 * s, 0, -0.18 - 0.25 * s]
+    p.armR = [0.35 * s, 0, 0.18 + 0.25 * s]
+    p.foreL = p.foreR = -0.15
+    p.head[2] = 0.08 * Math.sin(t * 1.3)
+    if (s >= 1) breathe(p, t, 0.5)
+    p.eyes = t > 0.8 ? 'happy' : 'open'
+    return { pose: p, arms: false }
+  },
   cheer(t) {
     const p = rest()
     const c = (t % 0.8) / 0.8
@@ -339,6 +385,12 @@ export class Hero3D {
   private scarfAnchor = new THREE.Object3D()
   private chain: { p: THREE.Vector3; prev: THREE.Vector3 }[] = []
   private chainReady = false
+
+  /** Правая рука поднята над головой 0..1 (держит зонт). */
+  raiseR = 0
+
+  /** Усталость 0..1: наклон вперёд, голова вниз, руки висят, глаза счастливые («устал, но доволен»). */
+  tired = 0
 
   private action: HeroAction = 'idle'
   private t0 = 0
@@ -519,6 +571,8 @@ export class Hero3D {
 
   /** Сбросить позу и хвост шарфа (новый фильм, перемотка). */
   reset() {
+    this.tired = 0
+    this.raiseR = 0
     this.action = 'idle'
     this.t0 = 0
     this.from = rest()
@@ -537,7 +591,23 @@ export class Hero3D {
   update(time: number, dt: number, walk = 0, phase = 0) {
     const t = Math.max(0, time - this.t0)
     const { pose, arms } = ACTIONS[this.action](t, this.dur)
-    walkOver(pose, phase, walk * (this.action === 'sit' ? 0 : 1), arms)
+    walkOver(pose, phase, walk * (this.action === 'sit' || this.action === 'dangle' || this.action === 'climb' ? 0 : 1), arms)
+    if (this.raiseR > 0) {
+      const k = this.raiseR
+      pose.armR = [lerp(pose.armR[0], -2.55, k), 0, lerp(pose.armR[2], 0.32, k)]
+      pose.foreR = lerp(pose.foreR, -0.25, k)
+    }
+    if (this.tired > 0) {
+      const k = this.tired
+      pose.torso[0] += 0.28 * k
+      pose.head[0] += 0.22 * k
+      pose.hip[1] -= 0.8 * k
+      pose.armL[0] *= 1 - 0.6 * k
+      pose.armR[0] *= 1 - 0.6 * k
+      pose.armL[2] = lerp(pose.armL[2], -0.05, k)
+      pose.armR[2] = lerp(pose.armR[2], 0.05, k)
+      if (k > 0.5) pose.eyes = 'happy'
+    }
     const k = ease(t / BLEND)
     const p = k < 1 ? blend(this.from, pose, k) : pose
     this.last = p

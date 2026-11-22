@@ -17,6 +17,9 @@ export const HERO3D = HD && params.get('hero') !== 'sprite'
 
 export type TickFn = (time: number, dt: number) => void
 
+/** Вертикальный угол камеры для кадра 16:9. */
+const BASE_FOV = 32
+
 /**
  * Рендерер, камера и цикл кадров.
  * Холст всегда 480×270 пикселей, на экран растягивается целым множителем через CSS.
@@ -24,7 +27,14 @@ export type TickFn = (time: number, dt: number) => void
 export class PixelStage {
   readonly renderer: THREE.WebGLRenderer
   readonly scene = new THREE.Scene()
-  readonly camera = new THREE.PerspectiveCamera(32, PIXEL_W / PIXEL_H, 0.1, 100)
+  readonly camera = new THREE.PerspectiveCamera(BASE_FOV, PIXEL_W / PIXEL_H, 0.1, 100)
+  /** Предел плотности пикселей холста; автокачество снижает его до 1 на слабых устройствах. */
+  private maxDpr = 2
+  /** Шире обычного угол обзора (вид из глаз в записи): 1 — как задумано для кадра. */
+  fovScale = 1
+  /** Автокачество: 0 — полное, 1 — плотность 1, 2 — ещё и тени помельче. */
+  quality = 0
+  private perf = { acc: 0, n: 0, warm: 0 }
   private ticks = new Set<TickFn>()
   private raf = 0
   private last = 0
@@ -52,6 +62,10 @@ export class PixelStage {
     this.camera.position.set(0, 7.2, 8.4)
     this.camera.lookAt(0, 0.2, 0)
 
+    if (params.get('q') === 'low') {
+      this.degrade()
+      this.degrade()
+    }
     if (this.pixel) {
       const d = Number(params.get('pxd'))
       const h = Number(params.get('pxh'))
@@ -61,24 +75,95 @@ export class PixelStage {
 
     this.ro = new ResizeObserver(() => this.fit())
     this.ro.observe(host)
+    // ResizeObserver молчит, пока вкладка не рисуется; resize окна — запасной путь
+    window.addEventListener('resize', this.onResize)
     this.fit()
   }
 
-  /** Целый множитель, чтобы пиксели оставались квадратными и одного размера. */
-  private fit() {
+  private onResize = () => this.fit()
+
+  /** Подогнать холст и камеру под размер контейнера. */
+  fit() {
     const c = this.renderer.domElement
     if (HD) {
-      // тот же кадр 16:9, но в полном разрешении экрана
-      const s = Math.min(this.host.clientWidth / PIXEL_W, this.host.clientHeight / PIXEL_H)
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      this.renderer.setSize(Math.round(PIXEL_W * s * dpr), Math.round(PIXEL_H * s * dpr), false)
-      c.style.width = `${PIXEL_W * s}px`
-      c.style.height = `${PIXEL_H * s}px`
+      // кадр заполняет экран целиком: на узком (телефон стоя) ширина разворота сохраняется,
+      // а сверху и снизу видно больше стола — вместо чёрных полей
+      const W = Math.max(1, this.host.clientWidth)
+      const H = Math.max(1, this.host.clientHeight)
+      const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr)
+      this.renderer.setSize(Math.round(W * dpr), Math.round(H * dpr), false)
+      c.style.width = `${W}px`
+      c.style.height = `${H}px`
+      this.camera.aspect = W / H
+      this.applyFov()
       return
     }
     const k = Math.max(1, Math.floor(Math.min(this.host.clientWidth / PIXEL_W, this.host.clientHeight / PIXEL_H)))
     c.style.width = `${PIXEL_W * k}px`
     c.style.height = `${PIXEL_H * k}px`
+  }
+
+  /** Сменить угол обзора без пересчёта холста — для плавных переходов камеры (вход от первого лица). */
+  setFovScale(s: number) {
+    if (this.fovScale === s) return
+    this.fovScale = s
+    this.applyFov()
+  }
+
+  /** Угол обзора по аспекту экрана и fovScale (только объёмный вид). */
+  private applyFov() {
+    if (!HD) return
+    const aspect = this.camera.aspect
+    const design = PIXEL_W / PIXEL_H
+    const base = Math.tan(THREE.MathUtils.degToRad(BASE_FOV / 2)) * this.fovScale
+    if (aspect >= design) this.camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(base))
+    else {
+      // стоя — чуть ближе: края страниц можно подрезать, книга крупнее
+      const k = aspect < 1 ? 0.88 : 1
+      this.camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan((base * design * k) / aspect))
+    }
+    this.camera.updateProjectionMatrix()
+  }
+
+  /**
+   * Если устройство не тянет (средний кадр дольше 20 мс две секунды подряд) —
+   * сначала рисуем с плотностью пикселей 1 (в 4 раза меньше работы), потом мельче тени.
+   * Скрытая вкладка и долгие паузы не считаются.
+   */
+  private watchSpeed(raw: number) {
+    if (!HD || this.quality >= 2 || raw <= 0 || raw > 0.09) return
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    const p = this.perf
+    if (p.warm < 1.5) {
+      p.warm += raw
+      return
+    }
+    p.acc += raw
+    p.n++
+    if (p.acc < 2) return
+    const avg = p.acc / p.n
+    p.acc = 0
+    p.n = 0
+    if (avg > 0.02) this.degrade()
+  }
+
+  /** Снизить качество на одну ступень. */
+  degrade() {
+    this.quality++
+    this.perf.warm = 0
+    if (this.quality === 1) {
+      this.maxDpr = 1
+      this.fit()
+    } else if (this.quality === 2) {
+      this.scene.traverse((o) => {
+        const l = o as THREE.Light & { shadow?: THREE.LightShadow }
+        if (!l.isLight || !l.castShadow || !l.shadow) return
+        l.shadow.mapSize.set(512, 512)
+        l.shadow.map?.dispose()
+        l.shadow.map = null
+      })
+    }
+    console.info(`[качество] ступень ${this.quality}`)
   }
 
   onTick(fn: TickFn) {
@@ -88,8 +173,10 @@ export class PixelStage {
 
   start() {
     const loop = (now: number) => {
-      const dt = this.last ? Math.min(0.1, (now - this.last) / 1000) : 0
+      const raw = this.last ? (now - this.last) / 1000 : 0
+      const dt = Math.min(0.1, raw)
       this.last = now
+      this.watchSpeed(raw)
       this.time += dt
       for (const fn of this.ticks) fn(this.time, dt)
       if (this.pixel) this.pixel.render(this.renderer, this.scene, this.camera)
@@ -102,6 +189,7 @@ export class PixelStage {
   dispose() {
     cancelAnimationFrame(this.raf)
     this.ro.disconnect()
+    window.removeEventListener('resize', this.onResize)
     this.pixel?.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()

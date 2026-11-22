@@ -80,6 +80,16 @@ export interface KitModel {
   /** Категории и признаки: food, drink, weather, nature, city, home, study, work, transport, music, animal, holiday, feeling, kz, warm, cold… */
   tags: string[]
   hold: Hold
+  /**
+   * Точка хвата для предметов в руке: где ладонь, в единицах кита (той же системы, что parts).
+   * Сцена совмещает эту точку с ладонью человечка; нет — держит за середину.
+   */
+  grip?: Vec3
+  /**
+   * Роль в сценке по умолчанию (src/kit/scene.ts): hand — в руку, stand — декорация места 25–60,
+   * detail — маленькая деталь на бумаге 6–20 (ниже обычного «ground»). Необязательно.
+   */
+  scene?: 'hand' | 'stand' | 'detail'
   fx?: Fx[]
   parts: Part[]
   /** Кто нарисовал: library — заранее, claude — дорисовано во время фильма. */
@@ -96,4 +106,6 @@ export const KIT_LIMITS = {
   minSize: 0.5,
   /** Рекомендуемая высота: в руке 6–12, средние 14–28, на странице 30–70. */
   height: { hand: [6, 12], both: [8, 18], ground: [16, 70] },
+  /** Высота по роли сценки (поле scene); для detail заменяет диапазон ground. */
+  sceneHeight: { hand: [6, 12], stand: [25, 60], detail: [6, 20] },
 } as const

@@ -45,6 +45,10 @@ export interface Meta {
   stems: string[]
   tags: string[]
   hold: Hold
+  /** Где ладонь (для hold: 'hand'), в единицах кита. */
+  grip?: Vec3
+  /** Роль в сценке: hand, stand (декорация места 25–60), detail (деталь 6–20). */
+  scene?: 'hand' | 'stand' | 'detail'
   fx?: Fx[]
 }
 

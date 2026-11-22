@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
 // Node has no image decoding: stub the texture loaders so geometry/animation parse fully.
 globalThis.self = globalThis
@@ -12,6 +13,7 @@ const file = process.argv[2]
 const buf = readFileSync(file)
 const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 const loader = new GLTFLoader()
+loader.setMeshoptDecoder(MeshoptDecoder)
 loader.parse(ab, '', (gltf) => {
   const scene = gltf.scene
   const names = new Set()
