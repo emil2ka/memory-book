@@ -1,0 +1,125 @@
+{
+  "title": "Скучный день и подруга",
+  "mood": {
+    "warmth": 0.6,
+    "tension": -0.3,
+    "energy": 0.6,
+    "openness": 0.5
+  },
+  "contradiction": {
+    "a": "Сегодня мне было скучно",
+    "b": "Домой вернулся счастливым",
+    "staging": "crowd_edges_alone_center"
+  },
+  "time_of_day": "day",
+  "weather": "clear",
+  "place": "park",
+  "palette_hint": [
+    "amber",
+    "coral",
+    "soft_green",
+    "cream"
+  ],
+  "song": {
+    "tempo": "fast",
+    "energy": 0.8,
+    "estimated": false
+  },
+  "beats": [
+    {
+      "quote": "мне было скучно",
+      "action": "sit",
+      "result": {
+        "kind": "kit",
+        "id": "sofa"
+      },
+      "camera": "wide",
+      "effect": null,
+      "hero_prop": "",
+      "place": "дом",
+      "companion": null,
+      "kind": "feeling",
+      "weight": 2,
+      "time_of_day": "day",
+      "weather": "clear",
+      "photo": null,
+      "story": "Сегодня мне было скучно, весь день сидел дома",
+      "emotion": "bored",
+      "act": null
+    },
+    {
+      "quote": "позвонила подруга",
+      "action": "cheer",
+      "result": {
+        "kind": "kit",
+        "id": "phone"
+      },
+      "camera": "hard_cut",
+      "effect": "palette_shift",
+      "hero_prop": "телефон",
+      "place": "парк",
+      "companion": {
+        "name": "подруга",
+        "role": "подруга"
+      },
+      "kind": "person",
+      "weight": 3,
+      "time_of_day": "day",
+      "weather": "clear",
+      "photo": null,
+      "story": "Потом позвонила подруга, и мы пошли гулять",
+      "emotion": "joy",
+      "act": "phone"
+    },
+    {
+      "quote": "Ели мороженое в парке",
+      "action": "walk",
+      "result": {
+        "kind": "kit",
+        "id": "ice_cream"
+      },
+      "camera": "orbit_quarter",
+      "effect": null,
+      "hero_prop": "мороженое",
+      "place": "парк",
+      "companion": {
+        "name": "подруга",
+        "role": "подруга"
+      },
+      "kind": "place",
+      "weight": 2,
+      "time_of_day": "day",
+      "weather": "clear",
+      "photo": null,
+      "story": "Мы ели мороженое в парке",
+      "emotion": "joy",
+      "act": "eat"
+    },
+    {
+      "quote": "смеялись",
+      "action": "cheer",
+      "result": {
+        "kind": "kit",
+        "id": "star"
+      },
+      "camera": "hold",
+      "effect": null,
+      "hero_prop": "",
+      "place": "парк",
+      "companion": null,
+      "kind": "feeling",
+      "weight": 1,
+      "time_of_day": "day",
+      "weather": "clear",
+      "photo": null,
+      "story": "И мы смеялись, а домой я вернулся счастливым",
+      "emotion": "laugh",
+      "act": null
+    }
+  ],
+  "why": [
+    "Текст: скука дома и счастье после подруги → поворот на подъёме песни",
+    "Фото: нет → палитра и свет взяты из текста и песни",
+    "Песня: Pharrell Williams — Happy 160 bpm — бодрая песня → бегом, ярче, поворот — на смене фразы"
+  ]
+}

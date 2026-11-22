@@ -10,7 +10,8 @@ import { CardButton, FlagButton, Icon, PinNote, SealButton, Sheet, SlipButton, S
 import { PersonPick, type PersonKind } from '../ui/PersonPick'
 import '../app.css'
 import './uilab.css'
-import frame from '../../assets/_raw/snaps/beat_portrait.jpg'
+// кадр-фон витрины лежит в assets/_raw (не в репозитории): есть локально — берём, нет — витрина без фона
+const frame: string = Object.values(import.meta.glob('../../assets/_raw/snaps/beat_portrait.jpg', { query: '?url', import: 'default', eager: true }))[0] as string ?? ''
 
 /** ?lab=ui&only=bookmark — только закладка поверх кадра фильма (проверка шторки на телефоне). */
 const ONLY = new URLSearchParams(location.search).get('only')

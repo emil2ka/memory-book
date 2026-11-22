@@ -30,9 +30,13 @@ describe('store (IndexedDB)', () => {
 })
 
 describe('demo days', () => {
-  it('три валидных демо-дня', () => {
-    expect(demoDays).toHaveLength(3)
-    for (const d of demoDays) expect(checkScript(d.script, d.text)).toEqual([])
+  it('пять валидных демо-дней, у каждого песня ссылкой YouTube (песня обязательна)', () => {
+    expect(demoDays).toHaveLength(5)
+    for (const d of demoDays) {
+      expect(checkScript(d.script, d.text)).toEqual([])
+      expect(d.song).toMatchObject({ kind: 'link' })
+      expect(d.song?.yt).toMatch(/^[\w-]{11}$/)
+    }
   })
 })
 

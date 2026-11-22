@@ -111,6 +111,8 @@ const IRREG: [string, string][] = [
 const toGirl = new Map([...IRREG, ...SHORT_ADJ])
 const toBoy = new Map([...IRREG, ...SHORT_ADJ].map(([m, f]) => [f, m]))
 const PRONOUN_OTHER = /^(он|она|оно|они|мы|ты|вы|кто-то|все|всё)$/i
+/** Человек по роли в именительном падеже: «позвонила подруга», «пришла мама». */
+const PERSON_WORD = /(^|\s)(подруга|подружка|друг|мама|папа|бабушка|дедушка|сестра|брат|тётя|тетя|дядя|учитель|учительница|преподаватель|сосед|соседка|ребёнок|ребенок|малыш|девочка|мальчик|все|кто-то|никто)(\s|$)/
 // имена на -л / -ла в начале строки
 const NAMES = new Set(['павел', 'михаил', 'даниил', 'гавриил', 'рафаил', 'камила', 'камилла', 'мила', 'алла', 'стелла', 'нелли', 'сабила', 'жамила', 'адиля', 'нурила', 'гуля'])
 
@@ -157,7 +159,8 @@ export function genderize(line: string, hero: Hero | undefined): string {
       const lineStart = atLineStart
       atLineStart = false
       const hasI = lows.includes('я')
-      const other = lows.some((w) => PRONOUN_OTHER.test(w))
+      // другое подлежащее: местоимение или человек по роли — и после глагола («позвонила подруга»)
+      const other = lows.some((w) => PRONOUN_OTHER.test(w)) || (!hasI && PERSON_WORD.test(lows.join(' ')))
       // имя (слово с большой буквы не в начале строки) — своё подлежащее
       const named = words.some((w, i) => /^\p{Lu}/u.test(w) && w !== 'Я' && !(lineStart && i === 0))
       const firstIdx = lows.findIndex((w) => !LINKS.has(w))

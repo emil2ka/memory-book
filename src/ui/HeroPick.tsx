@@ -10,6 +10,9 @@ import { Sheet, Tape } from './paper'
 
 const ASKED = 'memory-book.person-asked'
 
+// картинки героев грузим сразу при старте: к моменту, когда лист откроется, они уже в кэше (иначе на медленной сети — пустые полароиды)
+if (typeof Image !== 'undefined') for (const src of [boyUrl, girlUrl]) new Image().src = src
+
 function asked(): boolean {
   try {
     return localStorage.getItem(ASKED) === '1'

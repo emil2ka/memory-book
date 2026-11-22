@@ -1,0 +1,128 @@
+{
+  "title": "Лето в ауле у бабушки",
+  "mood": {
+    "warmth": 0.9,
+    "tension": -0.5,
+    "energy": 0.4,
+    "openness": 0.7
+  },
+  "contradiction": null,
+  "time_of_day": "morning",
+  "weather": "clear",
+  "place": "nature",
+  "palette_hint": [
+    "amber",
+    "ochre",
+    "soft_green",
+    "brown",
+    "cream"
+  ],
+  "song": {
+    "tempo": "medium",
+    "energy": 0.65,
+    "estimated": false
+  },
+  "beats": [
+    {
+      "quote": "приехали в аул к бабушке",
+      "action": "walk",
+      "result": {
+        "kind": "kit",
+        "id": "yurt"
+      },
+      "camera": "wide",
+      "effect": null,
+      "hero_prop": "юрта",
+      "place": "аул",
+      "companion": {
+        "name": "бабушка",
+        "role": "бабушка"
+      },
+      "kind": "place",
+      "weight": 2,
+      "time_of_day": "morning",
+      "weather": "clear",
+      "photo": null,
+      "story": "Утром я с братом приехал в аул к бабушке",
+      "emotion": "joy",
+      "act": "look"
+    },
+    {
+      "quote": "поставила самовар",
+      "action": "carry",
+      "result": {
+        "kind": "kit",
+        "id": "samovar"
+      },
+      "camera": "push_in",
+      "effect": "palette_shift",
+      "hero_prop": "самовар",
+      "place": "аул",
+      "companion": {
+        "name": "бабушка",
+        "role": "бабушка"
+      },
+      "kind": "person",
+      "weight": 3,
+      "time_of_day": "morning",
+      "weather": "clear",
+      "photo": null,
+      "story": "Бабушка напекла баурсаков и поставила самовар",
+      "emotion": "love",
+      "act": "cook"
+    },
+    {
+      "quote": "играли в асыки во дворе",
+      "action": "walk",
+      "result": {
+        "kind": "kit",
+        "id": "asyk"
+      },
+      "camera": "orbit_quarter",
+      "effect": null,
+      "hero_prop": "асыки",
+      "place": "двор",
+      "companion": {
+        "name": "брат",
+        "role": "брат"
+      },
+      "kind": "place",
+      "weight": 2,
+      "time_of_day": "day",
+      "weather": "clear",
+      "photo": null,
+      "story": "Весь день мы с братом играли в асыки во дворе",
+      "emotion": "laugh",
+      "act": "throw"
+    },
+    {
+      "quote": "дедушка играл на домбре",
+      "action": "cheer",
+      "result": {
+        "kind": "kit",
+        "id": "dombra"
+      },
+      "camera": "hard_cut",
+      "effect": "lamp_flicker",
+      "hero_prop": "домбра",
+      "place": "аул",
+      "companion": {
+        "name": "дедушка",
+        "role": "дедушка"
+      },
+      "kind": "person",
+      "weight": 3,
+      "time_of_day": "evening",
+      "weather": "clear",
+      "photo": null,
+      "story": "Вечером дедушка играл на домбре, все пели, и мне было так тепло",
+      "emotion": "joy",
+      "act": "guitar"
+    }
+  ],
+  "why": [
+    "Текст: тепло и семья у бабушки → тёплая охра и мягкий свет",
+    "Фото: нет → палитра и время выведены из текста",
+    "Песня: Ескендір Хасанғалиев — Атамекен — ровная песня → ровный шаг"
+  ]
+}
