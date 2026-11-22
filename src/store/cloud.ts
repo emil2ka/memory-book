@@ -8,8 +8,13 @@
 import type { StoredDay } from './days'
 
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}
-const URL_ = (env.VITE_SUPABASE_URL ?? '').replace(/\/+$/, '')
-const KEY = env.VITE_SUPABASE_ANON_KEY ?? ''
+// публичные адрес и anon-ключ проекта (их и так видно в сборке сайта; защита данных — RLS, supabase/schema.sql).
+// Переменные окружения важнее: так сборка на Vercel из git работает без .env.local.
+const PUBLIC_URL = 'https://olrxgoawtalkvjakodad.supabase.co'
+const PUBLIC_ANON =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9scnhnb2F3dGFsa3ZqYWtvZGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzMzYzNzEsImV4cCI6MjExMDkxMjM3MX0.i0zUjcLRqX_POc1D64Nmz5PdTpn-CjAjV1qJcnTVmZM'
+const URL_ = (env.VITE_SUPABASE_URL || PUBLIC_URL).replace(/\/+$/, '')
+const KEY = env.VITE_SUPABASE_ANON_KEY || PUBLIC_ANON
 
 /** Облако настроено в этой сборке. */
 export const cloudReady = !!(URL_ && KEY)
