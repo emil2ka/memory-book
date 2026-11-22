@@ -4,6 +4,8 @@
 
 **Сайт:** https://memory-book-mauve.vercel.app
 
+**Трейлер (2:05, без голоса):** https://memory-book-mauve.vercel.app/trailer.mp4
+
 REC GENESIS HACKATHON · кейс ArtTech · ноябрь 2026.
 
 ## Запуск
