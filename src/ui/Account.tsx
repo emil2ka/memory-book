@@ -52,7 +52,7 @@ export function Welcome(p: {
               <TagButton seed="acc-in" onClick={() => setMode('in')}>Войти</TagButton>
               <TagButton seed="acc-up" onClick={() => setMode('up')}>Новый аккаунт</TagButton>
               {/* жюри не должно застрять на входе: «без аккаунта» — такая же бирка, как «Войти» */}
-              <TagButton seed="acc-local" onClick={p.onLocal}>Попробовать без аккаунта</TagButton>
+              <TagButton seed="acc-local" onClick={p.onLocal}>Без аккаунта</TagButton>
               <span className="acc-link-note">дни останутся только на этом устройстве</span>
             </div>
           ) : (
