@@ -10,6 +10,8 @@ import { chooseLocalOnly, cloudDeleteDay, cloudListDays, cloudReady, cloudSaveDa
 import { AccountCard, CloudBadge, MovePrompt, Welcome, type SaveState } from './ui/Account'
 import { DayPager, DaysBook } from './ui/DayNav'
 import { MusicToggle } from './ui/MusicToggle'
+import { Loader } from './ui/Loader'
+import { preloadUi } from './ui/preload'
 import { ambient } from './audio/ambient'
 import { seedFromString } from './timeline/rng'
 import type { SongShape } from './timeline/songShape'
@@ -146,6 +148,22 @@ function DiaryApp() {
   const [ctaReady, setCtaReady] = useState(false)
 
   const [phase, setPhase] = useState<Phase>('loading')
+  // экран загрузки: картинки и шрифты интерфейса + 3D-сцена; без него интерфейс собирался кусками
+  const [uiLoad, setUiLoad] = useState(0)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [sceneCrawl, setSceneCrawl] = useState(0)
+  const [bootTimeout, setBootTimeout] = useState(false)
+  const booted = (uiLoad >= 1 && sceneReady) || bootTimeout
+  useEffect(() => {
+    void preloadUi((d, t) => setUiLoad(d / t))
+    // сцену не видно по частям — полоска ползёт сама, пока модели не придут; через 25 с пускаем в любом случае
+    const crawl = window.setInterval(() => setSceneCrawl((k) => Math.min(0.92, k + (0.95 - k) * 0.06)), 250)
+    const stop = window.setTimeout(() => setBootTimeout(true), 25000)
+    return () => {
+      window.clearInterval(crawl)
+      window.clearTimeout(stop)
+    }
+  }, [])
   const [days, setDays] = useState<StoredDay[]>(demoDays)
   // ---- аккаунт и облако (план 15 § 2): без VITE_SUPABASE_URL ничего этого не видно ----
   const [cloudUser, setCloudUser] = useState<CloudUser | null>(() => currentUser())
@@ -488,6 +506,7 @@ function DiaryApp() {
         Object.assign(window, { world, songPlayer: () => songRef.current })
         world.idle()
         setPhase('shelf')
+        void world.whenReady().then(() => setSceneReady(true))
       })
     void refreshDays()
     return () => {
@@ -1164,6 +1183,7 @@ function DiaryApp() {
   return (
     <div className="app">
       <div ref={host} className="stage" />
+      <Loader progress={0.45 * uiLoad + 0.55 * (sceneReady ? 1 : sceneCrawl)} done={booted} />
       <div className={`overlay phase-${phase}${sceneFilm ? ' scene-film' : ''}`}>
         {cloudReady && phase !== 'film' && !welcome && (
           <CloudBadge state={saveState} email={cloudUser?.email} onClick={() => setAccountOpen((o) => !o)} />

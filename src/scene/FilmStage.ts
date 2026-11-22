@@ -508,12 +508,18 @@ export class FilmStage implements Stage {
     this.applyCamera()
     this.reset()
     // модели подменяют коробки, когда загрузятся; без них сцена работает на заглушках
-    loadModels()
+    this.modelsReady = loadModels()
       .then((m) => {
         this.room.useModels(m.lamp, m.cassette, m.desk)
         this.book.useModel(m.book)
       })
       .catch((err) => console.warn('3D-модели не загрузились, остаются заглушки', err))
+  }
+
+  /** Модели стола, книги, комнаты и человек за столом загрузились (экран загрузки ждёт этого). */
+  private modelsReady: Promise<void> = Promise.resolve()
+  whenReady(): Promise<void> {
+    return Promise.all([this.modelsReady, this.world?.ready, this.person?.ready]).then(() => undefined, () => undefined)
   }
 
   // ---------- Stage ----------

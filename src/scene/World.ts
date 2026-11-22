@@ -85,6 +85,11 @@ export class World {
     return this.film.personSettled
   }
 
+  /** Всё тяжёлое (модели комнаты, книги, человек) загрузилось. */
+  whenReady() {
+    return this.film.whenReady()
+  }
+
   /** Кто пишет за столом: мальчик или девочка. */
   setPerson(kind: 'boy' | 'girl') {
     this.heroKind = kind

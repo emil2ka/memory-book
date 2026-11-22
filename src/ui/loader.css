@@ -1,0 +1,17 @@
+/* Экран загрузки — тёплая бумага и чернила; без картинок-фактур (они как раз грузятся), только CSS. */
+.loader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 30%, #3a2a1e 0%, #1c130d 70%); transition: opacity 0.6s ease, visibility 0.6s; }
+.loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+.ld-card { width: min(380px, calc(100vw - 48px)); padding: 26px 26px 20px; text-align: center; background: var(--grain, none), #f4ead6; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55); transform: rotate(-0.6deg); }
+.ld-title { margin: 14px 0 12px; font: 700 34px / 1 'Caveat', 'Segoe Print', cursive; color: #2c3b58; }
+.ld-book { position: relative; width: 120px; height: 74px; margin: 0 auto; perspective: 400px; }
+.ld-page { position: absolute; top: 0; width: 58px; height: 74px; background: #fffdf6; box-shadow: 0 2px 6px rgba(27, 14, 6, 0.3); }
+.ld-page::after { content: ''; position: absolute; left: 10px; right: 10px; top: 16px; height: 40px; background: repeating-linear-gradient(#fffdf6 0 8px, rgba(44, 59, 88, 0.25) 8px 9px); }
+.ld-left { left: 2px; border-radius: 3px 0 0 3px; }
+.ld-right { right: 2px; border-radius: 0 3px 3px 0; }
+.ld-flip { position: absolute; top: 0; left: 60px; width: 58px; height: 74px; background: #f6eedd; border-radius: 0 3px 3px 0; transform-origin: left center; animation: ld-flip 1.4s ease-in-out infinite; box-shadow: 0 1px 4px rgba(27, 14, 6, 0.25); }
+@keyframes ld-flip { 0% { transform: rotateY(0deg); } 60%, 100% { transform: rotateY(-180deg); } }
+.ld-bar { height: 6px; background: rgba(44, 59, 88, 0.12); border-radius: 3px; overflow: hidden; }
+.ld-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2c3b58, #b5432f); border-radius: 3px; transition: width 0.3s ease; }
+.ld-step { margin-top: 10px; font: 600 18px 'Caveat', 'Segoe Print', cursive; color: #6b4f3a; }
+.ld-step b { color: #2c3b58; }
+@media (prefers-reduced-motion: reduce) { .ld-flip { animation: none; } }
