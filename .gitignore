@@ -11,3 +11,6 @@ tools/.venv
 __pycache__
 *.pyc
 submission/video
+
+# копии для Google Drive — не в репозиторий
+submission/drive/
